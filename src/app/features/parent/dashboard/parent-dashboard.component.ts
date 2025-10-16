@@ -1,0 +1,568 @@
+// src/app/features/parent/dashboard/parent-dashboard.component.ts
+import { Component, inject, signal, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { Router } from "@angular/router";
+import { AuthService } from "../../../core/services/auth.service";
+import { ApiService } from "../../../core/services/api.service";
+
+// Models
+interface Child {
+  id: number;
+  name: string;
+  email: string;
+  grade: string;
+  enrolledCourses: number;
+  averageProgress: number;
+  lastActive: string;
+}
+
+interface ChildProgress {
+  course_id: number;
+  course_title: string;
+  progress: number;
+  completed_lessons: number;
+  total_lessons: number;
+  last_accessed: string;
+  grade?: string;
+}
+
+interface AcademicReport {
+  child_id: number;
+  child_name: string;
+  total_courses: number;
+  completed_courses: number;
+  in_progress_courses: number;
+  overall_progress: number;
+  total_hours_studied: number;
+  attendance_rate: number;
+  last_week_activity: number;
+}
+
+@Component({
+  selector: "app-parent-dashboard",
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="container-fluid py-4">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="mb-0 fw-bold">Parent Dashboard</h2>
+          <p class="text-muted mb-0">
+            Welcome back, {{ authService.user()?.email }}
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary" (click)="refreshData()">
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Refresh
+          </button>
+          <button class="btn btn-outline-danger" (click)="logout()">
+            <i class="bi bi-box-arrow-right me-1"></i>
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      @if (loading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      }
+
+      <!-- Error State -->
+      @if (apiService.apiError(); as error) {
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button
+          type="button"
+          class="btn-close"
+          (click)="apiService.clearError()"
+        ></button>
+      </div>
+      }
+
+      <!-- Main Content -->
+      @if (!loading()) {
+      <!-- Summary Stats -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="card bg-primary text-white h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-people-fill display-4 mb-2"></i>
+              <h3 class="fw-bold">{{ children().length }}</h3>
+              <p class="mb-0">Children Enrolled</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-success text-white h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-book-fill display-4 mb-2"></i>
+              <h3 class="fw-bold">{{ totalCourses() }}</h3>
+              <p class="mb-0">Total Courses</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-info text-white h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-graph-up display-4 mb-2"></i>
+              <h3 class="fw-bold">{{ averageProgress() }}%</h3>
+              <p class="mb-0">Average Progress</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-warning text-white h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-clock-fill display-4 mb-2"></i>
+              <h3 class="fw-bold">{{ totalHoursStudied() }}h</h3>
+              <p class="mb-0">Hours This Month</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Children Cards -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <h4 class="mb-3">
+            <i class="bi bi-person-badge me-2"></i>
+            My Children
+          </h4>
+        </div>
+        @if (children().length === 0) {
+        <div class="col-12">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            No children enrolled yet. Contact administration to add children to
+            your account.
+          </div>
+        </div>
+        } @else { @for (child of children(); track child.id) {
+        <div class="col-md-6 col-lg-4 mb-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div
+                class="d-flex justify-content-between align-items-start mb-3"
+              >
+                <div>
+                  <h5 class="card-title mb-1">{{ child.name }}</h5>
+                  <small class="text-muted">{{ child.email }}</small>
+                </div>
+                <span class="badge bg-primary">{{ child.grade }}</span>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <small class="text-muted">Overall Progress</small>
+                  <small class="fw-bold">{{ child.averageProgress }}%</small>
+                </div>
+                <div class="progress">
+                  <div
+                    class="progress-bar"
+                    [style.width.%]="child.averageProgress"
+                    [class.bg-success]="child.averageProgress >= 75"
+                    [class.bg-warning]="
+                      child.averageProgress >= 50 && child.averageProgress < 75
+                    "
+                    [class.bg-danger]="child.averageProgress < 50"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="row text-center mb-3">
+                <div class="col-6">
+                  <div class="p-2 bg-light rounded">
+                    <h6 class="mb-0">{{ child.enrolledCourses }}</h6>
+                    <small class="text-muted">Courses</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-2 bg-light rounded">
+                    <h6 class="mb-0">{{ formatDate(child.lastActive) }}</h6>
+                    <small class="text-muted">Last Active</small>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                class="btn btn-primary w-100"
+                (click)="viewChildDetails(child)"
+              >
+                <i class="bi bi-eye me-1"></i>
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+        } }
+      </div>
+
+      <!-- Selected Child Details -->
+      @if (selectedChild()) {
+      <div class="row">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div
+              class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+            >
+              <h5 class="mb-0">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                {{ selectedChild()!.name }}'s Academic Report
+              </h5>
+              <button
+                class="btn btn-sm btn-light"
+                (click)="closeChildDetails()"
+              >
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div class="card-body">
+              <!-- Academic Report Stats -->
+              @if (selectedChildReport()) {
+              <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="text-muted mb-2">Course Statistics</h6>
+                    <p class="mb-1">
+                      <strong>Total:</strong>
+                      {{ selectedChildReport()!.total_courses }}
+                    </p>
+                    <p class="mb-1">
+                      <strong>Completed:</strong>
+                      {{ selectedChildReport()!.completed_courses }}
+                    </p>
+                    <p class="mb-0">
+                      <strong>In Progress:</strong>
+                      {{ selectedChildReport()!.in_progress_courses }}
+                    </p>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="text-muted mb-2">Performance</h6>
+                    <p class="mb-1">
+                      <strong>Overall Progress:</strong>
+                      {{ selectedChildReport()!.overall_progress }}%
+                    </p>
+                    <p class="mb-1">
+                      <strong>Attendance:</strong>
+                      {{ selectedChildReport()!.attendance_rate }}%
+                    </p>
+                    <p class="mb-0">
+                      <strong>Study Hours:</strong>
+                      {{ selectedChildReport()!.total_hours_studied }}h
+                    </p>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="text-muted mb-2">Recent Activity</h6>
+                    <p class="mb-0">
+                      <strong>Last Week:</strong>
+                      {{ selectedChildReport()!.last_week_activity }} lessons
+                    </p>
+                    <div class="mt-2">
+                      @if (selectedChildReport()!.last_week_activity >= 5) {
+                      <span class="badge bg-success">Very Active</span>
+                      } @else if (selectedChildReport()!.last_week_activity >=
+                      2) {
+                      <span class="badge bg-warning">Moderately Active</span>
+                      } @else {
+                      <span class="badge bg-danger">Low Activity</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+              }
+
+              <!-- Course Progress -->
+              <h6 class="mb-3">Course Progress Details</h6>
+              @if (loadingProgress()) {
+              <div class="text-center py-3">
+                <div
+                  class="spinner-border spinner-border-sm text-primary"
+                ></div>
+              </div>
+              } @else if (selectedChildProgress().length === 0) {
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No enrolled courses yet.
+              </div>
+              } @else {
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Course</th>
+                      <th>Progress</th>
+                      <th>Lessons</th>
+                      <th>Grade</th>
+                      <th>Last Accessed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (progress of selectedChildProgress(); track
+                    progress.course_id) {
+                    <tr>
+                      <td>{{ progress.course_title }}</td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div
+                            class="progress flex-grow-1 me-2"
+                            style="height: 20px;"
+                          >
+                            <div
+                              class="progress-bar"
+                              [style.width.%]="progress.progress"
+                              [class.bg-success]="progress.progress >= 75"
+                              [class.bg-warning]="
+                                progress.progress >= 50 &&
+                                progress.progress < 75
+                              "
+                              [class.bg-danger]="progress.progress < 50"
+                            >
+                              {{ progress.progress }}%
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        {{ progress.completed_lessons }}/{{
+                          progress.total_lessons
+                        }}
+                      </td>
+                      <td>
+                        @if (progress.grade) {
+                        <span class="badge bg-info">{{ progress.grade }}</span>
+                        } @else {
+                        <span class="text-muted">-</span>
+                        }
+                      </td>
+                      <td>{{ formatDate(progress.last_accessed) }}</td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+      } }
+    </div>
+  `,
+  styles: [
+    `
+      .progress {
+        height: 8px;
+      }
+
+      .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      }
+
+      .table-responsive {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+    `,
+  ],
+})
+export class ParentDashboardComponent implements OnInit {
+  readonly authService = inject(AuthService);
+  readonly apiService = inject(ApiService);
+  private readonly router = inject(Router);
+
+  // State
+  readonly loading = signal(true);
+  readonly loadingProgress = signal(false);
+  readonly children = signal<Child[]>([]);
+  readonly selectedChild = signal<Child | null>(null);
+  readonly selectedChildProgress = signal<ChildProgress[]>([]);
+  readonly selectedChildReport = signal<AcademicReport | null>(null);
+
+  // Computed values
+  readonly totalCourses = signal(0);
+  readonly averageProgress = signal(0);
+  readonly totalHoursStudied = signal(0);
+
+  ngOnInit(): void {
+    this.loadChildren();
+  }
+
+  loadChildren(): void {
+    this.loading.set(true);
+    const user = this.authService.user();
+
+    if (user) {
+      this.apiService.getParentChildren(user.id).subscribe({
+        next: (children: Child[]) => {
+          this.children.set(children);
+          this.calculateSummary(children);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          // Mock data for development
+          const mockChildren: Child[] = [
+            {
+              id: 1,
+              name: "Ahmed Ali",
+              email: "ahmed.ali@student.com",
+              grade: "Grade 8",
+              enrolledCourses: 4,
+              averageProgress: 78,
+              lastActive: new Date().toISOString(),
+            },
+            {
+              id: 2,
+              name: "Fatima Ali",
+              email: "fatima.ali@student.com",
+              grade: "Grade 6",
+              enrolledCourses: 3,
+              averageProgress: 85,
+              lastActive: new Date(Date.now() - 86400000).toISOString(),
+            },
+          ];
+          this.children.set(mockChildren);
+          this.calculateSummary(mockChildren);
+          this.loading.set(false);
+        },
+      });
+    }
+  }
+
+  calculateSummary(children: Child[]): void {
+    const total = children.reduce(
+      (sum, child) => sum + child.enrolledCourses,
+      0
+    );
+    const avgProgress =
+      children.length > 0
+        ? Math.round(
+            children.reduce((sum, child) => sum + child.averageProgress, 0) /
+              children.length
+          )
+        : 0;
+
+    this.totalCourses.set(total);
+    this.averageProgress.set(avgProgress);
+    this.totalHoursStudied.set(Math.round(total * 2.5)); // Mock calculation
+  }
+
+  viewChildDetails(child: Child): void {
+    this.selectedChild.set(child);
+    this.loadChildProgress(child.id);
+    this.loadChildReport(child.id);
+
+    // Scroll to details
+    setTimeout(() => {
+      const element = document.querySelector(".card-header.bg-primary");
+      element?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }
+
+  loadChildProgress(childId: number): void {
+    this.loadingProgress.set(true);
+
+    this.apiService.getStudentProgress(childId).subscribe({
+      next: (progress: ChildProgress[]) => {
+        this.selectedChildProgress.set(progress);
+        this.loadingProgress.set(false);
+      },
+      error: () => {
+        this.loadingProgress.set(false);
+        // Mock data
+        const mockProgress: ChildProgress[] = [
+          {
+            course_id: 1,
+            course_title: "Islamic Studies",
+            progress: 75,
+            completed_lessons: 6,
+            total_lessons: 8,
+            last_accessed: new Date().toISOString(),
+            grade: "A-",
+          },
+          {
+            course_id: 2,
+            course_title: "Arabic Language",
+            progress: 60,
+            completed_lessons: 3,
+            total_lessons: 5,
+            last_accessed: new Date(Date.now() - 172800000).toISOString(),
+            grade: "B+",
+          },
+        ];
+        this.selectedChildProgress.set(mockProgress);
+      },
+    });
+  }
+
+  loadChildReport(childId: number): void {
+    this.apiService.getChildAcademicReport(childId).subscribe({
+      next: (report: AcademicReport) => {
+        this.selectedChildReport.set(report);
+      },
+      error: () => {
+        // Mock data
+        const mockReport: AcademicReport = {
+          child_id: childId,
+          child_name: this.selectedChild()?.name || "",
+          total_courses: 4,
+          completed_courses: 1,
+          in_progress_courses: 3,
+          overall_progress: 78,
+          total_hours_studied: 45,
+          attendance_rate: 92,
+          last_week_activity: 7,
+        };
+        this.selectedChildReport.set(mockReport);
+      },
+    });
+  }
+
+  closeChildDetails(): void {
+    this.selectedChild.set(null);
+    this.selectedChildProgress.set([]);
+    this.selectedChildReport.set(null);
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+
+    return date.toLocaleDateString();
+  }
+
+  refreshData(): void {
+    this.loadChildren();
+    if (this.selectedChild()) {
+      this.loadChildProgress(this.selectedChild()!.id);
+      this.loadChildReport(this.selectedChild()!.id);
+    }
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(["/auth/login"]);
+  }
+}

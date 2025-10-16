@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <title>OnlineShariaAcademy</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="OnlineShariaAcademy - Learn Islamic Studies Online">
+  <meta name="keywords" content="Islamic Studies, Online Learning, Quran, Arabic, Islamic Education">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Theme detection script -->
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme') || 'auto';
+      if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark-theme');
+      } else {
+        document.documentElement.classList.add('light-theme');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

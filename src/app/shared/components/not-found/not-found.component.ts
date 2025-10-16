@@ -1,0 +1,38 @@
+import { CommonModule } from "@angular/common";
+import { Component } from "@angular/core";
+import { RouterLink } from "@angular/router";
+
+
+@Component({
+  selector: 'app-not-found',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  template: `
+    <div class="container mt-5">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card shadow">
+            <div class="card-body text-center">
+              <i class="bi bi-question-circle text-info display-1 mb-3"></i>
+              <h3 class="text-primary mb-3">Page Not Found</h3>
+              <p class="text-muted mb-4">
+                The page you're looking for doesn't exist or has been moved.
+              </p>
+              <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <a routerLink="/" class="btn btn-primary">
+                  <i class="bi bi-house me-2"></i>
+                  Go Home
+                </a>
+                <button class="btn btn-secondary" onclick="history.back()">
+                  <i class="bi bi-arrow-left me-2"></i>
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+})
+export class NotFoundComponent { }

@@ -1,0 +1,37 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+
+@Component({
+  selector: 'app-unauthorized',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  template: `
+    <div class="container mt-5">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card shadow">
+            <div class="card-body text-center">
+              <i class="bi bi-exclamation-triangle text-warning display-1 mb-3"></i>
+              <h3 class="text-danger mb-3">Unauthorized Access</h3>
+              <p class="text-muted mb-4">
+                You don't have permission to access this page. Please contact your administrator if you believe this is an error.
+              </p>
+              <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <a routerLink="/auth/login" class="btn btn-primary">
+                  <i class="bi bi-box-arrow-in-right me-2"></i>
+                  Go to Login
+                </a>
+                <button class="btn btn-secondary" onclick="history.back()">
+                  <i class="bi bi-arrow-left me-2"></i>
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+})
+export class UnauthorizedComponent { }
