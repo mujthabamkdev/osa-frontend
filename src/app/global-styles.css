@@ -686,9 +686,10 @@ select.form-control {
 
 /* Card component */
 .card {
-  background-color: var(--color-surface);
+  background-color: #ffffff;
+  color: #212529;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-card-border);
+  border: 1px solid #dee2e6;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: box-shadow var(--duration-normal) var(--ease-standard);
@@ -700,12 +701,112 @@ select.form-control {
 
 .card__body {
   padding: var(--space-16);
+  color: #212529;
 }
 
 .card__header,
 .card__footer {
   padding: var(--space-16);
-  border-bottom: 1px solid var(--color-card-border-inner);
+  border-bottom: 1px solid #dee2e6;
+  color: #212529;
+  background-color: #f8f9fa;
+}
+
+.card-body {
+  padding: var(--space-16);
+  color: #212529;
+}
+
+.card-header {
+  padding: var(--space-16);
+  border-bottom: 1px solid #dee2e6;
+  color: #212529;
+  background-color: #f8f9fa;
+}
+
+.card-footer {
+  padding: var(--space-16);
+  border-top: 1px solid #dee2e6;
+  color: #212529;
+  background-color: #f8f9fa;
+}
+
+.card h1,
+.card h2,
+.card h3,
+.card h4,
+.card h5,
+.card h6 {
+  color: #212529;
+}
+
+.card p {
+  color: #212529;
+}
+
+.card-title {
+  color: #212529;
+}
+
+.card-text {
+  color: #212529;
+}
+
+/* Dark mode card styles */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background-color: #2d3436;
+    color: #e8eaed;
+    border-color: #495057;
+  }
+
+  .card__body {
+    color: #e8eaed;
+  }
+
+  .card__header,
+  .card__footer {
+    color: #e8eaed;
+    background-color: #1e1e1e;
+    border-color: #495057;
+  }
+
+  .card-body {
+    color: #e8eaed;
+  }
+
+  .card-header {
+    color: #e8eaed;
+    background-color: #1e1e1e;
+    border-color: #495057;
+  }
+
+  .card-footer {
+    color: #e8eaed;
+    background-color: #1e1e1e;
+    border-color: #495057;
+  }
+
+  .card h1,
+  .card h2,
+  .card h3,
+  .card h4,
+  .card h5,
+  .card h6 {
+    color: #e8eaed;
+  }
+
+  .card p {
+    color: #e8eaed;
+  }
+
+  .card-title {
+    color: #e8eaed;
+  }
+
+  .card-text {
+    color: #e8eaed;
+  }
 }
 
 /* Status indicators - simplified with CSS variables */
@@ -1029,11 +1130,12 @@ body {
 }
 
 .card {
-  border: 1px solid var(--color-card-border);
+  border: 1px solid #dee2e6;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   transition: all var(--transition-normal);
-  background: var(--color-surface);
+  background: #ffffff;
+  color: #212529;
   overflow: hidden;
 }
 
@@ -1043,11 +1145,15 @@ body {
 }
 
 .card-header {
-  background: rgba(var(--color-teal-500-rgb), 0.05);
-  border-bottom: 1px solid var(--color-card-border-inner);
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
   font-weight: var(--font-weight-semibold);
   padding: var(--space-16) var(--space-24);
-  color: var(--color-text);
+  color: #212529;
+}
+
+.card-body {
+  color: #212529;
 }
 
 .form-control,
