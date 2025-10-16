@@ -280,6 +280,7 @@ import { NotificationService } from "./core/services/notification.service";
         color: white !important;
         display: flex;
         align-items: center;
+        cursor: pointer;
       }
 
       .navbar-brand:hover {
@@ -311,23 +312,24 @@ import { NotificationService } from "./core/services/notification.service";
 
       /* Navigation Links */
       .navbar-nav .nav-link {
-        color: rgba(255, 255, 255, 0.85) !important;
+        color: white !important;
         font-weight: 500;
         margin: 0 0.5rem;
         padding: 0.5rem 0.75rem !important;
         border-radius: 6px;
         transition: all 0.3s ease;
         position: relative;
+        cursor: pointer;
       }
 
       .navbar-nav .nav-link:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.15);
         color: white !important;
         transform: translateY(-1px);
       }
 
       .navbar-nav .nav-link.active {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.25);
         color: white !important;
       }
 
@@ -335,23 +337,25 @@ import { NotificationService } from "./core/services/notification.service";
         font-size: 1rem;
       }
 
-      /* Theme Toggle Button */
       .btn-outline-light {
-        color: rgba(255, 255, 255, 0.85);
-        border-color: rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.95);
+        border-color: rgba(255, 255, 255, 0.5);
         transition: all 0.3s ease;
+        cursor: pointer;
       }
 
       .btn-outline-light:hover {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.2);
+        border-color: white;
         color: white;
+        cursor: pointer;
       }
 
       .btn-outline-light:focus {
         background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.5);
+        border-color: white;
         box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        cursor: pointer;
       }
 
       /* User Dropdown */
@@ -359,28 +363,31 @@ import { NotificationService } from "./core/services/notification.service";
         display: flex;
         align-items: center;
         padding: 0.5rem !important;
+        cursor: pointer;
       }
 
       .avatar-sm {
         width: 36px;
         height: 36px;
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.25);
+        border: 2px solid rgba(255, 255, 255, 0.4);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
+        cursor: pointer;
       }
 
       .nav-item.dropdown:hover .avatar-sm {
-        background: rgba(255, 255, 255, 0.3);
-        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.35);
+        border-color: rgba(255, 255, 255, 0.6);
         transform: scale(1.08);
       }
 
       .avatar-sm i {
         font-size: 1.1rem;
+        color: white;
       }
 
       .dropdown-menu {
@@ -400,17 +407,20 @@ import { NotificationService } from "./core/services/notification.service";
         padding: 0.65rem 1rem;
         transition: all 0.2s ease;
         color: #333;
+        cursor: pointer;
       }
 
       .dropdown-item:hover {
         background: #f8f9fa;
         color: #0d6efd;
         transform: translateX(2px);
+        cursor: pointer;
       }
 
       .dropdown-item.text-danger:hover {
         background: #ffe5e5;
         color: #dc3545;
+        cursor: pointer;
       }
 
       .dropdown-divider {

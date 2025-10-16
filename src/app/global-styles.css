@@ -319,6 +319,157 @@ body {
   box-sizing: inherit;
 }
 
+/* Button Styles - Ensure proper cursor and contrast */
+button,
+a.btn,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  cursor: pointer;
+}
+
+button:hover,
+a.btn:hover,
+[role="button"]:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover {
+  cursor: pointer;
+}
+
+/* Bootstrap Button Overrides for better contrast */
+.btn-primary {
+  color: white !important;
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+  color: white !important;
+  background-color: #0a58ca;
+  border-color: #0a58ca;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  color: white !important;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  color: white !important;
+  background-color: #5a6268;
+  border-color: #545b62;
+  cursor: pointer;
+}
+
+.btn-danger {
+  color: white !important;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  color: white !important;
+  background-color: #c82333;
+  border-color: #bd2130;
+  cursor: pointer;
+}
+
+.btn-success {
+  color: white !important;
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.btn-success:hover {
+  color: white !important;
+  background-color: #157347;
+  border-color: #146c43;
+  cursor: pointer;
+}
+
+.btn-warning {
+  color: #212529 !important;
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-warning:hover {
+  color: #212529 !important;
+  background-color: #ffb800;
+  border-color: #ff9500;
+  cursor: pointer;
+}
+
+.btn-info {
+  color: white !important;
+  background-color: #0dcaf0;
+  border-color: #0dcaf0;
+}
+
+.btn-info:hover {
+  color: white !important;
+  background-color: #31d5f8;
+  border-color: #25d5e5;
+  cursor: pointer;
+}
+
+/* Text Color Fixes for Better Contrast */
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* Ensure good contrast on light backgrounds */
+.bg-light .text-muted {
+  color: #5a6268 !important;
+}
+
+/* Ensure good contrast on dark backgrounds */
+@media (prefers-color-scheme: dark) {
+  .text-muted {
+    color: #adb5bd !important;
+  }
+}
+
+/* Links should be visible */
+a {
+  color: #0d6efd;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a:hover {
+  color: #0a58ca;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Badge and Label contrast */
+.badge {
+  cursor: pointer;
+}
+
+/* Form elements cursor */
+input,
+textarea,
+select {
+  cursor: pointer;
+}
+
+input:not([type="hidden"]),
+textarea,
+select {
+  cursor: text;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
 /* Typography */
 h1,
 h2,
