@@ -1,6 +1,15 @@
 import { Injectable, signal } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
-import { Observable, tap, throwError, of, catchError } from "rxjs";
+import {
+  Observable,
+  tap,
+  throwError,
+  of,
+  catchError,
+  map,
+  retry,
+  delay,
+} from "rxjs";
 import { Router } from "@angular/router";
 import { environment } from "../../../environments/environment";
 
@@ -26,7 +35,8 @@ export class AuthService {
   userRole = signal<string | null>(null);
 
   constructor(private http: HttpClient, private router: Router) {
-    // Don't load user from token automatically - do it only when needed
+    // Automatically load user data if token exists
+    this.loadUserFromToken();
   }
 
   login(email: string, password: string): Observable<any>;
@@ -99,6 +109,57 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  isLoadingUser(): boolean {
+    return this.loading();
+  }
+
+  validateToken(): Observable<boolean> {
+    if (!this.getToken()) {
+      return of(false);
+    }
+
+    if (this.currentUserSignal()) {
+      return of(true);
+    }
+
+    return this.http.get(`${this.baseUrl}/users/me`).pipe(
+      retry({
+        count: 2,
+        delay: (error, retryIndex) => {
+          // Only retry on network errors, not auth errors
+          if (this.isAuthError(error)) {
+            return throwError(() => error);
+          }
+          // Retry with exponential backoff for network issues
+          return of(retryIndex).pipe(delay(1000 * retryIndex));
+        },
+      }),
+      map((user: any) => {
+        this.currentUserSignal.set(user);
+        this.userRole.set(user.role);
+        return true;
+      }),
+      catchError((error) => {
+        // Only consider auth errors as invalid token
+        if (this.isAuthError(error)) {
+          return of(false);
+        }
+        // For other errors after retries, assume token might still be valid
+        // This prevents logout on temporary network/server issues
+        console.warn(
+          "Token validation failed with non-auth error, keeping token:",
+          error
+        );
+        return of(true);
+      })
+    );
+  }
+
+  private isAuthError(error: any): boolean {
+    // Only consider 401 (Unauthorized) and 403 (Forbidden) as auth errors
+    return error?.status === 401 || error?.status === 403;
+  }
+
   loadUserData(): Observable<any> {
     if (!this.getToken()) {
       return throwError(() => new Error("No token available"));
@@ -116,7 +177,10 @@ export class AuthService {
       }),
       catchError((error) => {
         console.error("Failed to load user data:", error);
-        this.logout();
+        // Only logout on actual authentication errors
+        if (this.isAuthError(error)) {
+          this.logout();
+        }
         return throwError(() => error);
       })
     );
@@ -156,23 +220,38 @@ export class AuthService {
   }
 
   refreshToken(): Observable<any> {
-    // Placeholder - implement token refresh if needed
-    return throwError(() => new Error("Refresh token not implemented"));
+    // For now, this is a placeholder. In a full implementation,
+    // you would call a refresh endpoint with a refresh token
+    // Since this backend doesn't have refresh tokens yet, we return an error
+    // This will cause the auth interceptor to logout the user
+    return throwError(() => new Error("Token refresh not implemented"));
+  }
+
+  refreshTokenIfNeeded(): Observable<boolean> {
+    // Check if token needs refresh (this could be based on expiration time)
+    // For now, just validate the current token
+    return this.validateToken();
   }
 
   private loadUserFromToken(): void {
     const token = this.getToken();
-    if (token) {
+    if (token && !this.currentUserSignal()) {
+      this.loading.set(true);
       // Load user data from API using the token
       this.http.get(`${this.baseUrl}/users/me`).subscribe({
         next: (user: any) => {
           this.currentUserSignal.set(user);
           this.userRole.set(user.role);
+          this.loading.set(false);
         },
         error: (error) => {
-          // If token is invalid, clear it
           console.error("Failed to load user from token:", error);
-          this.logout();
+          this.loading.set(false);
+          // Only logout on actual authentication errors, not network/server errors
+          if (this.isAuthError(error)) {
+            this.logout();
+          }
+          // For other errors (network, server), keep the token and let auth guard retry
         },
       });
     }
