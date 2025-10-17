@@ -98,55 +98,135 @@ import {
         </div>
       </div>
 
-      <!-- Available Courses Section -->
+      <!-- My Courses Section -->
       <div class="row mb-4">
         <div class="col-12">
           <div class="card">
-            <div
-              class="card-header d-flex justify-content-between align-items-center"
-            >
-              <h5 class="mb-0">Available Courses</h5>
-              <button
-                class="btn btn-sm btn-outline-primary"
-                (click)="viewAllCourses()"
-              >
-                <i class="bi bi-grid me-1"></i>
-                View All
-              </button>
+            <div class="card-header">
+              <h5 class="mb-0">My Courses</h5>
             </div>
             <div class="card-body">
-              @if (availableCourses().length === 0) {
+              @if (enrolledCourses().length === 0) {
               <div class="text-center py-4">
-                <i class="bi bi-check-circle text-success fs-1 mb-3"></i>
-                <h6 class="text-muted">All caught up!</h6>
-                <p class="text-muted mb-0">
-                  You're enrolled in all available courses
+                <i class="bi bi-book text-muted fs-1 mb-3"></i>
+                <h6 class="text-muted">No courses enrolled yet</h6>
+                <p class="text-muted mb-3">
+                  Start your learning journey by enrolling in courses from the
+                  home page
                 </p>
+                <button class="btn btn-primary" (click)="goToHome()">
+                  <i class="bi bi-house me-1"></i>
+                  Browse Courses
+                </button>
               </div>
               } @else {
               <div class="row">
-                @for (course of availableCourses().slice(0, 3); track course.id)
-                {
-                <div class="col-md-4 mb-3">
-                  <div class="card h-100 available-course-card">
+                @for (course of enrolledCourses(); track course.id) {
+                <div class="col-md-6 mb-4">
+                  <div
+                    class="card h-100 course-card"
+                    [class.disabled]="!isCourseAccessible(course)"
+                    [class.opacity-50]="!isCourseAccessible(course)"
+                    (click)="
+                      isCourseAccessible(course) && viewCourse(course.id)
+                    "
+                    [style.cursor]="
+                      isCourseAccessible(course) ? 'pointer' : 'not-allowed'
+                    "
+                  >
                     <div class="card-body">
-                      <h6 class="card-title">{{ course.title }}</h6>
-                      <p class="card-text text-muted small">
+                      <div
+                        class="d-flex justify-content-between align-items-start mb-3"
+                      >
+                        <h6 class="card-title mb-1">{{ course.title }}</h6>
+                        <span
+                          class="badge"
+                          [class]="getStatusBadgeClass(course.status)"
+                        >
+                          {{ getStatusText(course.status) }}
+                        </span>
+                      </div>
+                      <p class="card-text text-muted small mb-3">
                         {{ course.description }}
                       </p>
+
+                      <!-- Active Class Information -->
+                      @if (course.active_class_title) {
+                      <div class="mb-3">
+                        <div class="d-flex align-items-center">
+                          <i
+                            class="bi bi-play-circle-fill text-primary me-2"
+                          ></i>
+                          <small class="text-primary fw-medium"
+                            >Active Class:
+                            {{ course.active_class_title }}</small
+                          >
+                        </div>
+                      </div>
+                      }
+
+                      <!-- Course Progress -->
+                      <div class="mb-3">
+                        <div
+                          class="d-flex justify-content-between align-items-center mb-1"
+                        >
+                          <small class="text-muted">Overall Progress</small>
+                          <small class="fw-medium"
+                            >{{ course.progress }}%</small
+                          >
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                          <div
+                            class="progress-bar"
+                            [class]="getProgressBarClass(course.progress)"
+                            [style.width.%]="course.progress"
+                          ></div>
+                        </div>
+                      </div>
+
+                      <!-- Course Levels -->
+                      @if (course.levels && course.levels.length > 0) {
+                      <div class="mb-3">
+                        <small class="text-muted d-block mb-2"
+                          >Course Structure</small
+                        >
+                        <div class="d-flex flex-wrap gap-1">
+                          @for (level of course.levels.slice(0, 3); track
+                          level.id) {
+                          <span class="badge bg-light text-dark small">
+                            <i class="bi bi-layer me-1"></i>
+                            {{ level.title }}
+                          </span>
+                          } @if (course.levels.length > 3) {
+                          <span class="badge bg-light text-dark small">
+                            +{{ course.levels.length - 3 }} more
+                          </span>
+                          }
+                        </div>
+                      </div>
+                      }
+
                       <div
                         class="d-flex justify-content-between align-items-center"
                       >
                         <small class="text-muted">
-                          <i class="bi bi-calendar me-1"></i>
-                          {{ formatDate(course.created_at) }}
+                          <i class="bi bi-clock me-1"></i>
+                          Last accessed: {{ formatDate(course.lastAccessed) }}
                         </small>
                         <button
-                          class="btn btn-sm btn-primary"
-                          (click)="enrollInCourse(course.id)"
+                          class="btn btn-sm btn-outline-primary"
+                          [disabled]="!isCourseAccessible(course)"
+                          (click)="
+                            isCourseAccessible(course) && viewCourse(course.id);
+                            $event.stopPropagation()
+                          "
                         >
-                          <i class="bi bi-plus-circle me-1"></i>
-                          Enroll
+                          <i class="bi bi-play-circle me-1"></i>
+                          {{
+                            isCourseAccessible(course)
+                              ? "Continue"
+                              : "Not Available"
+                          }}
                         </button>
                       </div>
                     </div>
@@ -249,154 +329,114 @@ import {
         </div>
       </div>
 
-      <div class="row">
-        <!-- Enrolled Courses -->
-        <div class="col-lg-8 mb-4">
+      <!-- My Progress Section -->
+      <div class="row mb-4">
+        <div class="col-12">
           <div class="card">
-            <div
-              class="card-header d-flex justify-content-between align-items-center"
-            >
-              <h5 class="mb-0">My Courses</h5>
-              <button
-                class="btn btn-sm btn-outline-primary"
-                (click)="viewAllCourses()"
-              >
-                <i class="bi bi-plus-circle me-1"></i>
-                Browse Courses
-              </button>
+            <div class="card-header">
+              <h5 class="mb-0">My Progress</h5>
             </div>
             <div class="card-body">
               @if (enrolledCourses().length === 0) {
               <div class="text-center py-4">
-                <i class="bi bi-book text-muted fs-1 mb-3"></i>
-                <h6 class="text-muted">No courses enrolled yet</h6>
-                <p class="text-muted mb-3">
-                  Start your learning journey by enrolling in courses
+                <i class="bi bi-graph-up text-muted fs-1 mb-3"></i>
+                <h6 class="text-muted">No progress to show yet</h6>
+                <p class="text-muted mb-0">
+                  Enroll in courses to start tracking your progress
                 </p>
-                <button class="btn btn-primary" (click)="viewAllCourses()">
-                  Browse Available Courses
-                </button>
               </div>
               } @else {
               <div class="row">
-                @for (course of enrolledCourses(); track course.id) {
-                <div class="col-md-6 mb-3">
-                  <div
-                    class="card h-100 course-card"
-                    (click)="viewCourse(course.id)"
-                  >
-                    <div class="card-body">
-                      <div
-                        class="d-flex justify-content-between align-items-start mb-2"
-                      >
-                        <h6 class="card-title mb-1">{{ course.title }}</h6>
-                        <span
-                          class="badge"
-                          [class]="getStatusBadgeClass(course.status)"
-                        >
-                          {{ getStatusText(course.status) }}
-                        </span>
-                      </div>
-                      <p class="card-text text-muted small mb-3">
-                        {{ course.description }}
-                      </p>
-                      <div class="mb-2">
-                        <div
-                          class="d-flex justify-content-between align-items-center mb-1"
-                        >
-                          <small class="text-muted">Progress</small>
-                          <small class="fw-medium"
-                            >{{ course.progress }}%</small
-                          >
-                        </div>
-                        <div class="progress" style="height: 6px;">
-                          <div
-                            class="progress-bar"
-                            [class]="getProgressBarClass(course.progress)"
-                            [style.width.%]="course.progress"
-                          ></div>
-                        </div>
-                      </div>
-                      <small class="text-muted">
-                        <i class="bi bi-clock me-1"></i>
-                        Last accessed: {{ formatDate(course.lastAccessed) }}
-                      </small>
+                <!-- Overall Progress Summary -->
+                <div class="col-md-4 mb-3">
+                  <div class="card h-100 border-primary">
+                    <div class="card-body text-center">
+                      <i class="bi bi-trophy text-primary fs-1 mb-2"></i>
+                      <h4 class="mb-1">{{ stats().totalProgress }}%</h4>
+                      <p class="text-muted mb-0">Overall Progress</p>
+                      <small class="text-muted">Across all courses</small>
                     </div>
                   </div>
                 </div>
-                }
-              </div>
-              }
-            </div>
-          </div>
-        </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-          <!-- Recent Progress -->
-          <div class="card mb-4">
-            <div class="card-header">
-              <h6 class="mb-0">Recent Activity</h6>
-            </div>
-            <div class="card-body">
-              @if (recentProgress().length === 0) {
-              <p class="text-muted small mb-0">No recent activity</p>
-              } @else {
-              <div class="list-group list-group-flush">
-                @for (progress of recentProgress(); track progress.course_id) {
-                <div class="list-group-item px-0 py-2">
-                  <div
-                    class="d-flex justify-content-between align-items-center"
-                  >
-                    <div>
-                      <small class="fw-medium">{{
-                        progress.course_title
-                      }}</small>
-                      <br />
+                <!-- Courses Completed -->
+                <div class="col-md-4 mb-3">
+                  <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                      <i class="bi bi-check-circle text-success fs-1 mb-2"></i>
+                      <h4 class="mb-1">{{ stats().completedCourses }}</h4>
+                      <p class="text-muted mb-0">Courses Completed</p>
                       <small class="text-muted"
-                        >{{ progress.progress }}% complete</small
+                        >Out of {{ stats().enrolledCourses }} enrolled</small
                       >
                     </div>
-                    <small class="text-muted">{{
-                      formatDate(progress.last_accessed)
-                    }}</small>
                   </div>
                 </div>
-                }
-              </div>
-              }
-            </div>
-          </div>
 
-          <!-- Quick Actions -->
-          <div class="card">
-            <div class="card-header">
-              <h6 class="mb-0">Quick Actions</h6>
-            </div>
-            <div class="card-body">
-              <div class="d-grid gap-2">
-                <button
-                  class="btn btn-outline-primary btn-sm"
-                  (click)="viewAllCourses()"
-                >
-                  <i class="bi bi-search me-1"></i>
-                  Browse Courses
-                </button>
-                <button
-                  class="btn btn-outline-success btn-sm"
-                  (click)="viewMyCourses()"
-                >
-                  <i class="bi bi-book me-1"></i>
-                  My Courses
-                </button>
-                <button
-                  class="btn btn-outline-info btn-sm"
-                  (click)="viewProgress()"
-                >
-                  <i class="bi bi-graph-up me-1"></i>
-                  View Progress
-                </button>
+                <!-- Study Streak/Time -->
+                <div class="col-md-4 mb-3">
+                  <div class="card h-100 border-info">
+                    <div class="card-body text-center">
+                      <i class="bi bi-calendar-check text-info fs-1 mb-2"></i>
+                      <h4 class="mb-1">{{ stats().hoursStudied || 0 }}</h4>
+                      <p class="text-muted mb-0">Hours Studied</p>
+                      <small class="text-muted">This month</small>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              <!-- Detailed Progress by Course -->
+              @if (enrolledCourses().length > 0) {
+              <div class="mt-4">
+                <h6 class="mb-3">Course Progress Details</h6>
+                <div class="row">
+                  @for (course of enrolledCourses(); track course.id) {
+                  <div class="col-md-6 mb-3">
+                    <div class="card">
+                      <div class="card-body">
+                        <div
+                          class="d-flex justify-content-between align-items-start mb-2"
+                        >
+                          <h6 class="card-title mb-1">{{ course.title }}</h6>
+                          <span
+                            class="badge"
+                            [class]="getStatusBadgeClass(course.status)"
+                          >
+                            {{ getStatusText(course.status) }}
+                          </span>
+                        </div>
+                        <div class="mb-2">
+                          <div
+                            class="d-flex justify-content-between align-items-center mb-1"
+                          >
+                            <small class="text-muted">Progress</small>
+                            <small class="fw-medium"
+                              >{{ course.progress }}%</small
+                            >
+                          </div>
+                          <div class="progress" style="height: 6px;">
+                            <div
+                              class="progress-bar"
+                              [class]="getProgressBarClass(course.progress)"
+                              [style.width.%]="course.progress"
+                            ></div>
+                          </div>
+                        </div>
+                        @if (course.levels && course.levels.length > 0) {
+                        <small class="text-muted">
+                          {{ course.completedLevels || 0 }} of
+                          {{ course.totalLevels || course.levels.length }}
+                          levels completed
+                        </small>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  }
+                </div>
+              </div>
+              } }
             </div>
           </div>
         </div>
@@ -539,7 +579,6 @@ export class StudentDashboardComponent implements OnInit {
     hoursStudied: 0,
   });
   readonly enrolledCourses = signal<EnrolledCourse[]>([]);
-  readonly availableCourses = signal<Course[]>([]);
   readonly recentProgress = signal<StudentProgress[]>([]);
   readonly notes = signal<Note[]>([]);
   readonly showNotesModal = signal(false);
@@ -556,11 +595,13 @@ export class StudentDashboardComponent implements OnInit {
     const user = this.authService.user();
     if (!user) return;
 
-    // Load enrolled courses
+    // Load enrolled courses with levels
     this.apiService.getEnrolledCourses(user.id).subscribe({
-      next: (progressData: StudentProgress[]) => {
-        const enrolledCourses: EnrolledCourse[] = progressData.map(
-          (progress) => ({
+      next: async (progressData: StudentProgress[]) => {
+        const enrolledCourses: EnrolledCourse[] = [];
+
+        for (const progress of progressData) {
+          const course: EnrolledCourse = {
             id: progress.course_id,
             title: progress.course_title || progress.title || "Course",
             description: `Course with ${progress.total_lessons || 0} lessons`,
@@ -568,8 +609,49 @@ export class StudentDashboardComponent implements OnInit {
             status: this.getCourseStatus(progress.progress),
             lastAccessed: progress.last_accessed,
             instructor: "Instructor Name", // Mock instructor
-          })
-        );
+            active_class_id: progress.active_class_id,
+            active_class_title: progress.active_class_title,
+          };
+
+          // Load course levels/chapters
+          try {
+            const levels = await this.apiService
+              .getCourseLevels(progress.course_id)
+              .toPromise();
+            if (levels && levels.length > 0) {
+              course.levels = levels.map((level: any) => ({
+                id: level.id,
+                course_id: level.course_id,
+                title: level.title,
+                description: level.description,
+                order: level.order,
+                progress: 0, // Will be calculated based on completed classes
+                created_at: level.created_at,
+              }));
+
+              // Calculate level progress (mock for now)
+              course.totalLevels = course.levels.length;
+              course.completedLevels = Math.floor(
+                (course.progress / 100) * course.levels.length
+              );
+            } else {
+              course.levels = [];
+              course.totalLevels = 0;
+              course.completedLevels = 0;
+            }
+          } catch (error) {
+            console.warn(
+              `Failed to load levels for course ${progress.course_id}:`,
+              error
+            );
+            course.levels = [];
+            course.totalLevels = 0;
+            course.completedLevels = 0;
+          }
+
+          enrolledCourses.push(course);
+        }
+
         this.enrolledCourses.set(enrolledCourses);
 
         // Calculate stats
@@ -600,21 +682,6 @@ export class StudentDashboardComponent implements OnInit {
       error: (error) => {
         console.error("Failed to load enrolled courses:", error);
         this.loading.set(false);
-      },
-    });
-
-    // Load available courses
-    this.apiService.getAvailableCourses().subscribe({
-      next: (courses: Course[]) => {
-        // Filter out already enrolled courses
-        const enrolledIds = this.enrolledCourses().map((c) => c.id);
-        const availableCourses = courses.filter(
-          (course) => !enrolledIds.includes(course.id)
-        );
-        this.availableCourses.set(availableCourses);
-      },
-      error: (error) => {
-        console.error("Failed to load available courses:", error);
       },
     });
 
@@ -668,7 +735,11 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   viewAllCourses(): void {
-    this.router.navigate(["/student/courses"]);
+    this.router.navigate(["/"]);
+  }
+
+  goToHome(): void {
+    this.router.navigate(["/"]);
   }
 
   viewMyCourses(): void {
@@ -681,8 +752,15 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   viewCourse(courseId: number): void {
-    // Navigate to course details or start learning
-    this.router.navigate(["/student/courses"]);
+    // Navigate to course details page to continue learning
+    this.router.navigate(["/student/courses", courseId]);
+  }
+
+  isCourseAccessible(course: EnrolledCourse): boolean {
+    // Allow access to courses that have an active class (current courses)
+    // or courses that are in progress or completed
+    // Disable access to courses that are not started and have no active class
+    return !!course.active_class_title || course.status !== "not-started";
   }
 
   enrollInCourse(courseId: number): void {

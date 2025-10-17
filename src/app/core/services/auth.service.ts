@@ -1,4 +1,4 @@
-import { Injectable, signal } from "@angular/core";
+import { Injectable, signal, computed } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import {
   Observable,
@@ -20,12 +20,19 @@ interface User {
   role: string;
 }
 
+interface TokenData {
+  token: string;
+  expiresAt: number; // timestamp in milliseconds
+}
+
 @Injectable({
   providedIn: "root",
 })
 export class AuthService {
   private baseUrl = environment.apiUrl;
   private currentUserSignal = signal<User | null>(null);
+  private tokenDataSignal = signal<TokenData | null>(null);
+
   public loading = signal<boolean>(false);
   public authError = signal<string | null>(null);
 
@@ -34,9 +41,22 @@ export class AuthService {
   user = this.currentUserSignal.asReadonly();
   userRole = signal<string | null>(null);
 
+  // Computed signals for reactive auth state
+  isAuthenticated = computed(() => {
+    const tokenData = this.tokenDataSignal();
+    const user = this.currentUserSignal();
+    return !!(tokenData && user && !this.isTokenExpired());
+  });
+
+  isTokenExpired = computed(() => {
+    const tokenData = this.tokenDataSignal();
+    if (!tokenData) return true;
+    return Date.now() >= tokenData.expiresAt;
+  });
+
   constructor(private http: HttpClient, private router: Router) {
-    // Automatically load user data if token exists
-    this.loadUserFromToken();
+    // Load token and user data from storage on initialization
+    this.loadStoredAuthData();
   }
 
   login(email: string, password: string): Observable<any>;
@@ -65,13 +85,28 @@ export class AuthService {
         tap((response: any) => {
           console.log("Auth service login response:", response);
           if (response.token) {
-            localStorage.setItem("token", response.token);
+            // Store token with expiration time (30 minutes from now)
+            const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes in milliseconds
+            const tokenData: TokenData = {
+              token: response.token,
+              expiresAt,
+            };
+
+            this.storeTokenData(tokenData);
             this.currentUserSignal.set(response.user);
             this.userRole.set(response.user?.role || null);
+
             console.log("User set in auth service:", this.currentUserSignal());
             console.log("User role set:", this.userRole());
+            console.log("Token expires at:", new Date(expiresAt));
           }
-        })
+        }),
+        catchError((error) => {
+          this.loading.set(false);
+          this.authError.set(error.error?.detail || "Login failed");
+          return throwError(() => error);
+        }),
+        tap(() => this.loading.set(false))
       );
   }
 
@@ -82,31 +117,45 @@ export class AuthService {
     return this.http.post(`${this.baseUrl}/auth/register`, userData).pipe(
       tap((response: any) => {
         if (response.token) {
-          localStorage.setItem("token", response.token);
+          // Store token with expiration time (30 minutes from now)
+          const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes in milliseconds
+          const tokenData: TokenData = {
+            token: response.token,
+            expiresAt,
+          };
+
+          this.storeTokenData(tokenData);
           this.currentUserSignal.set(response.user);
           this.userRole.set(response.user?.role || null);
         }
-      })
+      }),
+      catchError((error) => {
+        this.loading.set(false);
+        this.authError.set(error.error?.detail || "Registration failed");
+        return throwError(() => error);
+      }),
+      tap(() => this.loading.set(false))
     );
   }
 
   logout(): void {
-    localStorage.removeItem("token");
+    // Clear all stored auth data
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    this.tokenDataSignal.set(null);
     this.currentUserSignal.set(null);
     this.userRole.set(null);
     this.router.navigate(["/auth/login"]);
   }
 
   getToken(): string | null {
-    return localStorage.getItem("token");
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getToken() && !!this.currentUserSignal();
+    const tokenData = this.tokenDataSignal();
+    return tokenData?.token || null;
   }
 
   hasValidToken(): boolean {
-    return !!this.getToken();
+    const tokenData = this.tokenDataSignal();
+    return !!(tokenData && !this.isTokenExpired());
   }
 
   isLoadingUser(): boolean {
@@ -114,14 +163,17 @@ export class AuthService {
   }
 
   validateToken(): Observable<boolean> {
-    if (!this.getToken()) {
+    // First check if token exists and is not expired locally
+    if (!this.hasValidToken()) {
       return of(false);
     }
 
+    // If we have user data, token is considered valid
     if (this.currentUserSignal()) {
       return of(true);
     }
 
+    // Otherwise, validate with server
     return this.http.get(`${this.baseUrl}/users/me`).pipe(
       retry({
         count: 2,
@@ -137,11 +189,14 @@ export class AuthService {
       map((user: any) => {
         this.currentUserSignal.set(user);
         this.userRole.set(user.role);
+        // Store user data locally
+        localStorage.setItem("authUser", JSON.stringify(user));
         return true;
       }),
       catchError((error) => {
         // Only consider auth errors as invalid token
         if (this.isAuthError(error)) {
+          this.clearStoredAuthData();
           return of(false);
         }
         // For other errors after retries, assume token might still be valid
@@ -161,8 +216,8 @@ export class AuthService {
   }
 
   loadUserData(): Observable<any> {
-    if (!this.getToken()) {
-      return throwError(() => new Error("No token available"));
+    if (!this.hasValidToken()) {
+      return throwError(() => new Error("No valid token available"));
     }
 
     if (this.currentUserSignal()) {
@@ -174,12 +229,14 @@ export class AuthService {
       tap((user: any) => {
         this.currentUserSignal.set(user);
         this.userRole.set(user.role);
+        // Store user data locally for faster subsequent loads
+        localStorage.setItem("authUser", JSON.stringify(user));
       }),
       catchError((error) => {
         console.error("Failed to load user data:", error);
         // Only logout on actual authentication errors
         if (this.isAuthError(error)) {
-          this.logout();
+          this.clearStoredAuthData();
         }
         return throwError(() => error);
       })
@@ -233,6 +290,56 @@ export class AuthService {
     return this.validateToken();
   }
 
+  // New methods for token management with expiration
+  private storeTokenData(tokenData: TokenData): void {
+    this.tokenDataSignal.set(tokenData);
+    localStorage.setItem("authToken", JSON.stringify(tokenData));
+  }
+
+  private loadStoredAuthData(): void {
+    try {
+      const storedToken = localStorage.getItem("authToken");
+      const storedUser = localStorage.getItem("authUser");
+
+      if (storedToken) {
+        const tokenData: TokenData = JSON.parse(storedToken);
+
+        // Check if token is still valid
+        if (!this.isTokenExpiredStatic(tokenData)) {
+          this.tokenDataSignal.set(tokenData);
+
+          // Load user data if stored
+          if (storedUser) {
+            const user: User = JSON.parse(storedUser);
+            this.currentUserSignal.set(user);
+            this.userRole.set(user.role);
+          } else {
+            // Load user data from API if token is valid but no user stored
+            this.loadUserFromToken();
+          }
+        } else {
+          // Token expired, clear storage
+          this.clearStoredAuthData();
+        }
+      }
+    } catch (error) {
+      console.error("Error loading stored auth data:", error);
+      this.clearStoredAuthData();
+    }
+  }
+
+  private clearStoredAuthData(): void {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    this.tokenDataSignal.set(null);
+    this.currentUserSignal.set(null);
+    this.userRole.set(null);
+  }
+
+  private isTokenExpiredStatic(tokenData: TokenData): boolean {
+    return Date.now() >= tokenData.expiresAt;
+  }
+
   private loadUserFromToken(): void {
     const token = this.getToken();
     if (token && !this.currentUserSignal()) {
@@ -242,6 +349,10 @@ export class AuthService {
         next: (user: any) => {
           this.currentUserSignal.set(user);
           this.userRole.set(user.role);
+
+          // Store user data locally for faster subsequent loads
+          localStorage.setItem("authUser", JSON.stringify(user));
+
           this.loading.set(false);
         },
         error: (error) => {
@@ -249,7 +360,7 @@ export class AuthService {
           this.loading.set(false);
           // Only logout on actual authentication errors, not network/server errors
           if (this.isAuthError(error)) {
-            this.logout();
+            this.clearStoredAuthData();
           }
           // For other errors (network, server), keep the token and let auth guard retry
         },

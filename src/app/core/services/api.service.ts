@@ -1,7 +1,7 @@
 // src/app/core/services/api.service.ts
 import { Injectable, inject, signal } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { Observable, tap, catchError, throwError } from "rxjs";
+import { Observable, tap, catchError, throwError, map } from "rxjs";
 import { environment } from "../../../environments/environment";
 import { User, CreateUserRequest } from "../models/user.models";
 import { Course, CreateCourseRequest } from "../models/course.models";
@@ -120,6 +120,15 @@ export class ApiService {
   getCourseProgress(courseId: number): Observable<any> {
     return this.performRequest(() =>
       this.http.get<any>(`${this.baseUrl}/courses/${courseId}/progress`)
+    );
+  }
+
+  getCourseLevels(courseId: number): Observable<any[]> {
+    return this.performRequest(() =>
+      this.http.get<any>(`${this.baseUrl}/courses/${courseId}`)
+    ).pipe(
+      tap((response) => response),
+      map((response) => response?.chapters || [])
     );
   }
 

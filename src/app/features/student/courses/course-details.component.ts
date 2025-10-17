@@ -81,6 +81,11 @@ interface CourseDetails {
   description: string;
   teacher_id: number;
   teacher?: Teacher;
+  active_class?: {
+    id: number;
+    title: string;
+    description: string;
+  } | null;
   created_at: string;
   chapters: Chapter[];
   live_classes: LiveClass[];
@@ -139,681 +144,368 @@ interface CourseDetails {
 
       <!-- Course Content -->
       <div *ngIf="!loading() && courseDetails()" class="container-fluid py-4">
-        <div class="row g-4">
-          <!-- Left Sidebar: Navigation & Progress -->
-          <div class="col-lg-3">
-            <!-- Course Progress Card -->
-            <div class="card mb-4">
+        <!-- Course Overview -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card">
               <div class="card-header">
-                <h6 class="mb-0">Course Progress</h6>
-              </div>
-              <div class="card-body">
-                <div class="progress mb-2" style="height: 10px;">
-                  <div
-                    class="progress-bar"
-                    [style.width.%]="courseProgress()"
-                    [class]="getProgressBarClass(courseProgress())"
-                  ></div>
-                </div>
-                <small class="text-muted">
-                  {{ courseProgress() }}% Complete ({{ completedChapters() }}/{{
-                    totalChapters()
-                  }}
-                  lessons)
+                <h4 class="mb-0">{{ courseDetails()!.title }}</h4>
+                <small class="text-muted" *ngIf="courseDetails()?.teacher">
+                  Instructor: {{ courseDetails()!.teacher!.full_name }}
                 </small>
               </div>
-            </div>
-
-            <!-- Chapters Navigation -->
-            <div class="card mb-4">
-              <div class="card-header">
-                <h6 class="mb-0">Subjects</h6>
-              </div>
-              <div class="list-group list-group-flush">
-                <button
-                  *ngFor="
-                    let chapter of courseDetails()!.chapters;
-                    trackBy: trackByChapter
-                  "
-                  type="button"
-                  class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                  [class.active]="selectedChapter()?.id === chapter.id"
-                  (click)="selectChapter(chapter)"
-                >
-                  <div class="text-start flex-grow-1">
-                    <small class="fw-medium d-block">{{ chapter.title }}</small>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-8">
+                    <p class="mb-0">{{ courseDetails()!.description }}</p>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="progress mb-2" style="height: 10px;">
+                      <div
+                        class="progress-bar"
+                        [style.width.%]="courseProgress()"
+                        [class]="getProgressBarClass(courseProgress())"
+                      ></div>
+                    </div>
                     <small class="text-muted">
-                      <i
-                        class="bi"
-                        [class]="
-                          chapter.progress?.completed
-                            ? 'bi-check-circle-fill text-success'
-                            : 'bi-clock text-warning'
-                        "
-                      ></i>
-                      {{
-                        chapter.progress?.completed
-                          ? "Completed"
-                          : "In Progress"
-                      }}
+                      {{ courseProgress() }}% Complete ({{
+                        completedChapters()
+                      }}/{{ totalChapters() }} classes)
                     </small>
                   </div>
-                </button>
-              </div>
-            </div>
-
-            <!-- Upcoming Classes -->
-            <div class="card" *ngIf="upcomingClasses().length > 0">
-              <div class="card-header">
-                <h6 class="mb-0">Upcoming Sessions</h6>
-              </div>
-              <div class="card-body p-0">
-                <div
-                  *ngFor="let liveClass of upcomingClasses(); let first = first"
-                  [class]="first ? 'p-3 border-bottom' : 'p-3 border-bottom'"
-                  (click)="expandCalendar = !expandCalendar"
-                  class="cursor-pointer hover-light"
-                >
-                  <small class="fw-medium d-block">{{ liveClass.title }}</small>
-                  <small class="text-muted">
-                    <i class="bi bi-calendar-event"></i>
-                    {{ formatSessionDate(liveClass.scheduled_date) }}
-                  </small>
-                  <small class="text-muted d-block">
-                    <i class="bi bi-clock"></i>
-                    {{ liveClass.start_time }} - {{ liveClass.end_time }}
-                  </small>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Main Content Area -->
-          <div class="col-lg-9">
-            <!-- Tab Navigation -->
-            <ul class="nav nav-tabs mb-4" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button
-                  class="nav-link"
-                  [class.active]="activeTab() === 'lesson'"
-                  (click)="activeTab.set('lesson')"
-                  type="button"
-                >
-                  <i class="bi bi-book me-2"></i>Lesson
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button
-                  class="nav-link"
-                  [class.active]="activeTab() === 'notes'"
-                  (click)="activeTab.set('notes')"
-                  type="button"
-                >
-                  <i class="bi bi-journal me-2"></i>Notes
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button
-                  class="nav-link"
-                  [class.active]="activeTab() === 'calendar'"
-                  (click)="activeTab.set('calendar')"
-                  type="button"
-                >
-                  <i class="bi bi-calendar me-2"></i>Calendar
-                </button>
-              </li>
-            </ul>
-
-            <!-- LESSON TAB -->
-            <div *ngIf="activeTab() === 'lesson'" class="tab-content">
-              <div *ngIf="selectedChapter()" class="card">
-                <div class="card-header">
-                  <div
-                    class="d-flex justify-content-between align-items-center"
-                  >
-                    <h5 class="mb-0">{{ selectedChapter()!.title }}</h5>
+        <!-- Classes (Chapters) -->
+        <div class="row g-4">
+          <div
+            *ngFor="let chapter of sortedChapters(); trackBy: trackByChapter"
+            class="col-12"
+          >
+            <div
+              class="card class-card"
+              [class.active-class]="
+                courseDetails()?.active_class?.id === chapter.id
+              "
+            >
+              <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <button
+                      class="btn btn-sm btn-outline-secondary border-0 p-0 me-2"
+                      (click)="toggleChapterCollapse(chapter.id)"
+                      [attr.aria-expanded]="!isChapterCollapsed(chapter.id)"
+                      [attr.aria-controls]="'chapter-content-' + chapter.id"
+                    >
+                      <i
+                        class="bi"
+                        [class]="
+                          isChapterCollapsed(chapter.id)
+                            ? 'bi-chevron-right'
+                            : 'bi-chevron-down'
+                        "
+                      ></i>
+                    </button>
+                    <h5 class="mb-0">
+                      <i class="bi bi-folder me-2"></i>
+                      {{ chapter.title }}
+                    </h5>
+                    <span
+                      *ngIf="courseDetails()?.active_class?.id === chapter.id"
+                      class="badge bg-primary"
+                    >
+                      <i class="bi bi-play-circle me-1"></i>Active Class
+                    </span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <!-- Class Progress -->
+                    <div class="progress" style="width: 120px; height: 8px;">
+                      <div
+                        class="progress-bar"
+                        [style.width.%]="getChapterProgress(chapter)"
+                        [class]="
+                          getChapterProgress(chapter) === 100
+                            ? 'bg-success'
+                            : 'bg-info'
+                        "
+                      ></div>
+                    </div>
+                    <small class="text-muted"
+                      >{{ getChapterProgress(chapter) }}%</small
+                    >
                     <span
                       class="badge"
                       [class]="
-                        selectedChapter()!.progress?.completed
+                        chapter.progress?.completed
                           ? 'bg-success'
                           : 'bg-secondary'
                       "
                     >
                       {{
-                        selectedChapter()!.progress?.completed
+                        chapter.progress?.completed
                           ? "✓ Completed"
                           : "In Progress"
                       }}
                     </span>
                   </div>
                 </div>
-                <div class="card-body">
-                  <p class="text-muted" *ngIf="selectedChapter()!.description">
-                    {{ selectedChapter()!.description }}
-                  </p>
+                <small class="text-muted" *ngIf="chapter.description">
+                  {{ chapter.description }}
+                </small>
+              </div>
 
-                  <!-- Video Player Section -->
-                  <div
-                    *ngIf="selectedChapter()!.attachments.length > 0"
-                    class="mb-4"
-                  >
-                    <h6 class="mb-3">📹 Recorded Lectures</h6>
-                    <div class="row g-3">
+              <div
+                class="card-body collapse"
+                [class.show]="!isChapterCollapsed(chapter.id)"
+                [id]="'chapter-content-' + chapter.id"
+              >
+                <!-- Subjects Section -->
+                <div class="card">
+                  <div class="card-header">
+                    <h6 class="mb-0">
+                      <i class="bi bi-book me-2"></i>Subjects
+                    </h6>
+                  </div>
+                  <div class="card-body">
+                    <div *ngIf="chapter.attachments.length > 0" class="row g-3">
                       <div
                         *ngFor="
-                          let attachment of getVideoAttachments(
-                            selectedChapter()!.attachments
-                          );
+                          let attachment of chapter.attachments;
                           trackBy: trackByAttachment
                         "
-                        class="col-md-6"
+                        class="col-12"
                       >
-                        <div
-                          class="card video-card cursor-pointer"
-                          (click)="openAttachment(attachment)"
-                        >
+                        <div class="card subject-card border">
                           <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                              <i
-                                class="bi bi-play-circle-fill fs-5 text-danger"
-                              ></i>
-                              <div class="flex-grow-1">
-                                <h6 class="card-title mb-1">
+                            <div class="row align-items-center">
+                              <!-- Subject Info -->
+                              <div class="col-md-6">
+                                <h6 class="mb-1">
+                                  <i class="bi bi-file-earmark me-2"></i>
                                   {{ attachment.title }}
                                 </h6>
-                                <small class="text-muted d-block">
+                                <small
+                                  class="text-muted d-block"
+                                  *ngIf="attachment.description"
+                                >
                                   {{ attachment.description }}
                                 </small>
                               </div>
+
+                              <!-- Subject Actions -->
+                              <div class="col-md-6">
+                                <div class="d-flex gap-2 justify-content-end">
+                                  <!-- Lesson Button -->
+                                  <button
+                                    class="btn btn-sm btn-outline-primary"
+                                    (click)="openAttachment(attachment)"
+                                    title="View Lesson"
+                                  >
+                                    <i class="bi bi-play-circle me-1"></i>Lesson
+                                  </button>
+
+                                  <!-- Notes Button -->
+                                  <button
+                                    class="btn btn-sm btn-outline-info"
+                                    (click)="
+                                      viewSubjectNotes(
+                                        chapter.id,
+                                        attachment.id
+                                      )
+                                    "
+                                    title="View Notes"
+                                  >
+                                    <i class="bi bi-journal me-1"></i>Notes
+                                  </button>
+
+                                  <!-- Progress Indicator -->
+                                  <div class="d-flex align-items-center">
+                                    <small class="text-muted me-2"
+                                      >Progress:</small
+                                    >
+                                    <span
+                                      class="badge"
+                                      [class]="
+                                        chapter.progress?.completed
+                                          ? 'bg-success'
+                                          : 'bg-warning'
+                                      "
+                                    >
+                                      {{
+                                        chapter.progress?.completed
+                                          ? "Completed"
+                                          : "In Progress"
+                                      }}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  <!-- Quiz Section -->
-                  <div
-                    *ngIf="
-                      selectedChapter()!.quiz &&
-                      !selectedChapter()!.progress?.completed
-                    "
-                    class="card border-warning mb-4"
-                  >
-                    <div class="card-header bg-warning-subtle">
-                      <h6 class="mb-0">
-                        <i class="bi bi-question-circle me-2"></i>
-                        Assessment: {{ selectedChapter()!.quiz!.title }}
-                      </h6>
-                    </div>
-                    <div class="card-body">
-                      <p class="text-muted mb-3">
-                        {{
-                          selectedChapter()!.quiz!.description ||
-                            "Complete this quiz to mark the lesson as done"
-                        }}
-                      </p>
-                      <small class="text-muted d-block mb-3">
-                        Passing Score:
-                        {{ selectedChapter()!.quiz!.passing_score }}% | Total
-                        Questions:
-                        {{ selectedChapter()!.quiz!.questions.length }}
-                      </small>
-
-                      <button
-                        class="btn btn-warning"
-                        (click)="startQuiz()"
-                        [disabled]="showQuiz()"
-                      >
-                        <i class="bi bi-play-circle me-1"></i>
-                        Start Quiz (4 Questions)
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Quiz Interface -->
-                  <div
-                    *ngIf="showQuiz() && selectedChapter()!.quiz"
-                    class="card"
-                  >
-                    <div class="card-header">
-                      <div class="d-flex justify-content-between">
-                        <h6 class="mb-0">
-                          Quiz: {{ selectedChapter()!.quiz!.title }}
-                        </h6>
-                        <small class="text-muted">
-                          Question {{ currentQuestionIndex() + 1 }} of
-                          {{ selectedChapter()!.quiz!.questions.length }}
-                        </small>
-                      </div>
-                    </div>
-                    <div class="card-body">
-                      <div *ngIf="!quizCompleted()">
-                        <div
-                          *ngFor="
-                            let question of selectedChapter()!.quiz!.questions;
-                            let i = index
-                          "
-                          [hidden]="i !== currentQuestionIndex()"
-                        >
-                          <div class="mb-4">
-                            <h6 class="mb-3">{{ question.question }}</h6>
-                            <div class="options">
+                            <!-- Quiz Section (if available) -->
+                            <div
+                              *ngIf="
+                                chapter.quiz && !chapter.progress?.completed
+                              "
+                              class="mt-3 pt-3 border-top"
+                            >
                               <div
-                                *ngFor="
-                                  let option of question.options;
-                                  let j = index;
-                                  trackBy: trackByOption
-                                "
-                                class="form-check mb-2"
+                                class="d-flex justify-content-between align-items-center"
                               >
-                                <input
-                                  class="form-check-input"
-                                  type="radio"
-                                  [name]="'question-' + i"
-                                  [id]="'option-' + i + '-' + j"
-                                  [value]="j"
-                                  [(ngModel)]="quizAnswers()[i]"
-                                />
-                                <label
-                                  class="form-check-label"
-                                  [for]="'option-' + i + '-' + j"
+                                <small class="text-muted">
+                                  <i class="bi bi-question-circle me-1"></i>
+                                  Assessment Available
+                                </small>
+                                <button
+                                  class="btn btn-sm btn-warning"
+                                  (click)="startQuizForChapter(chapter)"
                                 >
-                                  {{ option }}
-                                </label>
+                                  <i class="bi bi-play-circle me-1"></i>
+                                  Take Quiz
+                                </button>
                               </div>
                             </div>
                           </div>
                         </div>
-
-                        <div class="d-flex justify-content-between mt-4">
-                          <button
-                            class="btn btn-outline-secondary"
-                            (click)="previousQuestion()"
-                            [disabled]="currentQuestionIndex() === 0"
-                          >
-                            <i class="bi bi-chevron-left me-1"></i> Previous
-                          </button>
-                          <div
-                            class="progress flex-grow-1 mx-3"
-                            style="height: 8px;"
-                          >
-                            <div
-                              class="progress-bar"
-                              [style.width.%]="
-                                ((currentQuestionIndex() + 1) /
-                                  selectedChapter()!.quiz!.questions.length) *
-                                100
-                              "
-                            ></div>
-                          </div>
-                          <button
-                            class="btn btn-primary"
-                            (click)="nextQuestion()"
-                            [disabled]="
-                              currentQuestionIndex() >=
-                              selectedChapter()!.quiz!.questions.length - 1
-                            "
-                          >
-                            {{
-                              currentQuestionIndex() >=
-                              selectedChapter()!.quiz!.questions.length - 1
-                                ? "Finish"
-                                : "Next"
-                            }}
-                            <i class="bi bi-chevron-right ms-1"></i>
-                          </button>
-                        </div>
-                      </div>
-
-                      <!-- Quiz Results -->
-                      <div *ngIf="quizCompleted()" class="text-center py-4">
-                        <div class="mb-4">
-                          <i
-                            class="bi fs-1 mb-3 d-block"
-                            [class]="
-                              quizScore() >=
-                              selectedChapter()!.quiz!.passing_score
-                                ? 'bi-check-circle-fill text-success'
-                                : 'bi-x-circle-fill text-danger'
-                            "
-                          ></i>
-                          <h5>
-                            {{
-                              quizScore() >=
-                              selectedChapter()!.quiz!.passing_score
-                                ? "Quiz Passed!"
-                                : "Quiz Failed"
-                            }}
-                          </h5>
-                          <p class="mb-2">
-                            Your Score: <strong>{{ quizScore() }}%</strong>
-                          </p>
-                          <div class="progress mb-3" style="height: 8px;">
-                            <div
-                              class="progress-bar"
-                              [style.width.%]="quizScore()"
-                              [class]="
-                                quizScore() >=
-                                selectedChapter()!.quiz!.passing_score
-                                  ? 'bg-success'
-                                  : 'bg-danger'
-                              "
-                            ></div>
-                          </div>
-                          <p class="text-muted">
-                            Passing Score:
-                            {{ selectedChapter()!.quiz!.passing_score }}%
-                          </p>
-                        </div>
-
-                        <button
-                          class="btn btn-success"
-                          (click)="completeLesson()"
-                          [disabled]="
-                            quizScore() < selectedChapter()!.quiz!.passing_score
-                          "
-                        >
-                          <i class="bi bi-check-circle me-1"></i>
-                          Complete Lesson
-                        </button>
-                        <button
-                          class="btn btn-outline-secondary ms-2"
-                          (click)="restartQuiz()"
-                        >
-                          <i class="bi bi-arrow-clockwise me-1"></i> Retake Quiz
-                        </button>
                       </div>
                     </div>
-                  </div>
 
-                  <!-- Completed Badge -->
-                  <div
-                    *ngIf="selectedChapter()!.progress?.completed"
-                    class="alert alert-success mt-4"
-                  >
-                    <i class="bi bi-check-circle-fill me-2"></i>
-                    <strong>Lesson Completed!</strong>
-                    <br />
-                    <small class="text-muted">
-                      Completed on
-                      {{
-                        formatDate(selectedChapter()!.progress!.completed_at!)
-                      }}
-                      {{
-                        selectedChapter()!.progress!.quiz_score
-                          ? "(Score: " +
-                            selectedChapter()!.progress!.quiz_score +
-                            "%)"
-                          : ""
-                      }}
-                    </small>
-                  </div>
-                </div>
-              </div>
-
-              <div *ngIf="!selectedChapter()" class="text-center py-5">
-                <i class="bi bi-book text-muted" style="font-size: 3rem;"></i>
-                <h5 class="text-muted mt-3">Select a Subject</h5>
-                <p class="text-muted">
-                  Choose a subject from the sidebar to view lessons
-                </p>
-              </div>
-            </div>
-
-            <!-- NOTES TAB -->
-            <div *ngIf="activeTab() === 'notes'" class="tab-content">
-              <div class="card">
-                <div class="card-header">
-                  <div
-                    class="d-flex justify-content-between align-items-center"
-                  >
-                    <h6 class="mb-0">My Notes</h6>
-                    <button
-                      class="btn btn-sm btn-primary"
-                      (click)="showNoteForm.set(!showNoteForm())"
-                    >
-                      <i class="bi bi-plus-lg me-1"></i>New Note
-                    </button>
-                  </div>
-                </div>
-                <div class="card-body">
-                  <!-- Note Form -->
-                  <div *ngIf="showNoteForm()" class="mb-4 p-3 bg-light rounded">
-                    <h6 class="mb-3">Add a New Note</h6>
-                    <div class="mb-3">
-                      <label class="form-label">Title</label>
-                      <input
-                        type="text"
-                        class="form-control"
-                        [(ngModel)]="newNote.title"
-                        placeholder="Note title"
-                      />
-                    </div>
-                    <div class="mb-3">
-                      <label class="form-label">Content</label>
-                      <textarea
-                        class="form-control"
-                        [(ngModel)]="newNote.content"
-                        rows="5"
-                        placeholder="Write your notes here..."
-                      ></textarea>
-                    </div>
-                    <div class="mb-3">
-                      <label class="form-label">Subject (Optional)</label>
-                      <select
-                        class="form-select"
-                        [(ngModel)]="newNote.chapter_id"
-                      >
-                        <option [value]="null">No subject selected</option>
-                        <option
-                          *ngFor="let chapter of courseDetails()!.chapters"
-                          [value]="chapter.id"
-                        >
-                          {{ chapter.title }}
-                        </option>
-                      </select>
-                    </div>
-                    <div class="d-flex gap-2">
-                      <button
-                        class="btn btn-primary btn-sm"
-                        (click)="addNote()"
-                      >
-                        <i class="bi bi-save me-1"></i>Save Note
-                      </button>
-                      <button
-                        class="btn btn-outline-secondary btn-sm"
-                        (click)="showNoteForm.set(false)"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Notes List -->
-                  <div *ngIf="notes().length > 0" class="row g-3">
                     <div
-                      *ngFor="let note of notes(); trackBy: trackByNote"
-                      class="col-md-6"
+                      *ngIf="chapter.attachments.length === 0"
+                      class="text-center py-4"
                     >
-                      <div class="card h-100">
-                        <div class="card-body">
-                          <h6 class="card-title">{{ note.title }}</h6>
-                          <p class="card-text small">
-                            {{ note.content.substring(0, 100) }}...
-                          </p>
-                          <small class="text-muted d-block mb-2">
-                            <i class="bi bi-calendar"></i>
-                            {{ formatDate(note.created_at) }}
-                          </small>
-                          <div class="d-flex gap-1">
-                            <button
-                              class="btn btn-xs btn-outline-primary"
-                              (click)="editNote(note)"
-                            >
-                              <i class="bi bi-pencil"></i>
-                            </button>
-                            <button
-                              class="btn btn-xs btn-outline-danger"
-                              (click)="deleteNote(note.id)"
-                            >
-                              <i class="bi bi-trash"></i>
-                            </button>
+                      <i
+                        class="bi bi-book text-muted"
+                        style="font-size: 2rem;"
+                      ></i>
+                      <p class="text-muted mt-2">
+                        No subjects available for this class
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Class Calendar - Only for Active Class -->
+                <div
+                  class="card mt-3"
+                  *ngIf="courseDetails()?.active_class?.id === chapter.id"
+                >
+                  <div class="card-header">
+                    <h6 class="mb-0">
+                      <i class="bi bi-calendar-week me-2"></i>Class Schedule
+                    </h6>
+                  </div>
+                  <div class="card-body">
+                    <div *ngIf="getChapterLiveClasses(chapter.id).length > 0">
+                      <div class="row g-3">
+                        <div
+                          *ngFor="
+                            let daySchedule of getChapterGroupedLiveClasses(
+                              chapter.id
+                            );
+                            trackBy: trackByDate
+                          "
+                          class="col-md-6 col-lg-4"
+                        >
+                          <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                              <h6 class="mb-0">
+                                <i class="bi bi-calendar-day me-2"></i>
+                                {{ formatDayHeader(daySchedule.date) }}
+                              </h6>
+                            </div>
+                            <div class="card-body">
+                              <div
+                                *ngFor="
+                                  let liveClass of daySchedule.classes;
+                                  trackBy: trackByLiveClass
+                                "
+                                class="mb-3 p-2 border rounded bg-light"
+                              >
+                                <div
+                                  class="d-flex justify-content-between align-items-start"
+                                >
+                                  <div class="flex-grow-1">
+                                    <small class="d-block">{{
+                                      liveClass.title
+                                    }}</small>
+                                    <small class="text-muted">
+                                      <i class="bi bi-clock me-1"></i>
+                                      {{ liveClass.start_time }} -
+                                      {{ liveClass.end_time }}
+                                    </small>
+                                  </div>
+                                  <div class="ms-2">
+                                    <button
+                                      class="btn btn-xs btn-primary"
+                                      *ngIf="
+                                        liveClass.meeting_link &&
+                                        isUpcoming(liveClass.scheduled_date)
+                                      "
+                                      (click)="
+                                        window.open(
+                                          liveClass.meeting_link,
+                                          '_blank'
+                                        )
+                                      "
+                                    >
+                                      Join
+                                    </button>
+                                    <small
+                                      class="badge d-block mt-1"
+                                      [class]="
+                                        isUpcoming(liveClass.scheduled_date)
+                                          ? 'bg-info'
+                                          : 'bg-secondary'
+                                      "
+                                    >
+                                      {{
+                                        isUpcoming(liveClass.scheduled_date)
+                                          ? "Upcoming"
+                                          : "Completed"
+                                      }}
+                                    </small>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div *ngIf="notes().length === 0" class="text-center py-5">
-                    <i
-                      class="bi bi-journal-text text-muted"
-                      style="font-size: 2rem;"
-                    ></i>
-                    <p class="text-muted mt-3">
-                      No notes yet. Create one to get started!
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- CALENDAR TAB -->
-            <div *ngIf="activeTab() === 'calendar'" class="tab-content">
-              <div class="card">
-                <div class="card-header">
-                  <h6 class="mb-0">📅 Course Schedule</h6>
-                </div>
-                <div class="card-body">
-                  <div
-                    *ngIf="courseDetails()!.live_classes.length > 0"
-                    class="table-responsive"
-                  >
-                    <table class="table table-hover">
-                      <thead>
-                        <tr>
-                          <th>Subject</th>
-                          <th>Date & Time</th>
-                          <th>Duration</th>
-                          <th>Status</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr
-                          *ngFor="
-                            let liveClass of courseDetails()!.live_classes;
-                            trackBy: trackByLiveClass
-                          "
-                        >
-                          <td>
-                            <strong>{{ liveClass.title }}</strong>
-                            <br />
-                            <small class="text-muted">
-                              {{
-                                getChapterNameById(liveClass.chapter_id) ||
-                                  "General"
-                              }}
-                            </small>
-                          </td>
-                          <td>
-                            <small>
-                              {{ formatSessionDate(liveClass.scheduled_date) }}
-                            </small>
-                          </td>
-                          <td>
-                            <small
-                              >{{ liveClass.start_time }} -
-                              {{ liveClass.end_time }}</small
-                            >
-                          </td>
-                          <td>
-                            <small
-                              class="badge"
-                              [class]="
-                                isUpcoming(liveClass.scheduled_date)
-                                  ? 'bg-info'
-                                  : 'bg-secondary'
-                              "
-                            >
-                              {{
-                                isUpcoming(liveClass.scheduled_date)
-                                  ? "Upcoming"
-                                  : "Completed"
-                              }}
-                            </small>
-                          </td>
-                          <td>
-                            <button
-                              class="btn btn-xs btn-primary"
-                              *ngIf="
-                                liveClass.meeting_link &&
-                                isUpcoming(liveClass.scheduled_date)
-                              "
-                              (click)="
-                                window.open(liveClass.meeting_link, '_blank')
-                              "
-                            >
-                              Join
-                            </button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  <div
-                    *ngIf="courseDetails()!.live_classes.length === 0"
-                    class="text-center py-5"
-                  >
-                    <i
-                      class="bi bi-calendar-x text-muted"
-                      style="font-size: 2rem;"
-                    ></i>
-                    <p class="text-muted mt-3">No sessions scheduled yet</p>
+                    <div
+                      *ngIf="getChapterLiveClasses(chapter.id).length === 0"
+                      class="text-center py-4"
+                    >
+                      <i
+                        class="bi bi-calendar-x text-muted"
+                        style="font-size: 2rem;"
+                      ></i>
+                      <p class="text-muted mt-2">
+                        No live sessions scheduled for this class
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Video Modal -->
-    <div
-      *ngIf="showVideoModal()"
-      class="modal fade show d-block"
-      style="background-color: rgba(0,0,0,0.95);"
-      tabindex="-1"
-    >
-      <div class="modal-dialog modal-xl">
-        <div class="modal-content bg-dark">
-          <div class="modal-header border-0">
-            <h6 class="modal-title text-white">
-              {{ currentAttachment()?.title }}
-            </h6>
-            <button
-              type="button"
-              class="btn-close btn-close-white"
-              (click)="closeVideoModal()"
-            ></button>
-          </div>
-          <div class="modal-body p-0">
-            <div
-              *ngIf="currentAttachment()?.file_type === 'video'"
-              class="video-container"
-            >
-              <iframe
-                [src]="getVideoEmbedUrl(currentAttachment()!.file_url)"
-                width="100%"
-                height="600"
-                frameborder="0"
-                allowfullscreen
-              ></iframe>
-            </div>
+          <!-- No Classes Message -->
+          <div
+            *ngIf="courseDetails()!.chapters.length === 0"
+            class="text-center py-5"
+          >
+            <i class="bi bi-folder text-muted" style="font-size: 3rem;"></i>
+            <h5 class="text-muted mt-3">No Classes Available</h5>
+            <p class="text-muted">This course doesn't have any classes yet.</p>
           </div>
         </div>
+
+        <!-- Video Modal -->
       </div>
     </div>
   `,
@@ -855,51 +547,55 @@ interface CourseDetails {
 
       .video-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-
-      .video-container {
-        position: relative;
-        padding-bottom: 56.25%;
-        height: 0;
-        overflow: hidden;
-      }
-
-      .video-container iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-
-      .form-check-input:checked {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-      }
-
-      .btn-xs {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
 
       .cursor-pointer {
         cursor: pointer;
       }
 
-      .hover-light:hover {
-        background-color: #f0f0f0;
-        transition: background-color 0.2s;
+      .class-card {
+        transition: all 0.3s;
       }
 
-      .list-group-item.active {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
+      .class-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .subject-card {
+        transition: all 0.3s;
+        border: 1px solid #e0e0e0;
+      }
+
+      .subject-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .progress-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+      }
+
+      .video-container iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+      }
+
+      .modal {
+        z-index: 1050;
       }
 
       @media (max-width: 768px) {
-        .course-header {
-          position: relative;
+        .course-container {
+          padding: 1rem;
         }
 
         .col-lg-3 {
@@ -928,6 +624,24 @@ export class CourseDetailsComponent implements OnInit {
         (ch: Chapter) => ch.progress?.completed
       ).length || 0
   );
+
+  // Sorted chapters with active class first
+  sortedChapters = computed(() => {
+    const chapters = this.courseDetails()?.chapters || [];
+    const activeClassId = this.courseDetails()?.active_class?.id;
+
+    if (!activeClassId) {
+      return chapters;
+    }
+
+    // Sort chapters: active class first, then others by order
+    return [...chapters].sort((a, b) => {
+      if (a.id === activeClassId) return -1;
+      if (b.id === activeClassId) return 1;
+      return a.order - b.order;
+    });
+  });
+
   activeTab = signal<"lesson" | "notes" | "calendar">("lesson");
   showQuiz = signal(false);
   showVideoModal = signal(false);
@@ -945,6 +659,9 @@ export class CourseDetailsComponent implements OnInit {
     chapter_id: null as number | null,
   };
 
+  // Track collapsed state for each chapter (non-active classes collapsed by default)
+  collapsedChapters = signal<Map<number, boolean>>(new Map());
+
   window = window;
 
   ngOnInit(): void {
@@ -953,6 +670,22 @@ export class CourseDetailsComponent implements OnInit {
       this.loadCourseDetails(+courseId);
       this.loadNotes();
     }
+  }
+
+  isChapterCollapsed(chapterId: number): boolean {
+    const activeClassId = this.courseDetails()?.active_class?.id;
+    // Active class is always expanded, others are collapsed by default
+    if (chapterId === activeClassId) {
+      return false;
+    }
+    return this.collapsedChapters().get(chapterId) ?? true; // Default to collapsed
+  }
+
+  toggleChapterCollapse(chapterId: number): void {
+    const currentMap = this.collapsedChapters();
+    const newMap = new Map(currentMap);
+    newMap.set(chapterId, !this.isChapterCollapsed(chapterId));
+    this.collapsedChapters.set(newMap);
   }
 
   loadCourseDetails(courseId: number): void {
@@ -1230,5 +963,124 @@ export class CourseDetailsComponent implements OnInit {
 
   trackByLiveClass(index: number, liveClass: LiveClass): number {
     return liveClass.id;
+  }
+
+  // Get live classes for a specific chapter
+  getChapterLiveClasses(chapterId: number): LiveClass[] {
+    return (
+      this.courseDetails()?.live_classes.filter(
+        (liveClass) => liveClass.chapter_id === chapterId
+      ) || []
+    );
+  }
+
+  // Get grouped live classes for a specific chapter
+  getChapterGroupedLiveClasses(
+    chapterId: number
+  ): { date: string; classes: LiveClass[] }[] {
+    const chapterLiveClasses = this.getChapterLiveClasses(chapterId);
+
+    // Group by date
+    const grouped = chapterLiveClasses.reduce((acc, liveClass) => {
+      const date = liveClass.scheduled_date.split("T")[0]; // Get date part only
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(liveClass);
+      return acc;
+    }, {} as Record<string, LiveClass[]>);
+
+    // Convert to array and sort by date
+    return Object.entries(grouped)
+      .map(([date, classes]) => ({ date, classes }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+
+  viewSubjectNotes(chapterId: number, attachmentId: number): void {
+    // Filter notes for this specific chapter and course
+    const courseId = this.courseDetails()?.id;
+    const subjectNotes = this.notes().filter(
+      (note) => note.chapter_id === chapterId && note.course_id === courseId
+    );
+
+    // For now, just show an alert. In a full implementation, you might want to show a modal or navigate to a notes view
+    if (subjectNotes.length > 0) {
+      const noteTitles = subjectNotes.map((note) => note.title).join(", ");
+      alert(`Notes for this subject: ${noteTitles}`);
+    } else {
+      alert(
+        "No notes available for this subject. Create some notes in the Notes tab."
+      );
+    }
+  }
+
+  startQuizForChapter(chapter: Chapter): void {
+    this.selectedChapter.set(chapter);
+    this.startQuiz();
+  }
+
+  // Course-level calendar methods
+  getGroupedLiveClasses(): { date: string; classes: LiveClass[] }[] {
+    const liveClasses = this.courseDetails()?.live_classes || [];
+    const activeClassId = this.courseDetails()?.active_class?.id;
+
+    // Filter to only show live classes for the active class
+    const filteredClasses = activeClassId
+      ? liveClasses.filter(
+          (liveClass) => liveClass.chapter_id === activeClassId
+        )
+      : [];
+
+    // Group by date
+    const grouped = filteredClasses.reduce((acc, liveClass) => {
+      const date = liveClass.scheduled_date.split("T")[0]; // Get date part only
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(liveClass);
+      return acc;
+    }, {} as Record<string, LiveClass[]>);
+
+    // Convert to array and sort by date
+    return Object.entries(grouped)
+      .map(([date, classes]) => ({ date, classes }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+
+  trackByDate(
+    index: number,
+    daySchedule: { date: string; classes: LiveClass[] }
+  ): string {
+    return daySchedule.date;
+  }
+
+  formatDayHeader(dateString: string): string {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return "Tomorrow";
+    } else {
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      });
+    }
+  }
+
+  // Calculate chapter progress based on completed subjects
+  getChapterProgress(chapter: Chapter): number {
+    if (!chapter.attachments || chapter.attachments.length === 0) {
+      return chapter.progress?.completed ? 100 : 0;
+    }
+
+    // For now, we'll consider the chapter complete if the chapter.progress.completed is true
+    // In a more detailed implementation, you could track individual attachment progress
+    return chapter.progress?.completed ? 100 : 0;
   }
 }
