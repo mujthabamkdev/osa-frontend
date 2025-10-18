@@ -342,7 +342,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 **Online Sharia Academy Frontend** - Modern Angular application for Islamic education 🕌</content>
-<parameter name="oldString">OnlineShariaAcademy Frontend (Angular 20)
+<parameter name="oldString">Online Sharia Academy Frontend (Angular 20)
 
 Dev: npm i; ng serve; API at environment.ts
 
