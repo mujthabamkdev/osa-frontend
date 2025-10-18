@@ -4,54 +4,11 @@ import { AuthService } from "../../../core/services/auth.service";
 import { ApiService } from "../../../core/services/api.service";
 
 @Component({
+  templateUrl: './teacher-dashboard.component.html',
   selector: "app-teacher-dashboard",
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="container-fluid py-4">
-      <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="mb-0 fw-bold">Teacher Dashboard</h2>
-          <p class="text-muted mb-0">
-            Welcome back, {{ authService.user()?.email }}
-          </p>
-        </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-outline-secondary" (click)="refreshData()">
-            <i class="bi bi-arrow-clockwise me-1"></i>
-            Refresh
-          </button>
-          <button class="btn btn-outline-danger" (click)="logout()">
-            <i class="bi bi-box-arrow-right me-1"></i>
-            Logout
-          </button>
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      @if (apiService.loading()) {
-      <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </div>
-      }
-
-      <!-- Error State -->
-      @if (apiService.apiError(); as error) {
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ error }}
-        <button
-          type="button"
-          class="btn-close"
-          (click)="apiService.clearError()"
-        ></button>
-      </div>
-      }
-    </div>
-  `,
-})
+  imports: [CommonModule]
+  })
 export class TeacherDashboardComponent {
   readonly authService = inject(AuthService);
   readonly apiService = inject(ApiService);

@@ -12,6 +12,20 @@ import {
   ParentChild,
 } from "../models/dashboard.models";
 import { Enrollment } from "../models/enrollment.models";
+import {
+  Class,
+  CreateClassRequest,
+  Subject,
+  CreateSubjectRequest,
+  Session,
+  CreateSessionRequest,
+  SessionContent,
+  CreateSessionContentRequest,
+  Timetable,
+  CreateTimetableRequest,
+  ClassProgress,
+  CreateClassProgressRequest,
+} from "../models/school.models";
 
 @Injectable({
   providedIn: "root",
@@ -128,7 +142,30 @@ export class ApiService {
       this.http.get<any>(`${this.baseUrl}/courses/${courseId}`)
     ).pipe(
       tap((response) => response),
-      map((response) => response?.chapters || [])
+      map((response) => {
+        // Flatten subjects and their chapters into a levels array
+        const levels: any[] = [];
+        if (response?.subjects) {
+          response.subjects.forEach((subject: any) => {
+            subject.chapters.forEach((chapter: any) => {
+              levels.push({
+                id: chapter.id,
+                course_id: courseId,
+                subject_id: subject.id,
+                subject_title: subject.title,
+                title: chapter.title,
+                description: chapter.description,
+                order: chapter.order,
+                progress: chapter.progress,
+                attachments: chapter.attachments,
+                quiz: chapter.quiz,
+                created_at: chapter.created_at,
+              });
+            });
+          });
+        }
+        return levels;
+      })
     );
   }
 
@@ -329,6 +366,169 @@ export class ApiService {
   deleteNote(studentId: number, noteId: number): Observable<any> {
     return this.performRequest(() =>
       this.http.delete(`${this.baseUrl}/students/${studentId}/notes/${noteId}`)
+    );
+  }
+
+  // School Management
+  // Classes
+  getClasses(courseId: number): Observable<Class[]> {
+    return this.performRequest(() =>
+      this.http.get<Class[]>(`${this.baseUrl}/school/courses/${courseId}/classes`)
+    );
+  }
+
+  createClass(courseId: number, classData: CreateClassRequest): Observable<Class> {
+    return this.performRequest(() =>
+      this.http.post<Class>(`${this.baseUrl}/school/courses/${courseId}/classes`, classData)
+    );
+  }
+
+  getClass(classId: number): Observable<Class> {
+    return this.performRequest(() =>
+      this.http.get<Class>(`${this.baseUrl}/school/classes/${classId}`)
+    );
+  }
+
+  updateClass(classId: number, classData: Partial<Class>): Observable<Class> {
+    return this.performRequest(() =>
+      this.http.put<Class>(`${this.baseUrl}/school/classes/${classId}`, classData)
+    );
+  }
+
+  deleteClass(classId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(`${this.baseUrl}/school/classes/${classId}`)
+    );
+  }
+
+  // Subjects
+  getSubjects(classId: number): Observable<Subject[]> {
+    return this.performRequest(() =>
+      this.http.get<Subject[]>(`${this.baseUrl}/school/classes/${classId}/subjects`)
+    );
+  }
+
+  createSubject(subjectData: CreateSubjectRequest): Observable<Subject> {
+    return this.performRequest(() =>
+      this.http.post<Subject>(`${this.baseUrl}/school/subjects`, subjectData)
+    );
+  }
+
+  getSubject(subjectId: number): Observable<Subject> {
+    return this.performRequest(() =>
+      this.http.get<Subject>(`${this.baseUrl}/school/subjects/${subjectId}`)
+    );
+  }
+
+  updateSubject(subjectId: number, subjectData: Partial<Subject>): Observable<Subject> {
+    return this.performRequest(() =>
+      this.http.put<Subject>(`${this.baseUrl}/school/subjects/${subjectId}`, subjectData)
+    );
+  }
+
+  deleteSubject(subjectId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(`${this.baseUrl}/school/subjects/${subjectId}`)
+    );
+  }
+
+  // Sessions
+  getSessions(subjectId: number): Observable<Session[]> {
+    return this.performRequest(() =>
+      this.http.get<Session[]>(`${this.baseUrl}/school/subjects/${subjectId}/sessions`)
+    );
+  }
+
+  createSession(sessionData: CreateSessionRequest): Observable<Session> {
+    return this.performRequest(() =>
+      this.http.post<Session>(`${this.baseUrl}/school/sessions`, sessionData)
+    );
+  }
+
+  getSession(sessionId: number): Observable<Session> {
+    return this.performRequest(() =>
+      this.http.get<Session>(`${this.baseUrl}/school/sessions/${sessionId}`)
+    );
+  }
+
+  updateSession(sessionId: number, sessionData: Partial<Session>): Observable<Session> {
+    return this.performRequest(() =>
+      this.http.put<Session>(`${this.baseUrl}/school/sessions/${sessionId}`, sessionData)
+    );
+  }
+
+  deleteSession(sessionId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(`${this.baseUrl}/school/sessions/${sessionId}`)
+    );
+  }
+
+  // Session Contents
+  getSessionContents(sessionId: number): Observable<SessionContent[]> {
+    return this.performRequest(() =>
+      this.http.get<SessionContent[]>(`${this.baseUrl}/school/sessions/${sessionId}/contents`)
+    );
+  }
+
+  createSessionContent(contentData: CreateSessionContentRequest): Observable<SessionContent> {
+    return this.performRequest(() =>
+      this.http.post<SessionContent>(`${this.baseUrl}/school/contents`, contentData)
+    );
+  }
+
+  getSessionContent(contentId: number): Observable<SessionContent> {
+    return this.performRequest(() =>
+      this.http.get<SessionContent>(`${this.baseUrl}/school/contents/${contentId}`)
+    );
+  }
+
+  updateSessionContent(contentId: number, contentData: Partial<SessionContent>): Observable<SessionContent> {
+    return this.performRequest(() =>
+      this.http.put<SessionContent>(`${this.baseUrl}/school/contents/${contentId}`, contentData)
+    );
+  }
+
+  deleteSessionContent(contentId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(`${this.baseUrl}/school/contents/${contentId}`)
+    );
+  }
+
+  // Timetables
+  getTimetable(classId: number): Observable<Timetable[]> {
+    return this.performRequest(() =>
+      this.http.get<Timetable[]>(`${this.baseUrl}/school/classes/${classId}/timetable`)
+    );
+  }
+
+  createTimetable(timetableData: CreateTimetableRequest): Observable<Timetable> {
+    return this.performRequest(() =>
+      this.http.post<Timetable>(`${this.baseUrl}/school/timetables`, timetableData)
+    );
+  }
+
+  updateTimetable(timetableId: number, timetableData: Partial<Timetable>): Observable<Timetable> {
+    return this.performRequest(() =>
+      this.http.put<Timetable>(`${this.baseUrl}/school/timetables/${timetableId}`, timetableData)
+    );
+  }
+
+  deleteTimetable(timetableId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(`${this.baseUrl}/school/timetables/${timetableId}`)
+    );
+  }
+
+  // Class Progress
+  getClassProgress(studentId: number): Observable<ClassProgress[]> {
+    return this.performRequest(() =>
+      this.http.get<ClassProgress[]>(`${this.baseUrl}/school/students/${studentId}/progress`)
+    );
+  }
+
+  updateClassProgress(progressData: CreateClassProgressRequest): Observable<ClassProgress> {
+    return this.performRequest(() =>
+      this.http.post<ClassProgress>(`${this.baseUrl}/school/progress`, progressData)
     );
   }
 

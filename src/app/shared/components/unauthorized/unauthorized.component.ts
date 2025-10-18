@@ -3,21 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 @Component({
+  templateUrl: './unauthorized.component.html',
   selector: 'app-unauthorized',
   standalone: true,
-  imports: [CommonModule, RouterLink],
-  template: `
-    <div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
-      <div class="text-center">
-        <h1 class="display-1 fw-bold text-danger">401</h1>
-        <h2 class="mb-4">Unauthorized Access</h2>
-        <p class="lead mb-4">You don't have permission to access this page.</p>
-        <a routerLink="/" class="btn btn-primary">
-          <i class="bi bi-house-door me-2"></i>
-          Go Home
-        </a>
-      </div>
-    </div>
-  `
-})
+  imports: [CommonModule, RouterLink]
+  })
 export class UnauthorizedComponent {}

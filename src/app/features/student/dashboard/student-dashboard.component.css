@@ -1,0 +1,39 @@
+
+      .course-card {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .course-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .available-course-card {
+        border: 2px solid #e9ecef;
+        transition: all 0.2s;
+      }
+      .available-course-card:hover {
+        border-color: #0d6efd;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+      }
+      .note-card {
+        border-left: 4px solid #28a745;
+        transition: transform 0.2s;
+      }
+      .note-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .spinning {
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    `,
+  

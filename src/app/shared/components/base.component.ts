@@ -11,7 +11,8 @@ import { RouterModule } from '@angular/router';
     ReactiveFormsModule,
     RouterModule
   ],
-  template: ''
+  selector: 'app-base',
+  templateUrl: './base.component.html'
 })
 export class BaseComponent {
   // Common functionality can go here

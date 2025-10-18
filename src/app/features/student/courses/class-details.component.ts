@@ -66,9 +66,9 @@ interface Subject {
 }
 
 interface DaySchedule {
-  date: string; // "2025-10-18"
+  date: string;
   dateObj: Date;
-  lessons: Lesson[]; // Lessons for this day, grouped by subject
+  lessons: Lesson[];
 }
 
 interface LiveClass {
@@ -95,13 +95,13 @@ interface CourseDetails {
 }
 
 @Component({
-  selector: "app-course-details",
+  selector: "app-class-details",
   standalone: true,
   imports: [FormsModule],
-  templateUrl: './course-details.component.html',
-  styleUrl: './course-details.component.css'
+  templateUrl: './class-details.component.html',
+  styleUrl: './class-details.component.css'
 })
-export class CourseDetailsComponent implements OnInit {
+export class ClassDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -113,6 +113,7 @@ export class CourseDetailsComponent implements OnInit {
   error = signal<string | null>(null);
   courseDetails = signal<CourseDetails | null>(null);
   selectedLesson = signal<Lesson | null>(null);
+  viewMode = signal<'calendar' | 'subject'>('calendar');
 
   collapsedSubjects = signal<Map<number, boolean>>(new Map());
 
@@ -145,6 +146,12 @@ export class CourseDetailsComponent implements OnInit {
           console.log('Course details transformed:', data);
           
           this.courseDetails.set(data);
+
+          // Auto-select first lesson if available
+          const firstScheduledDay = data.schedule?.[0];
+          if (firstScheduledDay && firstScheduledDay.lessons.length > 0) {
+            this.selectLesson(firstScheduledDay.lessons[0]);
+          }
         },
         error: (error) => {
           console.error("Failed to load course details:", error);
@@ -158,8 +165,9 @@ export class CourseDetailsComponent implements OnInit {
 
     const subjects: Subject[] = [];
     const schedule: DaySchedule[] = [];
+    const lessonMap = new Map<number, Lesson>();
 
-    // Build subjects with lessons from classes structure
+    // First, build subjects with lessons from classes structure
     if (rawData.classes && Array.isArray(rawData.classes)) {
       console.log('Processing classes structure...');
       
@@ -170,17 +178,12 @@ export class CourseDetailsComponent implements OnInit {
 
             // Transform sessions into lessons
             if (subject.sessions && Array.isArray(subject.sessions)) {
-              // Sort sessions by order first
-              const sortedSessions = subject.sessions.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
-              
-              // Create lessons with "Day X" naming
-              sortedSessions.forEach((session: any, dayIndex: number) => {
-                const dayNumber = dayIndex + 1; // Day 1, Day 2, etc.
+              for (const session of subject.sessions) {
                 const lesson: Lesson = {
                   id: session.id || Math.random(),
-                  title: `Day ${dayNumber}`, // Renamed to Day 1, Day 2, etc.
-                  description: session.description || session.title || '', // Use session title as description
-                  order: session.order || dayIndex,
+                  title: session.title || 'Untitled Lesson',
+                  description: session.description || '',
+                  order: session.order || 0,
                   subject_id: subject.id,
                   subject_name: subject.name || 'Subject',
                   attachments: (session.contents || []).map((content: any, idx: number) => ({
@@ -195,7 +198,8 @@ export class CourseDetailsComponent implements OnInit {
                   progress: session.progress || null
                 };
                 lessons.push(lesson);
-              });
+                lessonMap.set(lesson.id, lesson);
+              }
             }
 
             subjects.push({
@@ -203,10 +207,40 @@ export class CourseDetailsComponent implements OnInit {
               title: subject.name || 'Untitled Subject',
               description: subject.description || '',
               order: subject.order_in_class || 0,
-              lessons: lessons
+              lessons: lessons.sort((a, b) => a.order - b.order)
             });
           }
         }
+      }
+    }
+
+    // Build daily schedule from live_classes
+    if (rawData.live_classes && Array.isArray(rawData.live_classes)) {
+      console.log('Building daily schedule from live_classes...');
+      
+      const dayMap = new Map<string, Lesson[]>();
+
+      for (const liveClass of rawData.live_classes) {
+        const dateStr = this.extractDate(liveClass.scheduled_date);
+        
+        // Find the corresponding lesson
+        const lesson = lessonMap.get(liveClass.chapter_id);
+        if (lesson) {
+          if (!dayMap.has(dateStr)) {
+            dayMap.set(dateStr, []);
+          }
+          dayMap.get(dateStr)!.push(lesson);
+        }
+      }
+
+      // Convert map to sorted schedule array
+      const sortedDates = Array.from(dayMap.keys()).sort();
+      for (const dateStr of sortedDates) {
+        schedule.push({
+          date: dateStr,
+          dateObj: new Date(dateStr),
+          lessons: dayMap.get(dateStr) || []
+        });
       }
     }
 
@@ -222,9 +256,13 @@ export class CourseDetailsComponent implements OnInit {
       live_classes: rawData.live_classes || []
     };
 
-    console.log('Transformation complete. Subjects:', subjects.length);
-    console.log('Subjects with lessons:', subjects);
+    console.log('Transformation complete. Subjects:', subjects.length, 'Schedule days:', schedule.length);
     return result;
+  }
+
+  private extractDate(dateString: string): string {
+    // Extract just the date part (YYYY-MM-DD)
+    return dateString.split('T')[0];
   }
 
   selectLesson(lesson: Lesson): void {
@@ -244,6 +282,26 @@ export class CourseDetailsComponent implements OnInit {
 
   isSubjectCollapsed(subjectId: number): boolean {
     return this.collapsedSubjects().get(subjectId) ?? true;
+  }
+
+  formatDayHeader(dateString: string): string {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
   }
 
   goBack(): void {

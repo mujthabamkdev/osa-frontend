@@ -1,0 +1,52 @@
+
+      .course-container {
+        min-height: 100vh;
+        background-color: #f8f9fa;
+      }
+
+      .course-header {
+        z-index: 100;
+      }
+
+      .lesson-card {
+        transition: all 0.3s;
+        border: 2px solid transparent;
+      }
+
+      .lesson-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .lesson-card.active-lesson {
+        border-color: #0d6efd;
+        background-color: #f0f7ff;
+      }
+
+      .subject-card {
+        transition: all 0.3s;
+        border: 1px solid #e0e0e0;
+      }
+
+      .subject-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .subject-header {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        transition: all 0.2s;
+      }
+
+      .subject-header:hover {
+        background-color: #e9ecef;
+      }
+
+      @media (max-width: 768px) {
+        .course-container {
+          padding: 1rem;
+        }
+      }
+    `,
+  
