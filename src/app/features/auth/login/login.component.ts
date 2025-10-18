@@ -39,23 +39,30 @@ export class LoginComponent extends BaseComponent {
         console.log('Login successful, user:', user);
         console.log('User role:', user.role);
 
-        // Navigate directly to dashboard based on role
-        const dashboardRoutes: Record<string, string> = {
-          admin: '/admin/dashboard',
-          teacher: '/teacher/dashboard',
-          student: '/student/dashboard',
-          parent: '/parent/dashboard',
-        };
-        const targetRoute = dashboardRoutes[user.role] || '/';
-        console.log('Navigating to:', targetRoute);
-
-        this.router.navigate([targetRoute]).then((success) => {
-          console.log('Navigation success:', success);
-          if (!success) {
-            console.error('Failed to navigate to dashboard');
-            this.authService.authError.set('Failed to navigate to dashboard');
+        // Wait for user signal to be set before navigating
+        const checkUserReady = () => {
+          const currentUser = this.authService.user();
+          if (currentUser && currentUser.role) {
+            const dashboardRoutes: Record<string, string> = {
+              admin: '/admin/dashboard',
+              teacher: '/teacher/dashboard',
+              student: '/student/dashboard',
+              parent: '/parent/dashboard',
+            };
+            const targetRoute = dashboardRoutes[currentUser.role] || '/';
+            console.log('Navigating to:', targetRoute);
+            this.router.navigate([targetRoute]).then((success) => {
+              console.log('Navigation success:', success);
+              if (!success) {
+                console.error('Failed to navigate to dashboard');
+                this.authService.authError.set('Failed to navigate to dashboard');
+              }
+            });
+          } else {
+            setTimeout(checkUserReady, 50);
           }
-        });
+        };
+        checkUserReady();
       },
       error: (error) => {
         this.authService.loading.set(false);

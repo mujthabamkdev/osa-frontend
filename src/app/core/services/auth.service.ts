@@ -76,11 +76,12 @@ export class AuthService {
     return this.http.post(`${this.baseUrl}/auth/login`, { email, password: pwd }).pipe(
       tap((response: any) => {
         console.log('Auth service login response:', response);
-        if (response.token) {
+        const token = response.access_token || response.token;
+        if (token) {
           // Store token with expiration time (30 minutes from now)
           const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes in milliseconds
           const tokenData: TokenData = {
-            token: response.token,
+            token,
             expiresAt,
           };
 
@@ -108,11 +109,12 @@ export class AuthService {
 
     return this.http.post(`${this.baseUrl}/auth/register`, userData).pipe(
       tap((response: any) => {
-        if (response.token) {
+        const token = response.access_token || response.token;
+        if (token) {
           // Store token with expiration time (30 minutes from now)
           const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes in milliseconds
           const tokenData: TokenData = {
-            token: response.token,
+            token,
             expiresAt,
           };
 
