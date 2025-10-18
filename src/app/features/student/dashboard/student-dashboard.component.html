@@ -11,6 +11,7 @@
     <div class="d-flex gap-2">
       <button
         class="btn btn-outline-secondary"
+        type="button"
         (click)="refreshData()"
         [disabled]="loading()"
       >
@@ -22,6 +23,7 @@
       </button>
       <button
         class="btn btn-outline-danger"
+        type="button"
         (click)="logout()"
       >
         <i class="bi bi-box-arrow-right me-1"></i>
@@ -99,6 +101,7 @@
                 </p>
                 <button
                   class="btn btn-primary"
+                  type="button"
                   (click)="goToHome()"
                 >
                   <i class="bi bi-house me-1"></i>
@@ -188,6 +191,7 @@
                           <button
                             class="btn btn-sm btn-outline-primary"
                             [disabled]="!isCourseAccessible(course)"
+                            type="button"
                             (click)="
                               isCourseAccessible(course) && viewCourse(course.id);
                               $event.stopPropagation()
@@ -216,6 +220,7 @@
             <h5 class="mb-0">My Notes</h5>
             <button
               class="btn btn-sm btn-outline-success"
+              type="button"
               (click)="openNotesModal()"
             >
               <i class="bi bi-plus-circle me-1"></i>
@@ -232,6 +237,7 @@
                 </p>
                 <button
                   class="btn btn-success"
+                  type="button"
                   (click)="openNotesModal()"
                 >
                   <i class="bi bi-plus-circle me-1"></i>

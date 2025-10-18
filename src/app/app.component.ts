@@ -1,7 +1,7 @@
 // src/app/app.component.ts - FIXED VERSION
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { LoadingService } from './core/services/loading.service';
@@ -12,7 +12,7 @@ import { NotificationService } from './core/services/notification.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -36,24 +36,6 @@ export class AppComponent implements OnInit {
         const hideNavbarRoutes = ['/auth/login', '/auth/register', '/unauthorized'];
         this.showNavbar.set(!hideNavbarRoutes.some((route) => event.url.includes(route)));
       });
-  }
-
-  navigateHome(): void {
-    const user = this.authService.user();
-    const role = user?.role || this.authService.userRole();
-
-    if (role) {
-      const dashboardRoutes: Record<string, string> = {
-        admin: '/admin/dashboard',
-        teacher: '/teacher/dashboard',
-        student: '/student/dashboard',
-        parent: '/parent/dashboard',
-      };
-      this.router.navigate([dashboardRoutes[role] || '/']);
-    } else {
-      // If no user/role found, navigate to login
-      this.router.navigate(['/login']);
-    }
   }
 
   getNotificationClass(type: string): string {
