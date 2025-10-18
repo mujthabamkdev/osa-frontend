@@ -80,10 +80,11 @@
   --color-info-rgb: 98, 108, 113;
 
   /* Typography */
-  --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-family-mono: "Berkeley Mono", ui-monospace, SFMono-Regular, Menlo,
-    Monaco, Consolas, monospace;
+  --font-family-base:
+    'FKGroteskNeue', 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  --font-family-mono:
+    'Berkeley Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-size-xs: 11px;
   --font-size-sm: 12px;
   --font-size-base: 14px;
@@ -125,12 +126,9 @@
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04),
-    0 2px 4px -1px rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04),
-    0 4px 6px -2px rgba(0, 0, 0, 0.02);
-  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.03);
 
   /* Animation */
   --duration-fast: 150ms;
@@ -183,8 +181,7 @@
     --color-btn-primary-text: var(--color-slate-900);
     --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
     --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
-    --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
     --button-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
     --color-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
     --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
@@ -206,7 +203,7 @@
 }
 
 /* Data attribute for manual theme switching */
-[data-color-scheme="dark"] {
+[data-color-scheme='dark'] {
   /* RGB versions for opacity control (dark mode) */
   --color-gray-400-rgb: 119, 124, 124;
   --color-teal-300-rgb: 50, 184, 198;
@@ -243,8 +240,7 @@
   --color-btn-primary-text: var(--color-slate-900);
   --color-card-border: rgba(var(--color-gray-400-rgb), 0.15);
   --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
-  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
   --color-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
   --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
 
@@ -263,7 +259,7 @@
   --color-info-rgb: var(--color-gray-300-rgb);
 }
 
-[data-color-scheme="light"] {
+[data-color-scheme='light'] {
   /* RGB versions for opacity control (light mode) */
   --color-brown-600-rgb: 94, 82, 64;
   --color-teal-500-rgb: 33, 128, 141;
@@ -322,19 +318,19 @@ body {
 /* Button Styles - Ensure proper cursor and contrast */
 button,
 a.btn,
-[role="button"],
-input[type="button"],
-input[type="submit"],
-input[type="reset"] {
+[role='button'],
+input[type='button'],
+input[type='submit'],
+input[type='reset'] {
   cursor: pointer;
 }
 
 button:hover,
 a.btn:hover,
-[role="button"]:hover,
-input[type="button"]:hover,
-input[type="submit"]:hover,
-input[type="reset"]:hover {
+[role='button']:hover,
+input[type='button']:hover,
+input[type='submit']:hover,
+input[type='reset']:hover {
   cursor: pointer;
 }
 
@@ -459,14 +455,14 @@ select {
   cursor: pointer;
 }
 
-input:not([type="hidden"]),
+input:not([type='hidden']),
 textarea,
 select {
   cursor: text;
 }
 
-input[type="checkbox"],
-input[type="radio"] {
+input[type='checkbox'],
+input[type='radio'] {
   cursor: pointer;
 }
 
@@ -631,7 +627,8 @@ pre code {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-base);
-  transition: border-color var(--duration-fast) var(--ease-standard),
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
     box-shadow var(--duration-fast) var(--ease-standard);
 }
 
@@ -660,11 +657,11 @@ select.form-control {
 }
 
 /* Also handle data-color-scheme */
-[data-color-scheme="dark"] select.form-control {
+[data-color-scheme='dark'] select.form-control {
   background-image: var(--select-caret-dark);
 }
 
-[data-color-scheme="light"] select.form-control {
+[data-color-scheme='light'] select.form-control {
   background-image: var(--select-caret-light);
 }
 
@@ -820,43 +817,27 @@ select.form-control {
 }
 
 .status--success {
-  background-color: rgba(
-    var(--color-success-rgb, 33, 128, 141),
-    var(--status-bg-opacity)
-  );
+  background-color: rgba(var(--color-success-rgb, 33, 128, 141), var(--status-bg-opacity));
   color: var(--color-success);
-  border: 1px solid
-    rgba(var(--color-success-rgb, 33, 128, 141), var(--status-border-opacity));
+  border: 1px solid rgba(var(--color-success-rgb, 33, 128, 141), var(--status-border-opacity));
 }
 
 .status--error {
-  background-color: rgba(
-    var(--color-error-rgb, 192, 21, 47),
-    var(--status-bg-opacity)
-  );
+  background-color: rgba(var(--color-error-rgb, 192, 21, 47), var(--status-bg-opacity));
   color: var(--color-error);
-  border: 1px solid
-    rgba(var(--color-error-rgb, 192, 21, 47), var(--status-border-opacity));
+  border: 1px solid rgba(var(--color-error-rgb, 192, 21, 47), var(--status-border-opacity));
 }
 
 .status--warning {
-  background-color: rgba(
-    var(--color-warning-rgb, 168, 75, 47),
-    var(--status-bg-opacity)
-  );
+  background-color: rgba(var(--color-warning-rgb, 168, 75, 47), var(--status-bg-opacity));
   color: var(--color-warning);
-  border: 1px solid
-    rgba(var(--color-warning-rgb, 168, 75, 47), var(--status-border-opacity));
+  border: 1px solid rgba(var(--color-warning-rgb, 168, 75, 47), var(--status-border-opacity));
 }
 
 .status--info {
-  background-color: rgba(
-    var(--color-info-rgb, 98, 108, 113),
-    var(--status-bg-opacity)
-  );
+  background-color: rgba(var(--color-info-rgb, 98, 108, 113), var(--status-bg-opacity));
   color: var(--color-info);
-  border: 1px solid
-    rgba(var(--color-info-rgb, 98, 108, 113), var(--status-border-opacity));
+  border: 1px solid rgba(var(--color-info-rgb, 98, 108, 113), var(--status-border-opacity));
 }
 
 /* Container layout */
@@ -979,7 +960,7 @@ select.form-control {
 }
 
 /* Dark mode specifics */
-[data-color-scheme="dark"] .btn--outline {
+[data-color-scheme='dark'] .btn--outline {
   border: 1px solid var(--color-border-secondary);
 }
 
@@ -995,14 +976,14 @@ select.form-control {
   --primary-color: var(--color-primary);
   --primary-light: rgba(var(--color-teal-500-rgb), 0.1);
   --primary-dark: var(--color-primary-hover);
-  
+
   /* Secondary Colors - mapped to design system */
   --secondary-color: var(--color-secondary);
   --success-color: var(--color-success);
   --info-color: var(--color-info);
   --warning-color: var(--color-warning);
   --danger-color: var(--color-error);
-  
+
   /* Neutral Colors - mapped to design system */
   --light-color: var(--color-background);
   --dark-color: var(--color-text);
@@ -1015,7 +996,7 @@ select.form-control {
   --gray-700: var(--color-charcoal-700);
   --gray-800: var(--color-charcoal-800);
   --gray-900: var(--color-slate-900);
-  
+
   /* Typography - use design system */
   --font-family: var(--font-family-base);
   --font-weight-light: 300;
@@ -1023,14 +1004,14 @@ select.form-control {
   --font-weight-medium: var(--font-weight-medium);
   --font-weight-semibold: var(--font-weight-semibold);
   --font-weight-bold: var(--font-weight-bold);
-  
+
   /* Spacing - use design system */
   --border-radius: var(--radius-lg);
   --border-radius-sm: var(--radius-sm);
   --border-radius-lg: var(--radius-lg);
   --box-shadow: var(--shadow-md);
   --box-shadow-lg: var(--shadow-lg);
-  
+
   /* Transitions - use design system */
   --transition-fast: var(--duration-fast) var(--ease-standard);
   --transition-normal: var(--duration-normal) var(--ease-standard);
@@ -1477,39 +1458,39 @@ body {
     padding-left: var(--space-16);
     padding-right: var(--space-16);
   }
-  
+
   .card-body {
     padding: var(--space-16);
   }
-  
+
   .btn {
     padding: var(--space-8) var(--space-16);
     font-size: var(--font-size-sm);
   }
-  
+
   .table th,
   .table td {
     padding: var(--space-8);
     font-size: var(--font-size-sm);
   }
-  
+
   .stats-card:hover {
     transform: none;
   }
-  
+
   .navbar-brand {
     font-size: var(--font-size-xl);
   }
-  
+
   .card-header {
     padding: var(--space-12) var(--space-16);
     font-size: var(--font-size-sm);
   }
-  
+
   .alert {
     padding: var(--space-12) var(--space-16);
   }
-  
+
   .form-control,
   .form-select {
     padding: var(--space-6) var(--space-10);
@@ -1523,20 +1504,20 @@ body {
     padding-left: var(--space-16);
     padding-right: var(--space-16);
   }
-  
+
   .card-body {
     padding: var(--space-16);
   }
-  
+
   .btn {
     padding: var(--space-8) var(--space-16);
   }
-  
+
   .table th,
   .table td {
     padding: var(--space-12) var(--space-8);
   }
-  
+
   .stats-card:hover {
     transform: none;
   }
@@ -1547,11 +1528,11 @@ body {
     padding-left: var(--space-12);
     padding-right: var(--space-12);
   }
-  
+
   .navbar-brand {
     font-size: var(--font-size-xl);
   }
-  
+
   .card-header {
     padding: var(--space-12) var(--space-16);
   }
@@ -1564,7 +1545,7 @@ body {
   .alert {
     display: none !important;
   }
-  
+
   .card {
     box-shadow: none !important;
     border: 1px solid var(--color-border) !important;
@@ -1576,7 +1557,7 @@ body {
   .card {
     border: 2px solid var(--color-border);
   }
-  
+
   .btn {
     border: 2px solid currentColor;
   }
@@ -1591,7 +1572,7 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   .stats-card:hover {
     transform: none;
   }

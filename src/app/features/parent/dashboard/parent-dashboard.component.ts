@@ -1,9 +1,9 @@
 // src/app/features/parent/dashboard/parent-dashboard.component.ts
-import { Component, inject, signal, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { Router } from "@angular/router";
-import { AuthService } from "../../../core/services/auth.service";
-import { ApiService } from "../../../core/services/api.service";
+import { Component, inject, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+import { ApiService } from '../../../core/services/api.service';
 
 // Models
 interface Child {
@@ -40,10 +40,10 @@ interface AcademicReport {
 
 @Component({
   templateUrl: './parent-dashboard.component.html',
-  selector: "app-parent-dashboard",
+  selector: 'app-parent-dashboard',
   standalone: true,
-  imports: [CommonModule]
-  })
+  imports: [CommonModule],
+})
 export class ParentDashboardComponent implements OnInit {
   readonly authService = inject(AuthService);
   readonly apiService = inject(ApiService);
@@ -83,41 +83,37 @@ export class ParentDashboardComponent implements OnInit {
           const mockChildren: Child[] = [
             {
               id: 1,
-              name: "Ahmed Ali",
-              email: "ahmed.ali@student.com",
-              grade: "Grade 8",
+              name: 'Ahmed Ali',
+              email: 'ahmed.ali@student.com',
+              grade: 'Grade 8',
               enrolledCourses: 4,
               averageProgress: 78,
-              lastActive: new Date().toISOString()
+              lastActive: new Date().toISOString(),
             },
             {
               id: 2,
-              name: "Fatima Ali",
-              email: "fatima.ali@student.com",
-              grade: "Grade 6",
+              name: 'Fatima Ali',
+              email: 'fatima.ali@student.com',
+              grade: 'Grade 6',
               enrolledCourses: 3,
               averageProgress: 85,
-              lastActive: new Date(Date.now() - 86400000).toISOString()
+              lastActive: new Date(Date.now() - 86400000).toISOString(),
             },
           ];
           this.children.set(mockChildren);
           this.calculateSummary(mockChildren);
           this.loading.set(false);
-        }
+        },
       });
     }
   }
 
   calculateSummary(children: Child[]): void {
-    const total = children.reduce(
-      (sum, child) => sum + child.enrolledCourses,
-      0
-    );
+    const total = children.reduce((sum, child) => sum + child.enrolledCourses, 0);
     const avgProgress =
       children.length > 0
         ? Math.round(
-            children.reduce((sum, child) => sum + child.averageProgress, 0) /
-              children.length
+            children.reduce((sum, child) => sum + child.averageProgress, 0) / children.length
           )
         : 0;
 
@@ -133,8 +129,8 @@ export class ParentDashboardComponent implements OnInit {
 
     // Scroll to details
     setTimeout(() => {
-      const element = document.querySelector(".card-header.bg-primary");
-      element?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const element = document.querySelector('.card-header.bg-primary');
+      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   }
 
@@ -152,25 +148,25 @@ export class ParentDashboardComponent implements OnInit {
         const mockProgress: ChildProgress[] = [
           {
             course_id: 1,
-            course_title: "Islamic Studies",
+            course_title: 'Islamic Studies',
             progress: 75,
             completed_lessons: 6,
             total_lessons: 8,
             last_accessed: new Date().toISOString(),
-            grade: "A-"
+            grade: 'A-',
           },
           {
             course_id: 2,
-            course_title: "Arabic Language",
+            course_title: 'Arabic Language',
             progress: 60,
             completed_lessons: 3,
             total_lessons: 5,
             last_accessed: new Date(Date.now() - 172800000).toISOString(),
-            grade: "B+"
+            grade: 'B+',
           },
         ];
         this.selectedChildProgress.set(mockProgress);
-      }
+      },
     });
   }
 
@@ -183,17 +179,17 @@ export class ParentDashboardComponent implements OnInit {
         // Mock data
         const mockReport: AcademicReport = {
           child_id: childId,
-          child_name: this.selectedChild()?.name || "",
+          child_name: this.selectedChild()?.name || '',
           total_courses: 4,
           completed_courses: 1,
           in_progress_courses: 3,
           overall_progress: 78,
           total_hours_studied: 45,
           attendance_rate: 92,
-          last_week_activity: 7
+          last_week_activity: 7,
         };
         this.selectedChildReport.set(mockReport);
-      }
+      },
     });
   }
 
@@ -209,8 +205,8 @@ export class ParentDashboardComponent implements OnInit {
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
 
     return date.toLocaleDateString();
@@ -226,6 +222,6 @@ export class ParentDashboardComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(["/auth/login"]);
+    this.router.navigate(['/auth/login']);
   }
 }

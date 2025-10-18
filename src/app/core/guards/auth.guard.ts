@@ -1,7 +1,7 @@
-import { inject } from "@angular/core";
-import { Router, CanActivateFn } from "@angular/router";
-import { AuthService } from "../services/auth.service";
-import { Observable, map, catchError, of } from "rxjs";
+import { inject } from '@angular/core';
+import { Router, CanActivateFn } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+import { Observable, map, catchError, of } from 'rxjs';
 
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
@@ -14,7 +14,7 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   // If no token, redirect to login
   if (!authService.hasValidToken()) {
-    router.navigate(["/auth/login"], { queryParams: { returnUrl: state.url } });
+    router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 
@@ -25,7 +25,7 @@ export const authGuard: CanActivateFn = (route, state) => {
         return true;
       } else {
         // Token is invalid, redirect to login
-        router.navigate(["/auth/login"], {
+        router.navigate(['/auth/login'], {
           queryParams: { returnUrl: state.url },
         });
         return false;

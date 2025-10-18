@@ -9,17 +9,17 @@ import { Course, CreateCourseRequest } from '../../../core/models/course.models'
   templateUrl: './course-management.component.html',
   selector: 'app-admin-course-management',
   standalone: true,
-  imports: [CommonModule, FormsModule]
-  })
+  imports: [CommonModule, FormsModule],
+})
 export class CourseManagementComponent implements OnInit {
   readonly apiService = inject(ApiService);
-  
+
   readonly courses = signal<Course[]>([]);
   readonly loading = signal(true);
   readonly showCreateModal = signal(false);
-  readonly newCourse = signal<CreateCourseRequest>({ 
-    title: '', 
-    description: '' 
+  readonly newCourse = signal<CreateCourseRequest>({
+    title: '',
+    description: '',
   });
 
   ngOnInit(): void {
@@ -37,10 +37,22 @@ export class CourseManagementComponent implements OnInit {
         this.loading.set(false);
         // Mock data
         this.courses.set([
-          { id: 1, title: 'Islamic Studies', description: 'Basic Islamic principles', teacher_id: 1, created_at: '2024-01-15' },
-          { id: 2, title: 'Arabic Language', description: 'Learn Arabic fundamentals', teacher_id: 2, created_at: '2024-01-20' }
+          {
+            id: 1,
+            title: 'Islamic Studies',
+            description: 'Basic Islamic principles',
+            teacher_id: 1,
+            created_at: '2024-01-15',
+          },
+          {
+            id: 2,
+            title: 'Arabic Language',
+            description: 'Learn Arabic fundamentals',
+            teacher_id: 2,
+            created_at: '2024-01-20',
+          },
         ]);
-      }
+      },
     });
   }
 
@@ -51,7 +63,7 @@ export class CourseManagementComponent implements OnInit {
         this.newCourse.set({ title: '', description: '' });
         this.loadCourses();
       },
-      error: (err) => console.error(err)
+      error: (err) => console.error(err),
     });
   }
 
@@ -63,16 +75,16 @@ export class CourseManagementComponent implements OnInit {
     if (confirm(`Delete course "${course.title}"?`)) {
       this.apiService.deleteCourse(course.id).subscribe({
         next: () => this.loadCourses(),
-        error: (err) => console.error(err)
+        error: (err) => console.error(err),
       });
     }
   }
 
   updateTitle(title: string): void {
-    this.newCourse.update(course => ({ ...course, title }));
+    this.newCourse.update((course) => ({ ...course, title }));
   }
 
   updateDescription(description: string): void {
-    this.newCourse.update(course => ({ ...course, description }));
+    this.newCourse.update((course) => ({ ...course, description }));
   }
 }

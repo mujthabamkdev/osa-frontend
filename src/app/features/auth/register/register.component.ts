@@ -1,29 +1,29 @@
-import { Component, inject, signal, computed } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { Router, RouterLink } from "@angular/router";
-import { AuthService } from "@core/services/auth.service";
-import { environment } from "@environments/environment";
+import { Component, inject, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '@core/services/auth.service';
+import { environment } from '@environments/environment';
 
 @Component({
   templateUrl: './register.component.html',
-  selector: "app-register",
+  selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink]
-  })
+  imports: [CommonModule, FormsModule, RouterLink],
+})
 export class RegisterComponent {
   readonly authService = inject(AuthService);
   readonly router = inject(Router);
   readonly appName = environment.appName;
 
   userData = signal({
-    email: "",
-    password: "",
-    fullName: "",
-    role: "student"
+    email: '',
+    password: '',
+    fullName: '',
+    role: 'student',
   });
 
-  readonly confirmPassword = signal("");
+  readonly confirmPassword = signal('');
   readonly showPassword = signal(false);
   readonly acceptTerms = signal(false);
   readonly registrationSuccess = signal(false);
@@ -44,18 +44,18 @@ export class RegisterComponent {
 
   readonly passwordStrengthClass = computed(() => {
     const strength = this.passwordStrength();
-    if (strength < 25) return "bg-danger";
-    if (strength < 50) return "bg-warning";
-    if (strength < 75) return "bg-info";
-    return "bg-success";
+    if (strength < 25) return 'bg-danger';
+    if (strength < 50) return 'bg-warning';
+    if (strength < 75) return 'bg-info';
+    return 'bg-success';
   });
 
   readonly passwordStrengthText = computed(() => {
     const strength = this.passwordStrength();
-    if (strength < 25) return "Weak password";
-    if (strength < 50) return "Fair password";
-    if (strength < 75) return "Good password";
-    return "Strong password";
+    if (strength < 25) return 'Weak password';
+    if (strength < 50) return 'Fair password';
+    if (strength < 75) return 'Good password';
+    return 'Strong password';
   });
 
   readonly isFormValid = computed(() => {
@@ -79,16 +79,14 @@ export class RegisterComponent {
       next: (response) => {
         this.authService.loading.set(false);
         // Redirect immediately after successful registration
-        const role = response.user?.role || "student";
+        const role = response.user?.role || 'student';
         this.router.navigate([`/${role}/dashboard`]);
       },
       error: (error) => {
         this.authService.loading.set(false);
-        this.authService.authError.set(
-          error.error?.detail || "Registration failed"
-        );
-        console.error("Registration error:", error);
-      }
+        this.authService.authError.set(error.error?.detail || 'Registration failed');
+        console.error('Registration error:', error);
+      },
     });
   }
 

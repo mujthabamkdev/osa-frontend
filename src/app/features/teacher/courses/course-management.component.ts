@@ -1,4 +1,3 @@
-
 // src/app/features/teacher/courses/course-management.component.ts
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -11,18 +10,18 @@ import { Course, CreateCourseRequest } from '../../../core/models/course.models'
   templateUrl: './course-management.component.html',
   selector: 'app-teacher-course-management',
   standalone: true,
-  imports: [CommonModule, FormsModule]
-  })
+  imports: [CommonModule, FormsModule],
+})
 export class TeacherCourseManagementComponent implements OnInit {
   readonly apiService = inject(ApiService);
   readonly authService = inject(AuthService);
-  
+
   readonly myCourses = signal<Course[]>([]);
   readonly loading = signal(true);
   readonly showCreateModal = signal(false);
-  readonly newCourse = signal<CreateCourseRequest>({ 
-    title: '', 
-    description: '' 
+  readonly newCourse = signal<CreateCourseRequest>({
+    title: '',
+    description: '',
   });
 
   ngOnInit(): void {
@@ -40,9 +39,15 @@ export class TeacherCourseManagementComponent implements OnInit {
         this.loading.set(false);
         // Mock data
         this.myCourses.set([
-          { id: 1, title: 'Islamic History', description: 'Comprehensive Islamic history course', teacher_id: 1, created_at: '2024-01-15' }
+          {
+            id: 1,
+            title: 'Islamic History',
+            description: 'Comprehensive Islamic history course',
+            teacher_id: 1,
+            created_at: '2024-01-15',
+          },
         ]);
-      }
+      },
     });
   }
 
@@ -53,7 +58,7 @@ export class TeacherCourseManagementComponent implements OnInit {
         this.newCourse.set({ title: '', description: '' });
         this.loadMyCourses();
       },
-      error: (err) => console.error(err)
+      error: (err) => console.error(err),
     });
   }
 
@@ -66,10 +71,10 @@ export class TeacherCourseManagementComponent implements OnInit {
   }
 
   updateTitle(title: string): void {
-    this.newCourse.update(course => ({ ...course, title }));
+    this.newCourse.update((course) => ({ ...course, title }));
   }
 
   updateDescription(description: string): void {
-    this.newCourse.update(course => ({ ...course, description }));
+    this.newCourse.update((course) => ({ ...course, description }));
   }
 }

@@ -38,7 +38,7 @@ export const guestGuard: CanActivateFn = () => {
     admin: '/admin/dashboard',
     teacher: '/teacher/dashboard',
     student: '/student/dashboard',
-    parent: '/parent/dashboard'
+    parent: '/parent/dashboard',
   };
   router.navigate([dashboardRoutes[role!] ?? '/']);
   return false;

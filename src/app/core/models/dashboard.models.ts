@@ -18,7 +18,7 @@ export interface EnrolledCourse {
   title: string;
   description: string;
   progress: number;
-  status: "not-started" | "in-progress" | "completed";
+  status: 'not-started' | 'in-progress' | 'completed';
   lastAccessed: string;
   instructor?: string;
   levels?: CourseLevel[];

@@ -9,18 +9,18 @@ import { User, CreateUserRequest } from '../../../core/models/user.models';
   templateUrl: './user-management.component.html',
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule]
-  })
+  imports: [CommonModule, FormsModule],
+})
 export class UserManagementComponent implements OnInit {
   readonly apiService = inject(ApiService);
-  
+
   readonly users = signal<User[]>([]);
   readonly loading = signal(true);
   readonly showCreateModal = signal(false);
-  readonly newUser = signal<CreateUserRequest>({ 
-    email: '', 
-    password: '', 
-    role: 'student' 
+  readonly newUser = signal<CreateUserRequest>({
+    email: '',
+    password: '',
+    role: 'student',
   });
 
   ngOnInit(): void {
@@ -38,10 +38,22 @@ export class UserManagementComponent implements OnInit {
         this.loading.set(false);
         // Mock data
         this.users.set([
-          { id: 1, email: 'admin@example.com', role: 'admin', is_active: true, created_at: '2024-01-15' },
-          { id: 2, email: 'teacher@example.com', role: 'teacher', is_active: true, created_at: '2024-01-20' }
+          {
+            id: 1,
+            email: 'admin@example.com',
+            role: 'admin',
+            is_active: true,
+            created_at: '2024-01-15',
+          },
+          {
+            id: 2,
+            email: 'teacher@example.com',
+            role: 'teacher',
+            is_active: true,
+            created_at: '2024-01-20',
+          },
         ]);
-      }
+      },
     });
   }
 
@@ -52,7 +64,7 @@ export class UserManagementComponent implements OnInit {
         this.newUser.set({ email: '', password: '', role: 'student' });
         this.loadUsers();
       },
-      error: (err) => console.error(err)
+      error: (err) => console.error(err),
     });
   }
 
@@ -64,20 +76,20 @@ export class UserManagementComponent implements OnInit {
     if (confirm(`Delete user ${user.email}?`)) {
       this.apiService.deleteUser(user.id).subscribe({
         next: () => this.loadUsers(),
-        error: (err) => console.error(err)
+        error: (err) => console.error(err),
       });
     }
   }
 
   updateEmail(email: string): void {
-    this.newUser.update(user => ({ ...user, email }));
+    this.newUser.update((user) => ({ ...user, email }));
   }
 
   updatePassword(password: string): void {
-    this.newUser.update(user => ({ ...user, password }));
+    this.newUser.update((user) => ({ ...user, password }));
   }
 
   updateRole(role: any): void {
-    this.newUser.update(user => ({ ...user, role }));
+    this.newUser.update((user) => ({ ...user, role }));
   }
 }

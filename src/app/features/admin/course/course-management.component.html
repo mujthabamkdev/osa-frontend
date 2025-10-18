@@ -1,88 +1,115 @@
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Course Management</h2>
+    <button
+      class="btn btn-primary"
+      (click)="showCreateModal.set(true)"
+    >
+      <i class="bi bi-plus-circle me-1"></i>
+      Create Course
+    </button>
+  </div>
 
-    <div class="container py-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Course Management</h2>
-        <button class="btn btn-primary" (click)="showCreateModal.set(true)">
-          <i class="bi bi-plus-circle me-1"></i>
-          Create Course
-        </button>
+  <!-- Courses Grid -->
+  <div class="row g-4">
+    @if (loading()) {
+      <div class="col-12 text-center py-4">
+        <div class="spinner-border text-primary"></div>
       </div>
-
-      <!-- Courses Grid -->
-      <div class="row g-4">
-        @if (loading()) {
-          <div class="col-12 text-center py-4">
-            <div class="spinner-border text-primary"></div>
-          </div>
-        } @else {
-          @for (course of courses(); track course.id) {
-            <div class="col-md-6 col-lg-4">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h5 class="card-title">{{ course.title }}</h5>
-                  <p class="card-text text-muted">{{ course.description }}</p>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">{{ course.created_at | date:'short' }}</small>
-                    <div class="btn-group btn-group-sm">
-                      <button class="btn btn-outline-primary" (click)="editCourse(course)">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button class="btn btn-outline-danger" (click)="deleteCourse(course)">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </div>
+    } @else {
+      @for (course of courses(); track course.id) {
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">{{ course.title }}</h5>
+              <p class="card-text text-muted">{{ course.description }}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">{{ course.created_at | date: 'short' }}</small>
+                <div class="btn-group btn-group-sm">
+                  <button
+                    class="btn btn-outline-primary"
+                    (click)="editCourse(course)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-outline-danger"
+                    (click)="deleteCourse(course)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
                 </div>
-              </div>
-            </div>
-          }
-        }
-      </div>
-
-      <!-- Create Course Modal -->
-      @if (showCreateModal()) {
-        <div class="modal show d-block" style="background: rgba(0,0,0,0.5)">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Create New Course</h5>
-                <button type="button" class="btn-close" (click)="showCreateModal.set(false)"></button>
-              </div>
-              <div class="modal-body">
-                <form (ngSubmit)="createCourse()" #courseForm="ngForm">
-                  <div class="mb-3">
-                    <label class="form-label">Title</label>
-                    <input 
-                      type="text" 
-                      class="form-control"
-                      [ngModel]="newCourse().title"
-                      (ngModelChange)="updateTitle($event)"
-                      name="title" 
-                      required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <textarea 
-                      class="form-control" 
-                      rows="3"
-                      [ngModel]="newCourse().description"
-                      (ngModelChange)="updateDescription($event)"
-                      name="description" 
-                      required></textarea>
-                  </div>
-                  <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary" (click)="showCreateModal.set(false)">
-                      Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary" [disabled]="courseForm.invalid">
-                      Create Course
-                    </button>
-                  </div>
-                </form>
               </div>
             </div>
           </div>
         </div>
       }
+    }
+  </div>
+
+  <!-- Create Course Modal -->
+  @if (showCreateModal()) {
+    <div
+      class="modal show d-block"
+      style="background: rgba(0, 0, 0, 0.5)"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Create New Course</h5>
+            <button
+              type="button"
+              class="btn-close"
+              (click)="showCreateModal.set(false)"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form
+              (ngSubmit)="createCourse()"
+              #courseForm="ngForm"
+            >
+              <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [ngModel]="newCourse().title"
+                  (ngModelChange)="updateTitle($event)"
+                  name="title"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea
+                  class="form-control"
+                  rows="3"
+                  [ngModel]="newCourse().description"
+                  (ngModelChange)="updateDescription($event)"
+                  name="description"
+                  required
+                ></textarea>
+              </div>
+              <div class="d-flex justify-content-end gap-2">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="showCreateModal.set(false)"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="courseForm.invalid"
+                >
+                  Create Course
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-  
+  }
+</div>

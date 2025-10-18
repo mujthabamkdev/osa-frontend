@@ -1,14 +1,14 @@
-import { Routes } from "@angular/router";
-import { StudentCoursesComponent } from "./student-courses.component";
-import { ClassDetailsComponent } from "./class-details.component";
+import { Routes } from '@angular/router';
+import { StudentCoursesComponent } from './student-courses.component';
+import { ClassDetailsComponent } from './class-details.component';
 
 export const coursesRoutes: Routes = [
   {
-    path: "",
+    path: '',
     component: StudentCoursesComponent,
   },
   {
-    path: ":id",
+    path: ':id',
     component: ClassDetailsComponent,
   },
 ];

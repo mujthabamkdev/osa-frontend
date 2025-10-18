@@ -1,14 +1,14 @@
 // src/app/core/services/notification.service.ts
-import { Injectable, signal } from "@angular/core";
+import { Injectable, signal } from '@angular/core';
 
 export interface Notification {
   id: number;
-  type: "success" | "error" | "warning" | "info";
+  type: 'success' | 'error' | 'warning' | 'info';
   message: string;
 }
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class NotificationService {
   private notifications = signal<Notification[]>([]);
@@ -19,9 +19,7 @@ export class NotificationService {
   }
 
   remove(id: number) {
-    this.notifications.update((n) =>
-      n.filter((notification) => notification.id !== id)
-    );
+    this.notifications.update((n) => n.filter((notification) => notification.id !== id));
   }
 
   allNotifications() {
@@ -32,7 +30,7 @@ export class NotificationService {
   error(message: string) {
     this.add({
       id: Date.now(),
-      type: "error",
+      type: 'error',
       message,
     });
   }
@@ -40,7 +38,7 @@ export class NotificationService {
   success(message: string) {
     this.add({
       id: Date.now(),
-      type: "success",
+      type: 'success',
       message,
     });
   }
@@ -48,7 +46,7 @@ export class NotificationService {
   warning(message: string) {
     this.add({
       id: Date.now(),
-      type: "warning",
+      type: 'warning',
       message,
     });
   }
@@ -56,7 +54,7 @@ export class NotificationService {
   info(message: string) {
     this.add({
       id: Date.now(),
-      type: "info",
+      type: 'info',
       message,
     });
   }

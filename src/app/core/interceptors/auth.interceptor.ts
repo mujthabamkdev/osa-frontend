@@ -1,14 +1,14 @@
 // src/app/core/interceptors/auth.interceptor.ts
-import { inject } from "@angular/core";
+import { inject } from '@angular/core';
 import {
   HttpInterceptorFn,
   HttpRequest,
   HttpEvent,
   HttpErrorResponse,
   HttpHandlerFn,
-} from "@angular/common/http";
-import { Observable, catchError, throwError, switchMap, of } from "rxjs";
-import { AuthService } from "../services/auth.service";
+} from '@angular/common/http';
+import { Observable, catchError, throwError, switchMap, of } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
 let isRefreshing = false;
 
@@ -18,7 +18,7 @@ export const authInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<unknown>> => {
   const authService = inject(AuthService);
   const token = authService.getToken();
-  const isAuthEndpoint = req.url.includes("/auth/");
+  const isAuthEndpoint = req.url.includes('/auth/');
 
   if (token && !isAuthEndpoint) {
     req = addTokenHeader(req, token);
@@ -34,10 +34,7 @@ export const authInterceptor: HttpInterceptorFn = (
   );
 };
 
-function addTokenHeader(
-  request: HttpRequest<unknown>,
-  token: string
-): HttpRequest<unknown> {
+function addTokenHeader(request: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
   return request.clone({
     setHeaders: { Authorization: `Bearer ${token}` },
   });
@@ -66,5 +63,5 @@ function handle401Error(
   }
 
   authService.logout();
-  return throwError(() => new Error("Authentication failed"));
+  return throwError(() => new Error('Authentication failed'));
 }

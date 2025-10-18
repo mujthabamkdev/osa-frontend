@@ -1,10 +1,10 @@
-import { Component, inject, signal, OnInit, computed, DestroyRef } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
-import { FormsModule } from "@angular/forms";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { finalize } from "rxjs";
-import { AuthService } from "../../../core/services/auth.service";
-import { ApiService } from "../../../core/services/api.service";
+import { Component, inject, signal, OnInit, computed, DestroyRef } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
+import { ApiService } from '../../../core/services/api.service';
 
 // Types
 interface Teacher {
@@ -95,11 +95,11 @@ interface CourseDetails {
 }
 
 @Component({
-  selector: "app-course-details",
+  selector: 'app-course-details',
   standalone: true,
   imports: [FormsModule],
   templateUrl: './course-details.component.html',
-  styleUrl: './course-details.component.css'
+  styleUrl: './course-details.component.css',
 })
 export class CourseDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -117,7 +117,7 @@ export class CourseDetailsComponent implements OnInit {
   collapsedSubjects = signal<Map<number, boolean>>(new Map());
 
   ngOnInit(): void {
-    const courseId = this.route.snapshot.params["id"];
+    const courseId = this.route.snapshot.params['id'];
     if (courseId) {
       this.loadCourseDetails(+courseId);
     }
@@ -139,17 +139,17 @@ export class CourseDetailsComponent implements OnInit {
       .subscribe({
         next: (rawData: any) => {
           console.log('Course details API response:', rawData);
-          
+
           // Transform backend data structure to match frontend expectations
           const data = this.transformCourseData(rawData);
           console.log('Course details transformed:', data);
-          
+
           this.courseDetails.set(data);
         },
         error: (error) => {
-          console.error("Failed to load course details:", error);
-          this.error.set("Failed to load course details. Please try again.");
-        }
+          console.error('Failed to load course details:', error);
+          this.error.set('Failed to load course details. Please try again.');
+        },
       });
   }
 
@@ -162,7 +162,7 @@ export class CourseDetailsComponent implements OnInit {
     // Build subjects with lessons from classes structure
     if (rawData.classes && Array.isArray(rawData.classes)) {
       console.log('Processing classes structure...');
-      
+
       for (const classObj of rawData.classes) {
         if (classObj.subjects && Array.isArray(classObj.subjects)) {
           for (const subject of classObj.subjects) {
@@ -171,8 +171,10 @@ export class CourseDetailsComponent implements OnInit {
             // Transform sessions into lessons
             if (subject.sessions && Array.isArray(subject.sessions)) {
               // Sort sessions by order first
-              const sortedSessions = subject.sessions.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
-              
+              const sortedSessions = subject.sessions.sort(
+                (a: any, b: any) => (a.order || 0) - (b.order || 0)
+              );
+
               // Create lessons with "Day X" naming
               sortedSessions.forEach((session: any, dayIndex: number) => {
                 const dayNumber = dayIndex + 1; // Day 1, Day 2, etc.
@@ -189,10 +191,10 @@ export class CourseDetailsComponent implements OnInit {
                     file_type: content.content_type || 'document',
                     file_url: content.file_url || '',
                     source: content.source || 'upload',
-                    description: content.description || ''
+                    description: content.description || '',
                   })),
                   quiz: session.quiz || null,
-                  progress: session.progress || null
+                  progress: session.progress || null,
                 };
                 lessons.push(lesson);
               });
@@ -203,7 +205,7 @@ export class CourseDetailsComponent implements OnInit {
               title: subject.name || 'Untitled Subject',
               description: subject.description || '',
               order: subject.order_in_class || 0,
-              lessons: lessons
+              lessons: lessons,
             });
           }
         }
@@ -219,7 +221,7 @@ export class CourseDetailsComponent implements OnInit {
       created_at: rawData.created_at,
       subjects,
       schedule,
-      live_classes: rawData.live_classes || []
+      live_classes: rawData.live_classes || [],
     };
 
     console.log('Transformation complete. Subjects:', subjects.length);

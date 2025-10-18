@@ -1,14 +1,14 @@
-import { Component, inject, signal } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { AuthService } from "../../../core/services/auth.service";
-import { ApiService } from "../../../core/services/api.service";
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/services/auth.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   templateUrl: './teacher-dashboard.component.html',
-  selector: "app-teacher-dashboard",
+  selector: 'app-teacher-dashboard',
   standalone: true,
-  imports: [CommonModule]
-  })
+  imports: [CommonModule],
+})
 export class TeacherDashboardComponent {
   readonly authService = inject(AuthService);
   readonly apiService = inject(ApiService);

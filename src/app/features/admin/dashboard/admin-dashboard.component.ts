@@ -1,15 +1,15 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { ApiService } from "../../../core/services/api.service";
-import { AuthService } from "../../../core/services/auth.service";
-import { DashboardStats } from "../../../core/models/dashboard.models";
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ApiService } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { DashboardStats } from '../../../core/models/dashboard.models';
 
 @Component({
   templateUrl: './admin-dashboard.component.html',
-  selector: "app-admin-dashboard",
+  selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule]
-  })
+  imports: [CommonModule],
+})
 export class AdminDashboardComponent implements OnInit {
   readonly apiService = inject(ApiService);
   readonly authService = inject(AuthService);
@@ -25,7 +25,7 @@ export class AdminDashboardComponent implements OnInit {
       next: (data) => this.stats.set(data),
       error: () => {
         // Optional: set default or handle error
-      }
+      },
     });
   }
 }

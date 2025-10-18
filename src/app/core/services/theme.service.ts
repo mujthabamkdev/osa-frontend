@@ -3,11 +3,11 @@ import { Injectable, signal, effect } from '@angular/core';
 export type Theme = 'light' | 'dark' | 'auto';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ThemeService {
   private readonly currentTheme = signal<Theme>('auto');
-  
+
   readonly theme = this.currentTheme.asReadonly();
 
   constructor() {
@@ -36,10 +36,10 @@ export class ThemeService {
 
   private applyTheme(theme: Theme): void {
     const root = document.documentElement;
-    
+
     // Remove existing theme classes
     root.classList.remove('light-theme', 'dark-theme');
-    
+
     if (theme === 'auto') {
       // Use system preference
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

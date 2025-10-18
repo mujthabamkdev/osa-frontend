@@ -1,123 +1,154 @@
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>User Management</h2>
+    <button
+      class="btn btn-primary"
+      (click)="showCreateModal.set(true)"
+    >
+      <i class="bi bi-plus-circle me-1"></i>
+      Add User
+    </button>
+  </div>
 
-    <div class="container py-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>User Management</h2>
-        <button class="btn btn-primary" (click)="showCreateModal.set(true)">
-          <i class="bi bi-plus-circle me-1"></i>
-          Add User
-        </button>
-      </div>
-
-      <!-- Users Table -->
-      <div class="card">
-        <div class="card-body">
-          @if (loading()) {
-            <div class="text-center py-4">
-              <div class="spinner-border text-primary"></div>
-            </div>
-          } @else {
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (user of users(); track user.id) {
-                    <tr>
-                      <td>{{ user.email }}</td>
-                      <td>
-                        <span class="badge bg-primary">{{ user.role | titlecase }}</span>
-                      </td>
-                      <td>
-                        <span class="badge" [class]="user.is_active ? 'bg-success' : 'bg-danger'">
-                          {{ user.is_active ? 'Active' : 'Inactive' }}
-                        </span>
-                      </td>
-                      <td>{{ user.created_at | date:'short' }}</td>
-                      <td>
-                        <div class="btn-group btn-group-sm">
-                          <button class="btn btn-outline-primary" (click)="editUser(user)">
-                            <i class="bi bi-pencil"></i>
-                          </button>
-                          <button class="btn btn-outline-danger" (click)="deleteUser(user)">
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
+  <!-- Users Table -->
+  <div class="card">
+    <div class="card-body">
+      @if (loading()) {
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary"></div>
         </div>
-      </div>
-
-      <!-- Create User Modal -->
-      @if (showCreateModal()) {
-        <div class="modal show d-block" style="background: rgba(0,0,0,0.5)">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Create New User</h5>
-                <button type="button" class="btn-close" (click)="showCreateModal.set(false)"></button>
-              </div>
-              <div class="modal-body">
-                <form (ngSubmit)="createUser()" #userForm="ngForm">
-                  <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input 
-                      type="email" 
-                      class="form-control"
-                      [ngModel]="newUser().email"
-                      (ngModelChange)="updateEmail($event)"
-                      name="email" 
-                      required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input 
-                      type="password" 
-                      class="form-control"
-                      [ngModel]="newUser().password"
-                      (ngModelChange)="updatePassword($event)"
-                      name="password" 
-                      required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Role</label>
-                    <select 
-                      class="form-select"
-                      [ngModel]="newUser().role"
-                      (ngModelChange)="updateRole($event)"
-                      name="role" 
-                      required>
-                      <option value="">Select Role</option>
-                      <option value="admin">Admin</option>
-                      <option value="teacher">Teacher</option>
-                      <option value="student">Student</option>
-                      <option value="parent">Parent</option>
-                    </select>
-                  </div>
-                  <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary" (click)="showCreateModal.set(false)">
-                      Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid">
-                      Create User
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users(); track user.id) {
+                <tr>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    <span class="badge bg-primary">{{ user.role | titlecase }}</span>
+                  </td>
+                  <td>
+                    <span
+                      class="badge"
+                      [class]="user.is_active ? 'bg-success' : 'bg-danger'"
+                    >
+                      {{ user.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>{{ user.created_at | date: 'short' }}</td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button
+                        class="btn btn-outline-primary"
+                        (click)="editUser(user)"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button
+                        class="btn btn-outline-danger"
+                        (click)="deleteUser(user)"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
     </div>
-  
+  </div>
+
+  <!-- Create User Modal -->
+  @if (showCreateModal()) {
+    <div
+      class="modal show d-block"
+      style="background: rgba(0, 0, 0, 0.5)"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Create New User</h5>
+            <button
+              type="button"
+              class="btn-close"
+              (click)="showCreateModal.set(false)"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form
+              (ngSubmit)="createUser()"
+              #userForm="ngForm"
+            >
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  [ngModel]="newUser().email"
+                  (ngModelChange)="updateEmail($event)"
+                  name="email"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  [ngModel]="newUser().password"
+                  (ngModelChange)="updatePassword($event)"
+                  name="password"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Role</label>
+                <select
+                  class="form-select"
+                  [ngModel]="newUser().role"
+                  (ngModelChange)="updateRole($event)"
+                  name="role"
+                  required
+                >
+                  <option value="">Select Role</option>
+                  <option value="admin">Admin</option>
+                  <option value="teacher">Teacher</option>
+                  <option value="student">Student</option>
+                  <option value="parent">Parent</option>
+                </select>
+              </div>
+              <div class="d-flex justify-content-end gap-2">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="showCreateModal.set(false)"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="userForm.invalid"
+                >
+                  Create User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

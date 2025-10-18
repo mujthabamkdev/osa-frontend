@@ -5,14 +5,9 @@ import { RouterModule } from '@angular/router';
 
 @Component({
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    RouterModule
-  ],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   selector: 'app-base',
-  templateUrl: './base.component.html'
+  templateUrl: './base.component.html',
 })
 export class BaseComponent {
   // Common functionality can go here

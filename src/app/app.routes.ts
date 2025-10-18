@@ -1,135 +1,127 @@
 // src/app/app.routes.ts
-import { Routes } from "@angular/router";
-import { authGuard } from "./core/guards/auth.guard";
-import { guestGuard } from "./core/guards/guest.guard";
-import { roleGuard } from "./core/guards/role.guard";
+import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { guestGuard } from './core/guards/guest.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
-    path: "",
-    redirectTo: "/auth/login",
-    pathMatch: "full",
+    path: '',
+    redirectTo: '/auth/login',
+    pathMatch: 'full',
   },
   {
-    path: "auth",
+    path: 'auth',
     canActivate: [guestGuard],
     children: [
       {
-        path: "login",
+        path: 'login',
         loadComponent: () =>
-          import("./features/auth/login/login.component").then(
-            (m) => m.LoginComponent
-          ),
+          import('./features/auth/login/login.component').then((m) => m.LoginComponent),
       },
       {
-        path: "register",
+        path: 'register',
         loadComponent: () =>
-          import("./features/auth/register/register.component").then(
-            (m) => m.RegisterComponent
-          ),
+          import('./features/auth/register/register.component').then((m) => m.RegisterComponent),
       },
     ],
   },
   {
-    path: "admin",
+    path: 'admin',
     canActivate: [authGuard, roleGuard],
-    data: { role: "admin" },
+    data: { role: 'admin' },
     children: [
       {
-        path: "dashboard",
+        path: 'dashboard',
         loadComponent: () =>
-          import("./features/admin/dashboard/admin-dashboard.component").then(
+          import('./features/admin/dashboard/admin-dashboard.component').then(
             (m) => m.AdminDashboardComponent
           ),
       },
       {
-        path: "users",
+        path: 'users',
         loadComponent: () =>
-          import("./features/admin/users/user-management.component").then(
+          import('./features/admin/users/user-management.component').then(
             (m) => m.UserManagementComponent
           ),
       },
       {
-        path: "courses",
+        path: 'courses',
         loadComponent: () =>
-          import("./features/admin/course/course-management.component").then(
+          import('./features/admin/course/course-management.component').then(
             (m) => m.CourseManagementComponent
           ),
       },
     ],
   },
   {
-    path: "teacher",
+    path: 'teacher',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ["teacher", "admin"] },
+    data: { roles: ['teacher', 'admin'] },
     children: [
       {
-        path: "dashboard",
+        path: 'dashboard',
         loadComponent: () =>
-          import(
-            "./features/teacher/dashboard/teacher-dashboard.component"
-          ).then((m) => m.TeacherDashboardComponent),
+          import('./features/teacher/dashboard/teacher-dashboard.component').then(
+            (m) => m.TeacherDashboardComponent
+          ),
       },
       {
-        path: "courses",
+        path: 'courses',
         loadComponent: () =>
-          import("./features/teacher/courses/course-management.component").then(
+          import('./features/teacher/courses/course-management.component').then(
             (m) => m.TeacherCourseManagementComponent
           ),
       },
     ],
   },
   {
-    path: "student",
+    path: 'student',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ["student", "admin"] },
+    data: { roles: ['student', 'admin'] },
     children: [
       {
-        path: "dashboard",
+        path: 'dashboard',
         loadComponent: () =>
-          import(
-            "./features/student/dashboard/student-dashboard.component"
-          ).then((m) => m.StudentDashboardComponent),
+          import('./features/student/dashboard/student-dashboard.component').then(
+            (m) => m.StudentDashboardComponent
+          ),
       },
       {
-        path: "courses",
+        path: 'courses',
         loadChildren: () =>
-          import("./features/student/courses/courses.routes").then(
-            (m) => m.coursesRoutes
-          ),
+          import('./features/student/courses/courses.routes').then((m) => m.coursesRoutes),
       },
     ],
   },
   {
-    path: "parent",
+    path: 'parent',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ["parent", "admin"] },
+    data: { roles: ['parent', 'admin'] },
     children: [
       {
-        path: "dashboard",
+        path: 'dashboard',
         loadComponent: () =>
-          import("./features/parent/dashboard/parent-dashboard.component").then(
+          import('./features/parent/dashboard/parent-dashboard.component').then(
             (m) => m.ParentDashboardComponent
           ),
       },
     ],
   },
   {
-    path: "unauthorized",
+    path: 'unauthorized',
     loadComponent: () =>
-      import("./shared/components/unauthorized/unauthorized.component").then(
+      import('./shared/components/unauthorized/unauthorized.component').then(
         (m) => m.UnauthorizedComponent
       ),
   },
   {
-    path: "not-found",
+    path: 'not-found',
     loadComponent: () =>
-      import("./shared/components/not-found/not-found.component").then(
-        (m) => m.NotFoundComponent
-      ),
+      import('./shared/components/not-found/not-found.component').then((m) => m.NotFoundComponent),
   },
   {
-    path: "**",
-    redirectTo: "/not-found",
+    path: '**',
+    redirectTo: '/not-found',
   },
 ];

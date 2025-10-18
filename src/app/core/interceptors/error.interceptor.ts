@@ -3,10 +3,10 @@ import {
   HttpErrorResponse,
   HttpHandlerFn,
   HttpRequest,
-} from "@angular/common/http";
-import { inject } from "@angular/core";
-import { catchError, throwError } from "rxjs";
-import { NotificationService } from "../services/notification.service";
+} from '@angular/common/http';
+import { inject } from '@angular/core';
+import { catchError, throwError } from 'rxjs';
+import { NotificationService } from '../services/notification.service';
 
 export const errorInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
@@ -16,7 +16,7 @@ export const errorInterceptor: HttpInterceptorFn = (
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      let errorMessage = "An error occurred";
+      let errorMessage = 'An error occurred';
 
       if (error.error instanceof ErrorEvent) {
         errorMessage = error.error.message;

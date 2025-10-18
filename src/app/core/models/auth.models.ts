@@ -20,13 +20,13 @@ export interface TokenPayload {
   exp: number;
 }
 
-export type UserRole = "admin" | "teacher" | "student" | "parent";
+export type UserRole = 'admin' | 'teacher' | 'student' | 'parent';
 
 // src/app/core/models/user.models.ts
 export interface User {
   id: number;
   email: string;
-  role: "admin" | "teacher" | "student" | "parent";
+  role: 'admin' | 'teacher' | 'student' | 'parent';
   is_active: boolean;
   created_at: string;
 }
@@ -34,7 +34,7 @@ export interface User {
 export interface CreateUserRequest {
   email: string;
   password: string;
-  role: "admin" | "teacher" | "student" | "parent";
+  role: 'admin' | 'teacher' | 'student' | 'parent';
 }
 
 export interface UserResponse {
@@ -74,7 +74,7 @@ export interface Enrollment {
   course_id: number;
   enrolled_at: string;
   progress: number;
-  status: "active" | "completed" | "dropped";
+  status: 'active' | 'completed' | 'dropped';
 }
 
 export interface EnrollmentRequest {

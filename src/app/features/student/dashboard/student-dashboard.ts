@@ -1,10 +1,10 @@
 // src/app/features/student/dashboard/student-dashboard.component.ts - FIXED VERSION
-import { Component, inject, signal, computed, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { RouterLink } from "@angular/router";
-import { ApiService } from "../../../core/services/api.service";
-import { AuthService } from "../../../core/services/auth.service";
-import { Course } from "../../../core/models/course.models";
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { ApiService } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { Course } from '../../../core/models/course.models';
 
 interface StudentProgress {
   course_id: number;
@@ -16,7 +16,7 @@ interface StudentProgress {
 }
 
 @Component({
-  selector: "app-student-dashboard",
+  selector: 'app-student-dashboard',
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
@@ -25,16 +25,20 @@ interface StudentProgress {
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h2 class="mb-0 fw-bold">My Learning Dashboard</h2>
-          <p class="text-muted mb-0">
-            Welcome back, {{ authService.user()?.email }}
-          </p>
+          <p class="text-muted mb-0">Welcome back, {{ authService.user()?.email }}</p>
         </div>
         <div class="d-flex gap-2">
-          <button class="btn btn-outline-secondary" (click)="refreshData()">
+          <button
+            class="btn btn-outline-secondary"
+            (click)="refreshData()"
+          >
             <i class="bi bi-arrow-clockwise me-1"></i>
             Refresh
           </button>
-          <button class="btn btn-outline-danger" (click)="logout()">
+          <button
+            class="btn btn-outline-danger"
+            (click)="logout()"
+          >
             <i class="bi bi-box-arrow-right me-1"></i>
             Logout
           </button>
@@ -86,96 +90,95 @@ interface StudentProgress {
         <!-- My Courses -->
         <div class="col-lg-8">
           <div class="card h-100">
-            <div
-              class="card-header d-flex justify-content-between align-items-center"
-            >
+            <div class="card-header d-flex justify-content-between align-items-center">
               <h5 class="mb-0">My Courses</h5>
-              <a routerLink="/student/courses" class="btn btn-primary btn-sm">
+              <a
+                routerLink="/student/courses"
+                class="btn btn-primary btn-sm"
+              >
                 <i class="bi bi-plus-circle me-1"></i>
                 Browse Courses
               </a>
             </div>
             <div class="card-body">
               @if (apiService.loading()) {
-              <div class="text-center py-4">
-                <div class="spinner-border text-primary"></div>
-                <p class="mt-2 text-muted">Loading your courses...</p>
-              </div>
+                <div class="text-center py-4">
+                  <div class="spinner-border text-primary"></div>
+                  <p class="mt-2 text-muted">Loading your courses...</p>
+                </div>
               } @else if (enrolledCourses().length === 0) {
-              <div class="text-center py-5">
-                <i class="bi bi-book display-1 text-muted mb-3"></i>
-                <h4>No Courses Yet</h4>
-                <p class="text-muted mb-4">
-                  Start your learning journey by enrolling in a course
-                </p>
-                <a routerLink="/student/courses" class="btn btn-primary">
-                  <i class="bi bi-search me-1"></i>
-                  Browse Available Courses
-                </a>
-              </div>
+                <div class="text-center py-5">
+                  <i class="bi bi-book display-1 text-muted mb-3"></i>
+                  <h4>No Courses Yet</h4>
+                  <p class="text-muted mb-4">
+                    Start your learning journey by enrolling in a course
+                  </p>
+                  <a
+                    routerLink="/student/courses"
+                    class="btn btn-primary"
+                  >
+                    <i class="bi bi-search me-1"></i>
+                    Browse Available Courses
+                  </a>
+                </div>
               } @else {
-              <div class="row g-3">
-                @for (course of enrolledCourses(); track course.id) {
-                <div class="col-md-6">
-                  <div class="card border h-100">
-                    <div class="card-body">
-                      <div
-                        class="d-flex justify-content-between align-items-start mb-2"
-                      >
-                        <h6 class="card-title mb-0">{{ course.title }}</h6>
-                        <span class="badge bg-success">Active</span>
-                      </div>
-                      <p class="card-text text-muted small mb-3">
-                        {{ course.description }}
-                      </p>
+                <div class="row g-3">
+                  @for (course of enrolledCourses(); track course.id) {
+                    <div class="col-md-6">
+                      <div class="card border h-100">
+                        <div class="card-body">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title mb-0">{{ course.title }}</h6>
+                            <span class="badge bg-success">Active</span>
+                          </div>
+                          <p class="card-text text-muted small mb-3">
+                            {{ course.description }}
+                          </p>
 
-                      <!-- Progress Bar -->
-                      <div class="mb-3">
-                        <div
-                          class="d-flex justify-content-between align-items-center mb-1"
-                        >
-                          <small class="text-muted">Progress</small>
-                          <small class="fw-medium"
-                            >{{ getCourseProgress(course.id) }}%</small
-                          >
-                        </div>
-                        <div class="progress" style="height: 6px;">
-                          <div
-                            class="progress-bar bg-success"
-                            role="progressbar"
-                            [style.width.%]="getCourseProgress(course.id)"
-                          ></div>
-                        </div>
-                      </div>
+                          <!-- Progress Bar -->
+                          <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <small class="text-muted">Progress</small>
+                              <small class="fw-medium">{{ getCourseProgress(course.id) }}%</small>
+                            </div>
+                            <div
+                              class="progress"
+                              style="height: 6px;"
+                            >
+                              <div
+                                class="progress-bar bg-success"
+                                role="progressbar"
+                                [style.width.%]="getCourseProgress(course.id)"
+                              ></div>
+                            </div>
+                          </div>
 
-                      <div
-                        class="d-flex justify-content-between align-items-center"
-                      >
-                        <small class="text-muted">
-                          <i class="bi bi-calendar me-1"></i>
-                          {{ course.created_at | date : "mediumDate" }}
-                        </small>
-                        <div class="btn-group btn-group-sm">
-                          <button
-                            class="btn btn-outline-primary"
-                            (click)="continueCourse(course)"
-                          >
-                            <i class="bi bi-play-circle me-1"></i>
-                            Continue
-                          </button>
-                          <button
-                            class="btn btn-outline-secondary"
-                            (click)="viewCourseDetails(course)"
-                          >
-                            <i class="bi bi-info-circle"></i>
-                          </button>
+                          <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                              <i class="bi bi-calendar me-1"></i>
+                              {{ course.created_at | date: 'mediumDate' }}
+                            </small>
+                            <div class="btn-group btn-group-sm">
+                              <button
+                                class="btn btn-outline-primary"
+                                (click)="continueCourse(course)"
+                              >
+                                <i class="bi bi-play-circle me-1"></i>
+                                Continue
+                              </button>
+                              <button
+                                class="btn btn-outline-secondary"
+                                (click)="viewCourseDetails(course)"
+                              >
+                                <i class="bi bi-info-circle"></i>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  }
                 </div>
-                }
-              </div>
               }
             </div>
           </div>
@@ -189,29 +192,19 @@ interface StudentProgress {
               <h5 class="mb-0">Learning Statistics</h5>
             </div>
             <div class="card-body">
-              <div
-                class="d-flex justify-content-between align-items-center mb-3"
-              >
+              <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="fw-medium">Courses Enrolled</span>
-                <span class="badge bg-primary">{{
-                  enrolledCourses().length
-                }}</span>
+                <span class="badge bg-primary">{{ enrolledCourses().length }}</span>
               </div>
-              <div
-                class="d-flex justify-content-between align-items-center mb-3"
-              >
+              <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="fw-medium">Lessons Completed</span>
                 <span class="badge bg-success">{{ completedLessons() }}</span>
               </div>
-              <div
-                class="d-flex justify-content-between align-items-center mb-3"
-              >
+              <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="fw-medium">Study Streak</span>
                 <span class="badge bg-warning">{{ studyStreak() }} days</span>
               </div>
-              <div
-                class="d-flex justify-content-between align-items-center mb-3"
-              >
+              <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="fw-medium">Certificates Earned</span>
                 <span class="badge bg-info">{{ certificatesEarned() }}</span>
               </div>
@@ -220,13 +213,14 @@ interface StudentProgress {
 
               <!-- Overall Progress -->
               <div class="mb-3">
-                <div
-                  class="d-flex justify-content-between align-items-center mb-2"
-                >
+                <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="fw-medium">Overall Progress</span>
                   <span class="text-muted">{{ overallProgress() }}%</span>
                 </div>
-                <div class="progress" style="height: 8px;">
+                <div
+                  class="progress"
+                  style="height: 8px;"
+                >
                   <div
                     class="progress-bar bg-gradient"
                     role="progressbar"
@@ -276,27 +270,21 @@ interface StudentProgress {
                   <div class="timeline-marker bg-success"></div>
                   <div class="timeline-content">
                     <div class="fw-medium">Completed Lesson 3</div>
-                    <div class="text-muted small">
-                      Islamic History - 2 hours ago
-                    </div>
+                    <div class="text-muted small">Islamic History - 2 hours ago</div>
                   </div>
                 </div>
                 <div class="timeline-item mb-3">
                   <div class="timeline-marker bg-primary"></div>
                   <div class="timeline-content">
                     <div class="fw-medium">Started New Course</div>
-                    <div class="text-muted small">
-                      Quran Recitation - 1 day ago
-                    </div>
+                    <div class="text-muted small">Quran Recitation - 1 day ago</div>
                   </div>
                 </div>
                 <div class="timeline-item">
                   <div class="timeline-marker bg-info"></div>
                   <div class="timeline-content">
                     <div class="fw-medium">Earned Certificate</div>
-                    <div class="text-muted small">
-                      Basic Arabic - 3 days ago
-                    </div>
+                    <div class="text-muted small">Basic Arabic - 3 days ago</div>
                   </div>
                 </div>
               </div>
@@ -307,15 +295,18 @@ interface StudentProgress {
 
       <!-- Error Display -->
       @if (apiService.apiError(); as error) {
-      <div class="alert alert-danger mt-4" role="alert">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {{ error }}
-        <button
-          type="button"
-          class="btn-close"
-          (click)="apiService.clearError()"
-        ></button>
-      </div>
+        <div
+          class="alert alert-danger mt-4"
+          role="alert"
+        >
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ error }}
+          <button
+            type="button"
+            class="btn-close"
+            (click)="apiService.clearError()"
+          ></button>
+        </div>
       }
     </div>
   `,
@@ -336,7 +327,7 @@ interface StudentProgress {
       }
 
       .timeline::before {
-        content: "";
+        content: '';
         position: absolute;
         left: 0.5rem;
         top: 0;
@@ -407,24 +398,24 @@ export class StudentDashboardComponent implements OnInit {
         this.enrolledCourses.set([
           {
             id: 1,
-            title: "Islamic Studies Foundation",
-            description: "Basic principles of Islam",
+            title: 'Islamic Studies Foundation',
+            description: 'Basic principles of Islam',
             teacher_id: 1,
-            created_at: "2024-01-15",
+            created_at: '2024-01-15',
           },
           {
             id: 2,
-            title: "Quran Recitation",
-            description: "Learn proper Quran recitation techniques",
+            title: 'Quran Recitation',
+            description: 'Learn proper Quran recitation techniques',
             teacher_id: 2,
-            created_at: "2024-01-20",
+            created_at: '2024-01-20',
           },
           {
             id: 3,
-            title: "Arabic Language Basics",
-            description: "Introduction to Arabic language",
+            title: 'Arabic Language Basics',
+            description: 'Introduction to Arabic language',
             teacher_id: 1,
-            created_at: "2024-01-25",
+            created_at: '2024-01-25',
           },
         ]);
       },
@@ -440,27 +431,27 @@ export class StudentDashboardComponent implements OnInit {
           this.progressData.set([
             {
               course_id: 1,
-              course_title: "Islamic Studies",
+              course_title: 'Islamic Studies',
               progress: 75,
               completed_lessons: 6,
               total_lessons: 8,
-              last_accessed: "2024-01-28",
+              last_accessed: '2024-01-28',
             },
             {
               course_id: 2,
-              course_title: "Quran Recitation",
+              course_title: 'Quran Recitation',
               progress: 45,
               completed_lessons: 9,
               total_lessons: 20,
-              last_accessed: "2024-01-27",
+              last_accessed: '2024-01-27',
             },
             {
               course_id: 3,
-              course_title: "Arabic Basics",
+              course_title: 'Arabic Basics',
               progress: 20,
               completed_lessons: 2,
               total_lessons: 10,
-              last_accessed: "2024-01-26",
+              last_accessed: '2024-01-26',
             },
           ]);
         },
@@ -478,12 +469,12 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   continueCourse(course: Course): void {
-    console.log("Continue course:", course);
+    console.log('Continue course:', course);
     // Navigate to course content
   }
 
   viewCourseDetails(course: Course): void {
-    console.log("View course details:", course);
+    console.log('View course details:', course);
     // Show course details modal or navigate
   }
 

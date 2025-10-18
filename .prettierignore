@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.angular/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.development
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Build outputs
+*.bundle.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Generated files
+src/main.ts.d.ts
