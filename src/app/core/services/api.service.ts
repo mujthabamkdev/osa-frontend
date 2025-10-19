@@ -3,8 +3,18 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, throwError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { User, CreateUserRequest } from '../models/user.models';
-import { Course, CreateCourseRequest } from '../models/course.models';
+import { User, CreateUserRequest, UpdateUserRequest } from '../models/user.models';
+import {
+  Course,
+  CreateCourseRequest,
+  CourseDetails,
+  CourseLesson,
+  CourseLessonContent,
+  CourseLessonContentPayload,
+  CourseLessonPayload,
+  CourseSubject,
+  CourseSubjectPayload,
+} from '../models/course.models';
 import {
   DashboardStats,
   StudentProgress,
@@ -44,6 +54,7 @@ import {
   StudentReport,
   StudentProgressEntry,
 } from '../models/teacher.models';
+import { AdminSettings, AdminSettingsUpdate } from '../models/admin.models';
 
 @Injectable({
   providedIn: 'root',
@@ -72,7 +83,7 @@ export class ApiService {
     return this.performRequest(() => this.http.get<User>(`${this.baseUrl}/users/me`));
   }
 
-  updateUser(id: number, userData: Partial<User>): Observable<User> {
+  updateUser(id: number, userData: UpdateUserRequest): Observable<User> {
     return this.performRequest(() => this.http.put<User>(`${this.baseUrl}/users/${id}`, userData));
   }
 
@@ -110,8 +121,10 @@ export class ApiService {
   }
 
   // Course Details endpoints
-  getCourseDetails(courseId: number): Observable<any> {
-    return this.performRequest(() => this.http.get<any>(`${this.baseUrl}/courses/${courseId}`));
+  getCourseDetails(courseId: number): Observable<CourseDetails> {
+    return this.performRequest(() =>
+      this.http.get<CourseDetails>(`${this.baseUrl}/courses/${courseId}`)
+    );
   }
 
   completeLesson(courseId: number, chapterId: number, quizScore?: number): Observable<any> {
@@ -130,9 +143,8 @@ export class ApiService {
 
   getCourseLevels(courseId: number): Observable<any[]> {
     return this.performRequest(() =>
-      this.http.get<any>(`${this.baseUrl}/courses/${courseId}`)
+      this.http.get<CourseDetails>(`${this.baseUrl}/courses/${courseId}`)
     ).pipe(
-      tap((response) => response),
       map((response) => {
         // Flatten subjects and their lessons into a levels array
         const levels: any[] = [];
@@ -147,7 +159,7 @@ export class ApiService {
                   subject_title: subject.name,
                   title: lesson.title,
                   description: lesson.description,
-                  order: lesson.order_in_course,
+                  order: lesson.order_in_subject,
                   progress: lesson.progress,
                   attachments: lesson.contents || [],
                   quiz: lesson.quiz,
@@ -160,6 +172,153 @@ export class ApiService {
         }
         return levels;
       })
+    );
+  }
+
+  getCourseSubjects(courseId: number): Observable<CourseSubject[]> {
+    return this.performRequest(() =>
+      this.http.get<CourseSubject[]>(`${this.baseUrl}/courses/${courseId}/subjects`)
+    );
+  }
+
+  createCourseSubject(courseId: number, payload: CourseSubjectPayload): Observable<CourseSubject> {
+    return this.performRequest(() =>
+      this.http.post<CourseSubject>(`${this.baseUrl}/courses/${courseId}/subjects`, {
+        ...payload,
+        course_id: courseId,
+      })
+    );
+  }
+
+  updateCourseSubject(
+    courseId: number,
+    subjectId: number,
+    payload: CourseSubjectPayload
+  ): Observable<CourseSubject> {
+    return this.performRequest(() =>
+      this.http.put<CourseSubject>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}`,
+        {
+          ...payload,
+          course_id: courseId,
+        }
+      )
+    );
+  }
+
+  deleteCourseSubject(courseId: number, subjectId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(`${this.baseUrl}/courses/${courseId}/subjects/${subjectId}`)
+    );
+  }
+
+  getSubjectLessons(subjectId: number): Observable<CourseLesson[]> {
+    return this.performRequest(() =>
+      this.http.get<CourseLesson[]>(`${this.baseUrl}/courses/subjects/${subjectId}/lessons`)
+    );
+  }
+
+  createSubjectLesson(
+    subjectId: number,
+    payload: CourseLessonPayload
+  ): Observable<CourseLesson> {
+    return this.performRequest(() =>
+      this.http.post<CourseLesson>(
+        `${this.baseUrl}/courses/subjects/${subjectId}/lessons`,
+        {
+          ...payload,
+          subject_id: subjectId,
+        }
+      )
+    );
+  }
+
+  updateSubjectLesson(
+    subjectId: number,
+    lessonId: number,
+    payload: Partial<CourseLessonPayload>
+  ): Observable<CourseLesson> {
+    return this.performRequest(() =>
+      this.http.put<CourseLesson>(
+        `${this.baseUrl}/courses/subjects/${subjectId}/lessons/${lessonId}`,
+        {
+          ...payload,
+          subject_id: subjectId,
+        }
+      )
+    );
+  }
+
+  deleteSubjectLesson(subjectId: number, lessonId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(`${this.baseUrl}/courses/subjects/${subjectId}/lessons/${lessonId}`)
+    );
+  }
+
+  getLessonContents(subjectId: number, lessonId: number): Observable<CourseLessonContent[]> {
+    return this.performRequest(() =>
+      this.http.get<CourseLessonContent[]>(
+        `${this.baseUrl}/courses/subjects/${subjectId}/lessons/${lessonId}/contents`
+      )
+    );
+  }
+
+  createLessonContent(
+    subjectId: number,
+    lessonId: number,
+    payload: CourseLessonContentPayload
+  ): Observable<CourseLessonContent> {
+    return this.performRequest(() =>
+      this.http.post<CourseLessonContent>(
+        `${this.baseUrl}/courses/subjects/${subjectId}/lessons/${lessonId}/contents`,
+        {
+          ...payload,
+          lesson_id: lessonId,
+        }
+      )
+    );
+  }
+
+  updateLessonContent(
+    subjectId: number,
+    lessonId: number,
+    contentId: number,
+    payload: Partial<CourseLessonContentPayload>
+  ): Observable<CourseLessonContent> {
+    return this.performRequest(() =>
+      this.http.put<CourseLessonContent>(
+        `${this.baseUrl}/courses/subjects/${subjectId}/lessons/${lessonId}/contents/${contentId}`,
+        {
+          ...payload,
+          lesson_id: lessonId,
+        }
+      )
+    );
+  }
+
+  deleteLessonContent(subjectId: number, lessonId: number, contentId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(
+        `${this.baseUrl}/courses/subjects/${subjectId}/lessons/${lessonId}/contents/${contentId}`
+      )
+    );
+  }
+
+  getAdminSettings(): Observable<AdminSettings> {
+    return this.performRequest(() =>
+      this.http.get<AdminSettings>(`${this.baseUrl}/admin/settings`)
+    );
+  }
+
+  updateAdminSettings(payload: AdminSettingsUpdate): Observable<AdminSettings> {
+    return this.performRequest(() =>
+      this.http.put<AdminSettings>(`${this.baseUrl}/admin/settings`, payload)
+    );
+  }
+
+  resetAdminSettings(): Observable<AdminSettings> {
+    return this.performRequest(() =>
+      this.http.post<AdminSettings>(`${this.baseUrl}/admin/settings/reset`, {})
     );
   }
 

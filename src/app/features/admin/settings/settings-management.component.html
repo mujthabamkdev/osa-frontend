@@ -1,0 +1,94 @@
+<div class="container py-4">
+  <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Platform Settings</h2>
+      <p class="text-muted mb-0">Manage feature availability and role permissions across the platform.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-outline-secondary" (click)="loadSettings()" [disabled]="loading() || saving()">
+        <i class="bi bi-arrow-repeat me-1"></i>
+        Refresh
+      </button>
+      <button class="btn btn-outline-danger" (click)="resetSettings()" [disabled]="saving()">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>
+        Reset Defaults
+      </button>
+      <button class="btn btn-primary" (click)="saveSettings()" [disabled]="!isDirty() || saving()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+        }
+        Save Changes
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+    </div>
+  } @else if (!localSettings()) {
+    <div class="alert alert-info mb-0">Settings are currently unavailable. Try refreshing to load the latest configuration.</div>
+  } @else {
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Feature Flags</h5>
+          </div>
+          <div class="list-group list-group-flush">
+            @for (key of featureKeys(); track key) {
+              <label class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold">{{ formatKey(key) }}</div>
+                  <small class="text-muted">{{ key }}</small>
+                </div>
+                <div class="form-check form-switch m-0">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    [checked]="localSettings()!.feature_flags[key]"
+                    (change)="updateFeatureFlag(key, $any($event.target).checked)"
+                  />
+                </div>
+              </label>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5 class="mb-0">Role Permissions</h5>
+          </div>
+          <div class="card-body">
+            @for (role of roles(); track role) {
+              <div class="mb-4">
+                <h5 class="text-capitalize">{{ role }}</h5>
+                <div class="row g-3">
+                  @for (permission of permissionKeys()[role]; track permission) {
+                    <div class="col-sm-6">
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          [id]="role + '-' + permission"
+                          [checked]="localSettings()!.role_permissions[role][permission]"
+                          (change)="updateRolePermission(role, permission, $any($event.target).checked)"
+                        />
+                        <label class="form-check-label" [for]="role + '-' + permission">
+                          {{ formatKey(permission) }}
+                        </label>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

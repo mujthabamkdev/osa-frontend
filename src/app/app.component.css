@@ -25,7 +25,8 @@
   display: flex;
   align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  z-index: 1050;
 }
 
 .custom-navbar::before {
@@ -213,6 +214,7 @@
   border-radius: 12px;
   margin-top: 0.5rem;
   padding: 0.35rem 0;
+  z-index: 1060;
 }
 
 .dropdown-header {

@@ -1,7 +1,10 @@
+export type UserRole = 'admin' | 'teacher' | 'student' | 'parent';
+
 export interface User {
   id: number;
   email: string;
-  role: 'admin' | 'teacher' | 'student' | 'parent';
+  full_name?: string | null;
+  role: UserRole;
   is_active: boolean;
   created_at: string;
 }
@@ -9,13 +12,17 @@ export interface User {
 export interface CreateUserRequest {
   email: string;
   password: string;
-  role: 'admin' | 'teacher' | 'student' | 'parent';
+  full_name?: string | null;
+  role: UserRole;
+  is_active?: boolean;
 }
 
-export interface UserResponse {
-  id: number;
-  email: string;
-  role: string;
-  is_active: boolean;
-  created_at: string;
+export interface UpdateUserRequest {
+  email?: string;
+  password?: string;
+  full_name?: string | null;
+  role?: UserRole;
+  is_active?: boolean;
 }
+
+export interface UserResponse extends User {}

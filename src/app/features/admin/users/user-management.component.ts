@@ -1,27 +1,42 @@
-// src/app/features/admin/users/user-management.component.ts
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
-import { User, CreateUserRequest } from '../../../core/models/user.models';
+import {
+  CreateUserRequest,
+  UpdateUserRequest,
+  User,
+  UserRole,
+} from '../../../core/models/user.models';
 
 @Component({
-  templateUrl: './user-management.component.html',
   selector: 'app-user-management',
-  standalone: true,
+  templateUrl: './user-management.component.html',
   imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementComponent implements OnInit {
-  readonly apiService = inject(ApiService);
+  private readonly apiService = inject(ApiService);
 
   readonly users = signal<User[]>([]);
-  readonly loading = signal(true);
-  readonly showCreateModal = signal(false);
-  readonly newUser = signal<CreateUserRequest>({
+  readonly loading = signal(false);
+  readonly formSaving = signal(false);
+
+  readonly showUserModal = signal(false);
+  readonly modalMode = signal<'create' | 'edit'>('create');
+  readonly editingUserId = signal<number | null>(null);
+
+  readonly userForm = signal<CreateUserRequest>({
     email: '',
     password: '',
+    full_name: '',
     role: 'student',
+    is_active: true,
   });
+
+  readonly modalTitle = computed(() =>
+    this.modalMode() === 'create' ? 'Create New User' : 'Edit User'
+  );
 
   ngOnInit(): void {
     this.loadUsers();
@@ -34,62 +49,127 @@ export class UserManagementComponent implements OnInit {
         this.users.set(users);
         this.loading.set(false);
       },
-      error: () => {
+      error: (error) => {
+        console.error('Failed to load users', error);
         this.loading.set(false);
-        // Mock data
-        this.users.set([
-          {
-            id: 1,
-            email: 'admin@example.com',
-            role: 'admin',
-            is_active: true,
-            created_at: '2024-01-15',
-          },
-          {
-            id: 2,
-            email: 'teacher@example.com',
-            role: 'teacher',
-            is_active: true,
-            created_at: '2024-01-20',
-          },
-        ]);
+        this.users.set([]);
       },
     });
   }
 
-  createUser(): void {
-    this.apiService.createUser(this.newUser()).subscribe({
-      next: () => {
-        this.showCreateModal.set(false);
-        this.newUser.set({ email: '', password: '', role: 'student' });
-        this.loadUsers();
-      },
-      error: (err) => console.error(err),
+  openCreateModal(): void {
+    this.modalMode.set('create');
+    this.editingUserId.set(null);
+    this.userForm.set({
+      email: '',
+      password: '',
+      full_name: '',
+      role: 'student',
+      is_active: true,
     });
+    this.showUserModal.set(true);
   }
 
   editUser(user: User): void {
-    console.log('Edit user:', user);
+    this.modalMode.set('edit');
+    this.editingUserId.set(user.id);
+    this.userForm.set({
+      email: user.email,
+      password: '',
+      full_name: user.full_name ?? '',
+      role: user.role,
+      is_active: user.is_active,
+    });
+    this.showUserModal.set(true);
   }
 
-  deleteUser(user: User): void {
-    if (confirm(`Delete user ${user.email}?`)) {
-      this.apiService.deleteUser(user.id).subscribe({
-        next: () => this.loadUsers(),
-        error: (err) => console.error(err),
-      });
+  saveUser(): void {
+    if (this.formSaving()) {
+      return;
+    }
+    const mode = this.modalMode();
+    if (mode === 'create') {
+      this.createUser();
+    } else {
+      this.updateUser();
     }
   }
 
-  updateEmail(email: string): void {
-    this.newUser.update((user) => ({ ...user, email }));
+  private createUser(): void {
+    this.formSaving.set(true);
+    this.apiService.createUser(this.userForm()).subscribe({
+      next: () => {
+        this.formSaving.set(false);
+        this.showUserModal.set(false);
+        this.loadUsers();
+      },
+      error: (error) => {
+        console.error('Failed to create user', error);
+        this.formSaving.set(false);
+      },
+    });
   }
 
-  updatePassword(password: string): void {
-    this.newUser.update((user) => ({ ...user, password }));
+  private updateUser(): void {
+    const userId = this.editingUserId();
+    if (!userId) {
+      return;
+    }
+    const form = this.userForm();
+    const payload: UpdateUserRequest = {
+      email: form.email,
+      full_name: form.full_name,
+      role: form.role,
+      is_active: form.is_active,
+    };
+    if (form.password && form.password.trim().length) {
+      payload.password = form.password.trim();
+    }
+
+    this.formSaving.set(true);
+    this.apiService.updateUser(userId, payload).subscribe({
+      next: () => {
+        this.formSaving.set(false);
+        this.showUserModal.set(false);
+        this.loadUsers();
+      },
+      error: (error) => {
+        console.error('Failed to update user', error);
+        this.formSaving.set(false);
+      },
+    });
   }
 
-  updateRole(role: any): void {
-    this.newUser.update((user) => ({ ...user, role }));
+  toggleUserStatus(user: User): void {
+    this.apiService.toggleUserStatus(user.id).subscribe({
+      next: (updated) => {
+        this.users.update((current) =>
+          current.map((existing) => (existing.id === updated.id ? updated : existing))
+        );
+      },
+      error: (error) => console.error('Failed to toggle user status', error),
+    });
+  }
+
+  deleteUser(user: User): void {
+    if (!confirm(`Delete user ${user.email}? This action cannot be reversed.`)) {
+      return;
+    }
+    this.apiService.deleteUser(user.id).subscribe({
+      next: () => this.loadUsers(),
+      error: (error) => console.error('Failed to delete user', error),
+    });
+  }
+
+  updateUserField<K extends keyof CreateUserRequest>(key: K, value: CreateUserRequest[K]): void {
+    this.userForm.update((form) => {
+      if (key === 'role') {
+        return { ...form, role: value as UserRole };
+      }
+      if (key === 'is_active') {
+        return { ...form, is_active: Boolean(value) };
+      }
+      return { ...form, [key]: value } as CreateUserRequest;
+    });
   }
 }

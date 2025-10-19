@@ -70,6 +70,28 @@
                 Users
               </a>
             </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/admin/courses"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+              >
+                <i class="bi bi-journal-text me-1"></i>
+                Courses
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/admin/settings"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+              >
+                <i class="bi bi-gear-wide-connected me-1"></i>
+                Settings
+              </a>
+            </li>
           }
           @if (authService.isTeacher()) {
             <li class="nav-item">
@@ -206,6 +228,25 @@
                   <h6 class="dropdown-header">{{ user.role | titlecase }}</h6>
                 </li>
                 <li><hr class="dropdown-divider" /></li>
+                @if (authService.isAdmin()) {
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      routerLink="/admin/dashboard"
+                    >
+                      <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      routerLink="/admin/settings"
+                    >
+                      <i class="bi bi-gear-wide-connected me-2"></i>Admin Settings
+                    </a>
+                  </li>
+                  <li><hr class="dropdown-divider" /></li>
+                }
                 <li>
                   <a
                     class="dropdown-item"
