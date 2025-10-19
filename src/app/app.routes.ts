@@ -78,6 +78,34 @@ export const routes: Routes = [
             (m) => m.TeacherCourseManagementComponent
           ),
       },
+      {
+        path: 'students',
+        loadComponent: () =>
+          import('./features/teacher/students/teacher-students.component').then(
+            (m) => m.TeacherStudentsComponent
+          ),
+      },
+      {
+        path: 'exams',
+        loadComponent: () =>
+          import('./features/teacher/exams/teacher-exams.component').then(
+            (m) => m.TeacherExamsComponent
+          ),
+      },
+      {
+        path: 'live-classes',
+        loadComponent: () =>
+          import('./features/teacher/live-classes/teacher-live-classes.component').then(
+            (m) => m.TeacherLiveClassesComponent
+          ),
+      },
+      {
+        path: 'questions',
+        loadComponent: () =>
+          import('./features/teacher/questions/teacher-questions.component').then(
+            (m) => m.TeacherQuestionsComponent
+          ),
+      },
     ],
   },
   {

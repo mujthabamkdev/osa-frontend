@@ -1,0 +1,168 @@
+<div class="container-fluid py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Lesson Q&amp;A</h2>
+      <p class="text-muted mb-0">Respond to student doubts and keep everyone aligned.</p>
+    </div>
+    <div class="text-end">
+      <span class="badge bg-primary fs-6">{{ pendingCount() }} unanswered</span>
+    </div>
+  </div>
+
+  @if (error(); as message) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+    </div>
+  }
+
+  @if (questionError(); as message) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" (click)="questionError.set(null)"></button>
+    </div>
+  }
+
+  @if (successMessage(); as message) {
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" (click)="successMessage.set(null)"></button>
+    </div>
+  }
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12 col-lg-4">
+          <label class="form-label text-muted" for="qa-course">Course</label>
+          <select
+            id="qa-course"
+            class="form-select"
+            [value]="selectedCourseId() ?? ''"
+            (change)="onCourseChange($event)"
+          >
+            @for (course of courses(); track course.id) {
+              <option [value]="course.id">{{ course.title }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 col-lg-4">
+          <label class="form-label text-muted" for="qa-subject">Subject</label>
+          <select
+            id="qa-subject"
+            class="form-select"
+            [value]="selectedSubjectId() ?? ''"
+            (change)="onSubjectChange($event)"
+            [disabled]="subjects().length === 0"
+          >
+            @for (subject of subjects(); track subject.id) {
+              <option [value]="subject.id">{{ subject.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 col-lg-4">
+          <label class="form-label text-muted" for="qa-lesson">Lesson</label>
+          <select
+            id="qa-lesson"
+            class="form-select"
+            [value]="selectedLessonId() ?? ''"
+            (change)="onLessonChange($event)"
+            [disabled]="lessonsForSubject().length === 0"
+          >
+            @for (lesson of lessonsForSubject(); track lesson.id) {
+              <option [value]="lesson.id">{{ lesson.title }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+        <span class="text-muted small">Filter:</span>
+        <button
+          type="button"
+          class="btn btn-sm"
+          [class.btn-primary]="filter() === 'unanswered'"
+          [class.btn-outline-secondary]="filter() !== 'unanswered'"
+          (click)="changeFilter('unanswered')"
+        >
+          Unanswered
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm"
+          [class.btn-primary]="filter() === 'all'"
+          [class.btn-outline-secondary]="filter() !== 'all'"
+          (click)="changeFilter('all')"
+        >
+          All questions
+        </button>
+        <div class="ms-auto d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm" type="button" (click)="refreshQuestions()" [disabled]="loadingQuestions()">
+            Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (loadingQuestions()) {
+    <div class="text-center py-5 text-muted">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-3 mb-0">Loading lesson questions...</p>
+    </div>
+  } @else if (filteredQuestions().length === 0) {
+    <div class="card shadow-sm">
+      <div class="card-body text-center text-muted py-5">
+        <p class="mb-0">No questions available for this lesson yet.</p>
+      </div>
+    </div>
+  } @else {
+    <div class="question-grid">
+      @for (question of filteredQuestions(); track question.id) {
+        <div class="card shadow-sm">
+          <div class="card-body d-flex flex-column gap-3">
+            <div>
+              <div class="d-flex justify-content-between flex-wrap gap-2">
+                <span class="badge" [class.bg-warning-subtle]="!question.answer" [class.bg-success-subtle]="question.answer">
+                  {{ question.answer ? 'Answered' : 'Pending' }}
+                </span>
+                <small class="text-muted">Asked {{ formatDate(question.created_at) }}</small>
+              </div>
+              <p class="question-text mb-0">{{ question.question }}</p>
+            </div>
+
+            <div class="answer-section">
+              @if (question.answer) {
+                <div class="existing-answer">
+                  <p class="text-muted mb-1">Published answer</p>
+                  <p class="mb-0">{{ question.answer }}</p>
+                </div>
+              }
+
+              <form [formGroup]="getAnswerForm(question.id)" (ngSubmit)="saveAnswer(question)" class="d-flex flex-column gap-2">
+                <label class="form-label text-muted" [for]="'answer-' + question.id">{{ question.answer ? 'Update answer' : 'Your answer' }}</label>
+                <textarea
+                  [id]="'answer-' + question.id"
+                  rows="3"
+                  class="form-control"
+                  formControlName="answer"
+                  placeholder="Share guidance, resources, or next steps"
+                  [readonly]="loadingQuestions()"
+                ></textarea>
+                @if (getAnswerForm(question.id).controls['answer'].touched && getAnswerForm(question.id).controls['answer'].invalid) {
+                  <div class="invalid-feedback d-block">Answer cannot be empty.</div>
+                }
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">Students see answers instantly.</small>
+                  <button class="btn btn-success btn-sm" type="submit" [disabled]="loadingQuestions()">
+                    Publish answer
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

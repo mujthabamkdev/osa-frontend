@@ -26,6 +26,24 @@ import {
   ClassProgress,
   CreateClassProgressRequest,
 } from '../models/school.models';
+import {
+  TeacherOverview,
+  TeacherStudent,
+  TeacherSubject,
+  Exam,
+  ExamCreateRequest,
+  ExamResult,
+  ExamResultPayload,
+  TeacherLiveClass,
+  LiveClassCreateRequest,
+  LessonQuestion,
+  LessonAnswerPayload,
+  LessonAnswer,
+  LessonQuestionPayload,
+  StudentExamResult,
+  StudentReport,
+  StudentProgressEntry,
+} from '../models/teacher.models';
 
 @Injectable({
   providedIn: 'root',
@@ -182,9 +200,114 @@ export class ApiService {
     );
   }
 
+  askLessonQuestion(lessonId: number, payload: LessonQuestionPayload): Observable<LessonQuestion> {
+    return this.performRequest(() =>
+      this.http.post<LessonQuestion>(`${this.baseUrl}/students/lessons/${lessonId}/questions`, payload)
+    );
+  }
+
+  getLessonQuestions(lessonId: number): Observable<LessonQuestion[]> {
+    return this.performRequest(() =>
+      this.http.get<LessonQuestion[]>(`${this.baseUrl}/students/lessons/${lessonId}/questions`)
+    );
+  }
+
+  getMyExamResults(): Observable<StudentExamResult[]> {
+    return this.performRequest(() =>
+      this.http.get<StudentExamResult[]>(`${this.baseUrl}/students/me/exams`)
+    );
+  }
+
   // Teacher-specific endpoints
   getTeacherCourses(): Observable<Course[]> {
     return this.performRequest(() => this.http.get<Course[]>(`${this.baseUrl}/teachers/courses`));
+  }
+
+  getTeacherOverview(): Observable<TeacherOverview> {
+    return this.performRequest(() =>
+      this.http.get<TeacherOverview>(`${this.baseUrl}/teachers/overview`)
+    );
+  }
+
+  getTeacherStudents(): Observable<TeacherStudent[]> {
+    return this.performRequest(() =>
+      this.http.get<TeacherStudent[]>(`${this.baseUrl}/teachers/students`)
+    );
+  }
+
+  getTeacherStudentsByCourse(courseId: number): Observable<TeacherStudent[]> {
+    return this.performRequest(() =>
+      this.http.get<TeacherStudent[]>(`${this.baseUrl}/teachers/courses/${courseId}/students`)
+    );
+  }
+
+  getTeacherSubjects(): Observable<TeacherSubject[]> {
+    return this.performRequest(() =>
+      this.http.get<TeacherSubject[]>(`${this.baseUrl}/teachers/subjects`)
+    );
+  }
+
+  createExam(payload: ExamCreateRequest): Observable<Exam> {
+    return this.performRequest(() => this.http.post<Exam>(`${this.baseUrl}/teachers/exams`, payload));
+  }
+
+  getTeacherExams(): Observable<Exam[]> {
+    return this.performRequest(() => this.http.get<Exam[]>(`${this.baseUrl}/teachers/exams`));
+  }
+
+  getExam(examId: number): Observable<Exam> {
+    return this.performRequest(() => this.http.get<Exam>(`${this.baseUrl}/teachers/exams/${examId}`));
+  }
+
+  getExamResults(examId: number): Observable<ExamResult[]> {
+    return this.performRequest(() =>
+      this.http.get<ExamResult[]>(`${this.baseUrl}/teachers/exams/${examId}/results`)
+    );
+  }
+
+  saveExamResults(examId: number, results: ExamResultPayload[]): Observable<ExamResult[]> {
+    return this.performRequest(() =>
+      this.http.post<ExamResult[]>(`${this.baseUrl}/teachers/exams/${examId}/results`, {
+        results,
+      })
+    );
+  }
+
+  getTeacherLiveClasses(): Observable<TeacherLiveClass[]> {
+    return this.performRequest(() =>
+      this.http.get<TeacherLiveClass[]>(`${this.baseUrl}/teachers/live-classes`)
+    );
+  }
+
+  scheduleLiveClass(payload: LiveClassCreateRequest): Observable<TeacherLiveClass> {
+    return this.performRequest(() =>
+      this.http.post<TeacherLiveClass>(`${this.baseUrl}/teachers/live-classes`, payload)
+    );
+  }
+
+  getLessonQuestionsForTeacher(lessonId: number): Observable<LessonQuestion[]> {
+    return this.performRequest(() =>
+      this.http.get<LessonQuestion[]>(`${this.baseUrl}/teachers/lessons/${lessonId}/questions`)
+    );
+  }
+
+  answerLessonQuestion(
+    lessonId: number,
+    questionId: number,
+    payload: LessonAnswerPayload
+  ): Observable<LessonAnswer> {
+    return this.performRequest(() =>
+      this.http.post<LessonAnswer>(
+        `${this.baseUrl}/teachers/lessons/${lessonId}/questions/${questionId}/answers`,
+        payload
+      )
+    );
+  }
+
+  getTeacherStudentReport(studentId: number): Observable<StudentReport> {
+    return this.performRequest(() =>
+      this.http.get<StudentReport>(`${this.baseUrl}/teachers/students/${studentId}/report`)
+    );
   }
 
   getTeacherStats(): Observable<TeacherStats> {
