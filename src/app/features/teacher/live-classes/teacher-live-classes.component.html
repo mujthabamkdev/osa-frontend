@@ -1,0 +1,199 @@
+<div class="container-fluid py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Live Classes</h2>
+      <p class="text-muted mb-0">Schedule interactive sessions and share meeting details with students.</p>
+    </div>
+    <div class="text-end">
+      <span class="badge bg-primary fs-6">{{ liveClasses().length }} sessions</span>
+    </div>
+  </div>
+
+  @if (error(); as message) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+    </div>
+  }
+
+  @if (successMessage(); as message) {
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" (click)="successMessage.set(null)"></button>
+    </div>
+  }
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-transparent border-bottom-0">
+          <h3 class="section-title mb-0">Schedule session</h3>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="scheduleClassForm" (ngSubmit)="scheduleClass()" novalidate>
+            <div class="mb-3">
+              <label class="form-label" for="live-course">Course</label>
+              <select id="live-course" class="form-select" formControlName="course_id">
+                <option [ngValue]="null">Select course</option>
+                @for (course of courses(); track course.id) {
+                  <option [ngValue]="course.id">{{ course.title }}</option>
+                }
+              </select>
+              @if (scheduleClassForm.controls.course_id.touched && scheduleClassForm.controls.course_id.invalid) {
+                <div class="invalid-feedback d-block">Course is required.</div>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="live-title">Title</label>
+              <input
+                id="live-title"
+                type="text"
+                class="form-control"
+                placeholder="Topic name"
+                formControlName="title"
+              />
+              @if (scheduleClassForm.controls.title.touched && scheduleClassForm.controls.title.invalid) {
+                <div class="invalid-feedback d-block">Title is required.</div>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="live-description">Description</label>
+              <textarea
+                id="live-description"
+                rows="3"
+                class="form-control"
+                formControlName="description"
+                placeholder="Key discussion points, prerequisites, resources..."
+              ></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="live-date">Date</label>
+              <input id="live-date" type="date" class="form-control" formControlName="scheduled_date" />
+              @if (scheduleClassForm.controls.scheduled_date.touched && scheduleClassForm.controls.scheduled_date.invalid) {
+                <div class="invalid-feedback d-block">Pick a date.</div>
+              }
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col">
+                <label class="form-label" for="live-start">Start time</label>
+                <input id="live-start" type="time" class="form-control" formControlName="start_time" />
+                @if (scheduleClassForm.controls.start_time.touched && scheduleClassForm.controls.start_time.invalid) {
+                  <div class="invalid-feedback d-block">Start time is required.</div>
+                }
+              </div>
+              <div class="col">
+                <label class="form-label" for="live-end">End time</label>
+                <input id="live-end" type="time" class="form-control" formControlName="end_time" />
+                @if (scheduleClassForm.controls.end_time.touched && scheduleClassForm.controls.end_time.invalid) {
+                  <div class="invalid-feedback d-block">End time is required.</div>
+                }
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label" for="live-link">Meeting link</label>
+              <input
+                id="live-link"
+                type="url"
+                class="form-control"
+                placeholder="https://"
+                formControlName="meeting_link"
+              />
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit" [disabled]="scheduling()">
+              @if (scheduling()) {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              }
+              Schedule
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-8">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center">
+          <h3 class="section-title mb-0">Upcoming sessions</h3>
+          <button class="btn btn-outline-secondary btn-sm" type="button" (click)="refreshLiveClasses()">
+            Refresh
+          </button>
+        </div>
+        <div class="card-body">
+          @if (upcomingClasses().length === 0) {
+            <p class="text-muted mb-0">No upcoming live classes. Schedule a new session to engage students.</p>
+          } @else {
+            <div class="timeline">
+              @for (item of upcomingClasses(); track item.id) {
+                <div class="timeline-item">
+                  <div class="timeline-marker"></div>
+                  <div class="timeline-content">
+                    <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+                      <h4 class="fw-semibold mb-0">{{ item.title }}</h4>
+                      <span class="badge bg-light text-dark">{{ formatDate(item.scheduled_date) }}</span>
+                    </div>
+                    <p class="text-muted mb-2">{{ courseTitle(item.course_id) }}</p>
+                    <p class="mb-2">{{ item.description || 'No description provided.' }}</p>
+                    <div class="d-flex flex-wrap gap-3 align-items-center text-muted small">
+                      <span>From {{ formatTime(item.start_time) }} to {{ formatTime(item.end_time) }}</span>
+                      @if (item.meeting_link) {
+                        <a class="btn btn-link btn-sm px-0" target="_blank" rel="noopener" [href]="item.meeting_link">
+                          Join link
+                        </a>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-4">
+    <div class="card-header bg-transparent border-bottom-0">
+      <h3 class="section-title mb-0">Past sessions</h3>
+    </div>
+    <div class="card-body">
+      @if (pastClasses().length === 0) {
+        <p class="text-muted mb-0">Past sessions will appear here after they conclude.</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Course</th>
+                <th scope="col">Date</th>
+                <th scope="col">Time</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of pastClasses(); track item.id) {
+                <tr>
+                  <td class="fw-semibold">{{ item.title }}</td>
+                  <td>{{ courseTitle(item.course_id) }}</td>
+                  <td>{{ formatDate(item.scheduled_date) }}</td>
+                  <td>{{ formatTime(item.start_time) }} - {{ formatTime(item.end_time) }}</td>
+                  <td>
+                    <span class="badge" [class.bg-success]="item.is_active" [class.bg-secondary]="!item.is_active">
+                      {{ item.is_active ? 'Completed' : 'Inactive' }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>

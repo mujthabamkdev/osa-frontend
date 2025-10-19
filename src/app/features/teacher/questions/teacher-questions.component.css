@@ -1,0 +1,42 @@
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.card {
+  border: none;
+  border-radius: 1rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.question-text {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.answer-section textarea {
+  resize: vertical;
+}
+
+.badge.bg-warning-subtle {
+  background-color: rgba(255, 193, 7, 0.16);
+  color: #8a6d07;
+}
+
+.badge.bg-success-subtle {
+  background-color: rgba(40, 167, 69, 0.16);
+  color: #1b6f3a;
+}
+
+.invalid-feedback {
+  font-size: 0.85rem;
+}

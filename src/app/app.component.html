@@ -92,6 +92,46 @@
                 My Courses
               </a>
             </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/teacher/students"
+                routerLinkActive="active"
+              >
+                <i class="bi bi-people me-1"></i>
+                Students
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/teacher/exams"
+                routerLinkActive="active"
+              >
+                <i class="bi bi-journal-check me-1"></i>
+                Exams
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/teacher/live-classes"
+                routerLinkActive="active"
+              >
+                <i class="bi bi-broadcast me-1"></i>
+                Live Classes
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/teacher/questions"
+                routerLinkActive="active"
+              >
+                <i class="bi bi-question-circle me-1"></i>
+                Q&amp;A
+              </a>
+            </li>
           }
           @if (authService.isStudent()) {
             <li class="nav-item">

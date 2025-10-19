@@ -1,0 +1,162 @@
+<div class="container-fluid py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">Students Overview</h2>
+      <p class="text-muted mb-0">Manage student rosters and track individual progress.</p>
+    </div>
+    <div class="text-end">
+      <span class="badge bg-primary fs-6">{{ totalStudents() }} active students</span>
+    </div>
+  </div>
+
+  @if (error(); as message) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+    </div>
+  }
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-3">
+      <div class="flex-grow-1">
+        <label class="form-label text-muted mb-1">Filter by course</label>
+        <select
+          class="form-select"
+          [ngModel]="selectedCourseId() === 'all' ? 'all' : selectedCourseId()"
+          (ngModelChange)="onCourseChange($event)"
+        >
+          <option value="all">All courses</option>
+          @for (course of courses(); track course.id) {
+            <option [value]="course.id">{{ course.title }}</option>
+          }
+        </select>
+      </div>
+      <div class="vr d-none d-md-block"></div>
+      <div>
+        <p class="mb-0 text-muted">Select a student to review detailed progress and exam history.</p>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading students...</span>
+      </div>
+    </div>
+  } @else {
+    <div class="row g-4">
+      <div class="col-12 col-xl-7">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-transparent border-bottom-0">
+            <h3 class="section-title mb-0">Students</h3>
+          </div>
+          <div class="card-body p-0">
+            @if (filteredStudents().length === 0) {
+              <div class="p-4 text-center text-muted">
+                No students found for this filter.
+              </div>
+            } @else {
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">Student</th>
+                      <th scope="col">Email</th>
+                      <th scope="col">Course</th>
+                      <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (student of filteredStudents(); track student.id) {
+                      <tr [class.table-active]="selectedStudent()?.id === student.id">
+                        <td class="fw-semibold">{{ student.full_name || 'Anonymous Learner' }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>{{ student.course_title }}</td>
+                        <td class="text-end">
+                          <button
+                            class="btn btn-outline-primary btn-sm"
+                            type="button"
+                            (click)="viewStudentReport(student)"
+                          >
+                            View Report
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center">
+            <h3 class="section-title mb-0">Student Report</h3>
+            @if (selectedStudent()) {
+              <button class="btn btn-link btn-sm" type="button" (click)="closeReport()">Clear</button>
+            }
+          </div>
+          <div class="card-body">
+            @if (!selectedStudent()) {
+              <p class="text-muted mb-0">Select a student to see their latest progress and exam performance.</p>
+            } @else if (loadingReport()) {
+              <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading report...</span>
+                </div>
+              </div>
+            } @else if (studentReport(); as report) {
+              <div class="mb-4">
+                <h4 class="fw-semibold mb-1">{{ selectedStudent()!.full_name || selectedStudent()!.email }}</h4>
+                <p class="text-muted mb-0">{{ selectedStudent()!.email }}</p>
+              </div>
+
+              <h5 class="fw-semibold mb-2">Class Progress</h5>
+              @if (report.progress.length === 0) {
+                <p class="text-muted">No class progress recorded yet.</p>
+              } @else {
+                <ul class="list-group list-group-flush mb-4">
+                  @for (entry of report.progress; track entry.session_id) {
+                    <li class="list-group-item">
+                      <div class="d-flex justify-content-between">
+                        <div>
+                          <div class="fw-semibold">{{ entry.session_title }}</div>
+                          <small class="text-muted">{{ entry.subject_name }}</small>
+                        </div>
+                        <span class="badge badge-soft">{{ progressStatus(entry) }}</span>
+                      </div>
+                      <small class="text-muted">{{ formatDate(entry.completed_at) }}</small>
+                    </li>
+                  }
+                </ul>
+              }
+
+              <h5 class="fw-semibold mb-2">Exam Results</h5>
+              @if (report.exams.length === 0) {
+                <p class="text-muted mb-0">Results will appear here once published.</p>
+              } @else {
+                <ul class="list-group list-group-flush">
+                  @for (exam of report.exams; track exam.id) {
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                      <div>
+                        <div class="fw-semibold">{{ exam.exam_id }}</div>
+                        <small class="text-muted">Published {{ formatDate(exam.published_at) }}</small>
+                      </div>
+                      <span class="badge" [class]="exam.status === 'passed' ? 'bg-success' : 'bg-secondary'">
+                        {{ exam.score }} / {{ exam.max_score || '—' }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
