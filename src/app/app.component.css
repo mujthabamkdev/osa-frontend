@@ -236,6 +236,8 @@
   justify-content: center;
   transition: all 0.3s ease;
   cursor: pointer;
+}
+
 .account-menu:hover .avatar-sm {
   background: rgba(255, 255, 255, 0.35);
   border-color: rgba(255, 255, 255, 0.6);

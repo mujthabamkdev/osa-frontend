@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { environment } from '@environments/environment';
+import { UserRole } from '@core/models/user.models';
 
 @Component({
   templateUrl: './register.component.html',
@@ -20,7 +21,7 @@ export class RegisterComponent {
     email: '',
     password: '',
     fullName: '',
-    role: 'student',
+    role: 'student' as UserRole,
   });
 
   readonly confirmPassword = signal('');
@@ -107,6 +108,6 @@ export class RegisterComponent {
   }
 
   updateRole(role: string): void {
-    this.userData.update((data) => ({ ...data, role }));
+    this.userData.update((data) => ({ ...data, role: role as UserRole }));
   }
 }

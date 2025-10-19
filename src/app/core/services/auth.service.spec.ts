@@ -62,7 +62,7 @@ describe('AuthService', () => {
     localStorage.setItem('authToken', JSON.stringify(expiredTokenData));
 
     // Reload service to trigger loadStoredAuthData
-    const newService = new AuthService(service['http'], routerSpy);
+  const newService = TestBed.runInInjectionContext(() => new AuthService());
     expect(newService.isTokenExpired()).toBe(true);
     expect(newService.getToken()).toBe(null);
   });
@@ -76,7 +76,7 @@ describe('AuthService', () => {
     localStorage.setItem('authToken', JSON.stringify(validTokenData));
 
     // Reload service to trigger loadStoredAuthData
-    const newService = new AuthService(service['http'], routerSpy);
+  const newService = TestBed.runInInjectionContext(() => new AuthService());
     expect(newService.isTokenExpired()).toBe(false);
     expect(newService.getToken()).toBe('valid-token');
   });
