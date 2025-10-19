@@ -1,13 +1,9 @@
 <div class="course-container">
-  <!-- Header -->
   <div class="course-header sticky-top shadow-sm">
     <div class="container-fluid py-3">
       <div class="d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
-          <button
-            class="btn btn-outline-secondary btn-sm"
-            (click)="goBack()"
-          >
+          <button class="btn btn-outline-secondary btn-sm" (click)="goBack()">
             <i class="bi bi-arrow-left"></i>
           </button>
           <div>
@@ -38,10 +34,7 @@
           >
             <i class="bi bi-book me-1"></i> By Subject
           </button>
-          <button
-            class="btn btn-outline-secondary btn-sm"
-            (click)="refreshCourse()"
-          >
+          <button class="btn btn-outline-secondary btn-sm" (click)="refreshCourse()">
             <i class="bi bi-arrow-clockwise me-1"></i> Refresh
           </button>
         </div>
@@ -49,193 +42,489 @@
     </div>
   </div>
 
-  <!-- Loading State -->
   @if (loading()) {
     <div class="text-center py-5">
-      <div
-        class="spinner-border text-primary"
-        role="status"
-      ></div>
+      <div class="spinner-border text-primary" role="status"></div>
       <p class="mt-2 text-muted">Loading course content...</p>
     </div>
   }
 
-  <!-- Error State -->
   @if (!loading() && error()) {
     <div class="alert alert-danger m-4">
       <i class="bi bi-exclamation-triangle me-2"></i>
       <strong>Error:</strong> {{ error() }}
-      <button
-        class="btn btn-sm btn-primary ms-2"
-        (click)="refreshCourse()"
-      >
+      <button class="btn btn-sm btn-primary ms-2" (click)="refreshCourse()">
         Try Again
       </button>
     </div>
   }
 
-  <!-- Course Content -->
   @if (!loading() && courseDetails()) {
     <div class="container-fluid py-4">
-      <!-- Course Overview -->
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="mb-0">{{ courseDetails()!.title }}</h4>
-              @if (courseDetails()?.teacher) {
-                <small class="text-muted">
-                  Instructor: {{ courseDetails()!.teacher!.full_name }}
-                </small>
-              }
-            </div>
-            <div class="card-body">
-              <p class="mb-0">{{ courseDetails()!.description }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Daily Calendar View -->
-      @if (viewMode() === 'calendar') {
-        <div class="row g-4">
-          @for (daySchedule of courseDetails()?.schedule; track daySchedule.date) {
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header bg-light">
-                  <h5 class="mb-0">
-                    <i class="bi bi-calendar-event me-2"></i>
-                    {{ formatDayHeader(daySchedule.date) }}
-                  </h5>
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header">
+                        <h4 class="mb-0">{{ courseDetails()!.title }}</h4>
+                        @if (courseDetails()?.teacher) {
+                          <small class="text-muted">
+                            Instructor: {{ courseDetails()!.teacher!.full_name }}
+                          </small>
+                        }
+                      </div>
+                      <div class="card-body">
+                        <p class="mb-0">{{ courseDetails()!.description }}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <div class="row g-3">
-                    @for (lesson of daySchedule.lessons; track lesson.id) {
-                      <div class="col-md-6 col-lg-4">
-                        <div
-                          class="card lesson-card"
-                          [class.active-lesson]="isActiveLessonId(lesson.id)"
-                          (click)="selectLesson(lesson)"
-                          style="cursor: pointer"
-                        >
+
+                @if (viewMode() === 'calendar') {
+                  <div class="row g-4">
+                    @for (daySchedule of courseDetails()?.schedule; track daySchedule.date) {
+                      <div class="col-12">
+                        <div class="card">
+                          <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                              <i class="bi bi-calendar-event me-2"></i>
+                              {{ formatDayHeader(daySchedule.date) }}
+                            </h5>
+                          </div>
                           <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                              <div>
-                                <h6 class="card-title mb-1">{{ lesson.title }}</h6>
-                                <small class="text-muted">
-                                  <i class="bi bi-book me-1"></i>{{ lesson.subject_name }}
-                                </small>
-                              </div>
-                              @if (lesson.progress?.completed) {
-                                <div class="text-success">
-                                  <i class="bi bi-check-circle-fill"></i>
+                            <div class="row g-3">
+                              @for (lesson of daySchedule.lessons; track lesson.id) {
+                                <div class="col-md-6 col-lg-4">
+                                  <div
+                                    class="card lesson-card"
+                                    [class.active-lesson]="isActiveLessonId(lesson.id)"
+                                    (click)="selectLesson(lesson)"
+                                    style="cursor: pointer"
+                                  >
+                                    <div class="card-body">
+                                      <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                          <h6 class="card-title mb-1">{{ lesson.title }}</h6>
+                                          <small class="text-muted">
+                                            <i class="bi bi-book me-1"></i>{{ lesson.subject_name }}
+                                          </small>
+                                        </div>
+                                        @if (lesson.progress?.completed) {
+                                          <div class="text-success">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                          </div>
+                                        }
+                                      </div>
+                                      <p class="card-text text-muted small mb-2">
+                                        {{ lesson.description }}
+                                      </p>
+                                      <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                          <i class="bi bi-play-circle me-1"></i>
+                                          {{ lesson.attachments.length }} videos
+                                        </small>
+                                        @if (lesson.quiz) {
+                                          <small class="text-primary">
+                                            <i class="bi bi-question-circle me-1"></i>
+                                            Quiz
+                                          </small>
+                                        }
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
+                                @if (isActiveLessonId(lesson.id)) {
+                                  <div class="col-12">
+                                    <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>
+                                  </div>
+                                }
                               }
                             </div>
-                            <p class="card-text text-muted small mb-2">
-                              {{ lesson.description }}
-                            </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                              <small class="text-muted">
-                                <i class="bi bi-play-circle me-1"></i>
-                                {{ lesson.attachments.length }} videos
-                              </small>
-                              @if (lesson.quiz) {
-                                <small class="text-primary">
-                                  <i class="bi bi-question-circle me-1"></i>
-                                  Quiz
-                                </small>
-                              }
-                            </div>
+                            @if (daySchedule.lessons.length === 0) {
+                              <div class="text-center text-muted py-3">
+                                No lessons scheduled for this day
+                              </div>
+                            }
                           </div>
                         </div>
                       </div>
                     }
                   </div>
-                  @if (daySchedule.lessons.length === 0) {
-                    <div class="text-center text-muted py-3">No lessons scheduled for this day</div>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      }
+                }
 
-      <!-- By Subject View -->
-      @if (viewMode() === 'subject') {
-        <div class="row g-4">
-          @for (subject of courseDetails()?.subjects; track subject.id) {
-            <div class="col-12">
-              <div class="card subject-card">
-                <div
-                  class="card-header subject-header"
-                  (click)="toggleSubject(subject.id)"
-                >
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h5 class="mb-1">{{ subject.title }}</h5>
-                      <p class="text-muted mb-0">{{ subject.description }}</p>
-                    </div>
-                    <div class="d-flex align-items-center">
-                      <span class="badge bg-primary me-3"
-                        >{{ subject.lessons.length }} lessons</span
-                      >
-                      <i
-                        class="bi"
-                        [class.bi-chevron-down]="isSubjectCollapsed(subject.id)"
-                        [class.bi-chevron-up]="!isSubjectCollapsed(subject.id)"
-                      ></i>
-                    </div>
-                  </div>
-                </div>
-                @if (!isSubjectCollapsed(subject.id)) {
-                  <div class="card-body">
-                    <div class="row g-3">
-                      @for (lesson of subject.lessons; track lesson.id) {
-                        <div class="col-md-6 col-lg-4">
-                          <div
-                            class="card lesson-card"
-                            [class.active-lesson]="isActiveLessonId(lesson.id)"
-                            (click)="selectLesson(lesson)"
-                            style="cursor: pointer"
-                          >
-                            <div class="card-body">
-                              <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6 class="card-title mb-0">{{ lesson.title }}</h6>
-                                @if (lesson.progress?.completed) {
-                                  <div class="text-success">
-                                    <i class="bi bi-check-circle-fill"></i>
-                                  </div>
-                                }
+                @if (viewMode() === 'subject') {
+                  <div class="row g-4">
+                    @for (subject of courseDetails()?.subjects; track subject.id) {
+                      <div class="col-12">
+                        <div class="card subject-card">
+                          <div class="card-header subject-header" (click)="toggleSubject(subject.id)">
+                            <div class="d-flex justify-content-between align-items-center">
+                              <div>
+                                <h5 class="mb-1">{{ subject.title }}</h5>
+                                <p class="text-muted mb-0">{{ subject.description }}</p>
                               </div>
-                              <p class="card-text text-muted small mb-2">
-                                {{ lesson.description }}
-                              </p>
-                              <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                  <i class="bi bi-play-circle me-1"></i>
-                                  {{ lesson.attachments.length }} videos
-                                </small>
-                                @if (lesson.quiz) {
-                                  <small class="text-primary">
-                                    <i class="bi bi-question-circle me-1"></i>
-                                    Quiz
-                                  </small>
-                                }
+                              <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-3">{{ subject.lessons.length }} lessons</span>
+                                <i
+                                  class="bi"
+                                  [class.bi-chevron-down]="isSubjectCollapsed(subject.id)"
+                                  [class.bi-chevron-up]="!isSubjectCollapsed(subject.id)"
+                                ></i>
                               </div>
                             </div>
                           </div>
+                          @if (!isSubjectCollapsed(subject.id)) {
+                            <div class="card-body">
+                              <div class="row g-3">
+                                @for (lesson of subject.lessons; track lesson.id) {
+                                  <div class="col-md-6 col-lg-4">
+                                    <div
+                                      class="card lesson-card"
+                                      [class.active-lesson]="isActiveLessonId(lesson.id)"
+                                      (click)="selectLesson(lesson)"
+                                      style="cursor: pointer"
+                                    >
+                                      <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                          <h6 class="card-title mb-0">{{ lesson.title }}</h6>
+                                          @if (lesson.progress?.completed) {
+                                            <div class="text-success">
+                                              <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                          }
+                                        </div>
+                                        <p class="card-text text-muted small mb-2">
+                                          {{ lesson.description }}
+                                        </p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                          <small class="text-muted">
+                                            <i class="bi bi-play-circle me-1"></i>
+                                            {{ lesson.attachments.length }} videos
+                                          </small>
+                                          @if (lesson.quiz) {
+                                            <small class="text-primary">
+                                              <i class="bi bi-question-circle me-1"></i>
+                                              Quiz
+                                            </small>
+                                          }
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  @if (isActiveLessonId(lesson.id)) {
+                                    <div class="col-12">
+                                      <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>
+                                    </div>
+                                  }
+                                }
+                              </div>
+                            </div>
+                          }
                         </div>
-                      }
-                    </div>
+                      </div>
+                    }
                   </div>
                 }
               </div>
-            </div>
-          }
-        </div>
-      }
-    </div>
-  }
-</div>
+            }
+          </div>
+
+          <ng-template #lessonDetailTemplate>
+            <ng-container *ngIf="selectedLesson() as lesson">
+              <div class="lesson-detail-container">
+                <div class="row g-4 align-items-stretch">
+                  <div class="col-lg-8">
+                    <div class="card lesson-detail-card mb-4 mb-lg-0">
+                      <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-start">
+                          <div>
+                            <h4 class="mb-1">{{ lesson.title }}</h4>
+                            <small class="text-muted">Part of {{ lesson.subject_name }}</small>
+                          </div>
+                          <span
+                            class="badge"
+                            [class.bg-success]="lesson.progress?.completed"
+                            [class.bg-warning]="!lesson.progress?.completed"
+                            [class.text-dark]="!lesson.progress?.completed"
+                          >
+                            {{ lesson.progress?.completed ? 'Completed' : 'In Progress' }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="card-body">
+                        <p class="lesson-description">
+                          {{ lesson.description || 'No description provided for this lesson.' }}
+                        </p>
+
+                        @if (lessonVideoAttachments().length > 0) {
+                          <div class="video-section mb-4">
+                            <div class="ratio ratio-16x9 video-wrapper">
+                              @if (selectedVideoAttachment()) {
+                                @if (isIframeVideo(selectedVideoAttachment()!)) {
+                                  <iframe
+                                    [src]="selectedVideoTrustedUrl()"
+                                    title="{{ selectedVideoAttachment()!.title }}"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen
+                                  ></iframe>
+                                } @else {
+                                  <video
+                                    controls
+                                    [src]="selectedVideoAttachment()!.file_url"
+                                    [title]="selectedVideoAttachment()!.title"
+                                  ></video>
+                                }
+                              }
+                            </div>
+
+                            @if (lessonVideoAttachments().length > 1) {
+                              <div class="btn-group mt-3 flex-wrap" role="group">
+                                @for (video of lessonVideoAttachments(); track video.id; let index = $index) {
+                                  <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    [class.active]="selectedVideoId() === video.id"
+                                    (click)="setSelectedVideoIndex(index)"
+                                  >
+                                    <i class="bi bi-play-circle me-1"></i>{{ video.title || 'Video ' + (index + 1) }}
+                                  </button>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+
+                        @if (lessonDocumentAttachments().length > 0) {
+                          <div class="document-section">
+                            <h6 class="fw-semibold">Lesson Resources</h6>
+                            <ul class="list-group list-group-flush">
+                              @for (doc of lessonDocumentAttachments(); track doc.id) {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                  <div>
+                                    <i class="bi bi-file-earmark-text me-2"></i>{{ doc.title || 'Document' }}
+                                    <p class="mb-0 small text-muted">{{ doc.description }}</p>
+                                  </div>
+                                  <a
+                                    class="btn btn-outline-primary btn-sm"
+                                    [href]="doc.file_url"
+                                    target="_blank"
+                                    rel="noopener"
+                                  >
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                  </a>
+                                </li>
+                              }
+                            </ul>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="card qa-card">
+                      <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Ask a Doubt</h5>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="fetchLessonQuestions(lesson.id)">
+                          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button>
+                      </div>
+                      <div class="card-body">
+                        @if (questionsLoading()) {
+                          <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="small text-muted mt-2">Loading questions...</p>
+                          </div>
+                        }
+
+                        @if (!questionsLoading() && questionsError()) {
+                          <div class="alert alert-warning">{{ questionsError() }}</div>
+                        }
+
+                        @if (!questionsLoading() && !questionsError() && lessonQuestions().length === 0) {
+                          <p class="text-muted small">No questions yet. Be the first to ask!</p>
+                        }
+
+                        @if (lessonQuestions().length > 0) {
+                          <div class="qa-list mb-4">
+                            @for (question of lessonQuestions(); track question.id) {
+                              <div class="qa-item">
+                                <div class="qa-question">
+                                  <i class="bi bi-question-circle-fill text-primary me-2"></i>
+                                  <div>
+                                    <p class="mb-1">{{ question.question }}</p>
+                                    <small class="text-muted">Asked on {{ question.created_at | date: 'medium' }}</small>
+                                  </div>
+                                </div>
+                                @if (question.answer) {
+                                  <div class="qa-answer mt-2">
+                                    <i class="bi bi-chat-right-quote-fill text-success me-2"></i>
+                                    <div>
+                                      <p class="mb-1">{{ question.answer }}</p>
+                                      <small class="text-muted">Answered on {{ question.answered_at | date: 'medium' }}</small>
+                                    </div>
+                                  </div>
+                                } @else {
+                                  <small class="text-muted d-block mt-2 ps-4">Awaiting teacher response</small>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+
+                        <form [formGroup]="questionForm" (ngSubmit)="submitQuestion()" novalidate>
+                          <div class="mb-3">
+                            <label class="form-label fw-semibold" for="questionInput">Your Question</label>
+                            <textarea
+                              id="questionInput"
+                              rows="3"
+                              class="form-control"
+                              formControlName="question"
+                              placeholder="Type your doubt for the teacher"
+                            ></textarea>
+                            @if (questionForm.controls.question.touched && questionForm.controls.question.hasError('required')) {
+                              <div class="text-danger small mt-1">Question is required.</div>
+                            }
+                            @if (questionForm.controls.question.touched && questionForm.controls.question.hasError('minlength')) {
+                              <div class="text-danger small mt-1">Please provide more details (min 5 characters).</div>
+                            }
+                          </div>
+
+                          <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="anonymousToggle" formControlName="isAnonymous" />
+                            <label class="form-check-label" for="anonymousToggle">Ask anonymously</label>
+                          </div>
+
+                          <button type="submit" class="btn btn-primary" [disabled]="questionSubmitting()">
+                            <i class="bi bi-send me-1"></i>
+                            {{ questionSubmitting() ? 'Sending...' : 'Submit Question' }}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-4">
+                    <div class="card quiz-card mb-4">
+                      <div class="card-header">
+                        <h5 class="mb-0">Lesson Quiz</h5>
+                      </div>
+                      <div class="card-body">
+                        @if (!lesson.quiz) {
+                          <p class="text-muted small mb-0">There is no quiz for this lesson yet.</p>
+                        } @else {
+                          @if (quizSubmitted() && !quizResult()) {
+                            <div class="alert alert-info">
+                              Answer all questions before submitting the quiz.
+                            </div>
+                          }
+
+                          @if (quizSubmitted() && quizResult()) {
+                            <div
+                              class="alert"
+                              [class.alert-success]="quizResult()!.score >= lesson.quiz.passing_score"
+                              [class.alert-danger]="quizResult()!.score < lesson.quiz.passing_score"
+                            >
+                              <strong>{{ quizResult()!.score }}%</strong>
+                              ({{ quizResult()!.correct }}/{{ quizResult()!.total }})
+                              — Passing score: {{ lesson.quiz.passing_score }}%
+                            </div>
+                          }
+
+                          @for (question of lesson.quiz.questions; track question.id) {
+                            <div class="quiz-question mb-3">
+                              <p class="fw-semibold mb-2">
+                                {{ question.order }}. {{ question.question }}
+                              </p>
+                              <div class="list-group">
+                                @for (option of question.options; track $index) {
+                                  <button
+                                    type="button"
+                                    class="list-group-item list-group-item-action"
+                                    [class.active]="quizAttempt()[question.id] === $index"
+                                    (click)="selectQuizOption(question.id, $index)"
+                                  >
+                                    {{ option }}
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          }
+
+                          <button class="btn btn-success w-100" type="button" (click)="submitQuiz()">
+                            <i class="bi bi-check2-circle me-1"></i>Submit Quiz
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="card notes-card">
+                      <div class="card-header">
+                        <h5 class="mb-0">My Notes</h5>
+                      </div>
+                      <div class="card-body">
+                        @if (notesLoading()) {
+                          <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="small text-muted mt-2">Loading your notes...</p>
+                          </div>
+                        }
+
+                        @if (!notesLoading() && notesError()) {
+                          <div class="alert alert-warning">{{ notesError() }}</div>
+                        }
+
+                        @if (!notesLoading() && !notesError() && courseNotes().length === 0) {
+                          <p class="text-muted small">You have not created any notes for this course yet.</p>
+                        }
+
+                        @if (courseNotes().length > 0) {
+                          <div class="notes-list mb-4">
+                            @for (note of courseNotes(); track note.id) {
+                              <div class="note-card">
+                                <h6 class="mb-1">{{ note.title }}</h6>
+                                <p class="small text-muted mb-2">{{ note.created_at | date: 'mediumDate' }}</p>
+                                <p class="note-content">{{ note.content }}</p>
+                              </div>
+                            }
+                          </div>
+                        }
+
+                        <form [formGroup]="noteForm" (ngSubmit)="saveNote()" novalidate>
+                          <div class="mb-3">
+                            <label class="form-label" for="noteTitle">Title</label>
+                            <input
+                              id="noteTitle"
+                              type="text"
+                              class="form-control"
+                              formControlName="title"
+                              placeholder="Quick note title"
+                            />
+                            @if (noteForm.controls.title.touched && noteForm.controls.title.hasError('required')) {
+                              <div class="text-danger small mt-1">Title is required.</div>
+                            }
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label" for="noteContent">Content</label>
+                            <textarea
+                              id="noteContent"
+                              rows="3"
+                              class="form-control"
+                              formControlName="content"
+                              placeholder="Write your key takeaways or reflections"
+                            ></textarea>
+                            @if (noteForm.controls.content.touched && noteForm.controls.content.hasError('required')) {
+                              <div class="text-danger small mt-1">Content is required.</div>
+                            }
+                          </div>
+
+                          <button type="submit" class="btn btn-outline-primary w-100" [disabled]="noteSubmitting()">
+                            <i class="bi bi-journal-plus me-1"></i>
+                            {{ noteSubmitting() ? 'Saving...' : 'Save Note' }}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-template>
