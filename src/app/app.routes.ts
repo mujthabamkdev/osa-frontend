@@ -69,6 +69,24 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'account',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('@features/account/profile/profile.component').then((m) => m.ProfileComponent),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('@features/account/settings/account-settings.component').then(
+            (m) => m.AccountSettingsComponent
+          ),
+      },
+    ],
+  },
+  {
     path: 'teacher',
     canActivate: [authGuard, roleGuard],
     data: { roles: ['teacher', 'admin'] },
@@ -114,6 +132,17 @@ export const routes: Routes = [
           import('@features/teacher/questions/teacher-questions.component').then(
             (m) => m.TeacherQuestionsComponent
           ),
+      },
+    ],
+  },
+  {
+    path: 'support',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'help',
+        loadComponent: () =>
+          import('@features/support/help/help.component').then((m) => m.HelpComponent),
       },
     ],
   },

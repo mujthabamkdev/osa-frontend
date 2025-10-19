@@ -103,12 +103,24 @@ export class CourseManagementComponent implements OnInit {
       next: (courses) => {
         this.courses.set(courses);
         this.coursesLoading.set(false);
-        if (this.selectedCourseId()) {
-          const stillExists = courses.some((course) => course.id === this.selectedCourseId());
-          if (!stillExists) {
-            this.resetSelections();
-          }
+        if (!courses.length) {
+          this.resetSelections();
+          return;
         }
+
+        const currentSelection = this.selectedCourseId();
+        if (currentSelection) {
+          const selectedCourse = courses.find((course) => course.id === currentSelection);
+          if (selectedCourse) {
+            this.selectCourse(selectedCourse, { force: true });
+            return;
+          }
+          this.resetSelections();
+          this.selectCourse(courses[0]);
+          return;
+        }
+
+        this.selectCourse(courses[0]);
       },
       error: (error) => {
         console.error('Failed to load courses', error);
@@ -119,8 +131,9 @@ export class CourseManagementComponent implements OnInit {
     });
   }
 
-  selectCourse(course: Course): void {
-    if (this.selectedCourseId() === course.id) {
+  selectCourse(course: Course, options?: { force?: boolean }): void {
+    const force = options?.force ?? false;
+    if (!force && this.selectedCourseId() === course.id) {
       return;
     }
     this.selectedCourseId.set(course.id);
@@ -151,6 +164,7 @@ export class CourseManagementComponent implements OnInit {
             this.loadLessons(subjects[0].id);
             return;
           }
+          this.loadLessons(this.selectedSubjectId()!);
         } else {
           this.selectedSubjectId.set(subjects[0].id);
           this.loadLessons(subjects[0].id);
@@ -196,6 +210,7 @@ export class CourseManagementComponent implements OnInit {
             this.loadContents(lessons[0].id);
             return;
           }
+          this.loadContents(this.selectedLessonId()!);
         } else {
           this.selectedLessonId.set(lessons[0].id);
           this.loadContents(lessons[0].id);

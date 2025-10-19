@@ -1,0 +1,37 @@
+<div class="profile-wrapper container py-4">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-center mb-4">
+        <div class="profile-avatar me-3">
+          <span>{{ avatarLetter() }}</span>
+        </div>
+        <div>
+          <h4 class="mb-1">{{ currentUser()?.email }}</h4>
+          <span class="badge bg-success text-uppercase">{{ currentUser()?.role }}</span>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="info-card">
+            <h6 class="text-uppercase text-muted">Account Details</h6>
+            <ul class="list-unstyled mb-0">
+              <li><strong>Email:</strong> {{ currentUser()?.email }}</li>
+              <li><strong>Role:</strong> {{ currentUser()?.role | titlecase }}</li>
+              <li><strong>Status:</strong> Active</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="info-card">
+            <h6 class="text-uppercase text-muted">Next Steps</h6>
+            <p class="mb-2">Need to update your personal information or password?</p>
+            <a class="btn btn-outline-primary btn-sm" routerLink="/account/settings">
+              Manage Account Settings
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
