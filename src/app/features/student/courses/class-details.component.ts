@@ -131,6 +131,7 @@ export class ClassDetailsComponent implements OnInit {
   viewMode = signal<'calendar' | 'subject'>('calendar');
 
   collapsedSubjects = signal<Map<number, boolean>>(new Map());
+  collapsedDays = signal<Map<string, boolean>>(new Map());
   notes = signal<Note[]>([]);
   notesLoading = signal(false);
   notesError = signal<string | null>(null);
@@ -216,6 +217,7 @@ export class ClassDetailsComponent implements OnInit {
           console.log('Course details transformed:', data);
 
           this.courseDetails.set(data);
+          this.collapsedDays.set(new Map());
           this.loadCourseNotes();
 
           // Auto-select first lesson if available
@@ -345,6 +347,7 @@ export class ClassDetailsComponent implements OnInit {
 
   selectLesson(lesson: Lesson): void {
     this.selectedLesson.set(lesson);
+    this.expandDayForLesson(lesson.id);
     this.selectedVideoIndex.set(0);
     this.trustedVideoUrls.set(this.buildVideoUrlMap(lesson));
     this.quizSubmitted.set(false);
@@ -367,6 +370,30 @@ export class ClassDetailsComponent implements OnInit {
 
   isSubjectCollapsed(subjectId: number): boolean {
     return this.collapsedSubjects().get(subjectId) ?? true;
+  }
+
+  toggleDay(date: string): void {
+    const currentMap = this.collapsedDays();
+    const newMap = new Map(currentMap);
+    newMap.set(date, !this.isDayCollapsed(date));
+    this.collapsedDays.set(newMap);
+  }
+
+  isDayCollapsed(date: string): boolean {
+    return this.collapsedDays().get(date) ?? false;
+  }
+
+  private expandDayForLesson(lessonId: number): void {
+    const schedule = this.courseDetails()?.schedule ?? [];
+    const matchingDay = schedule.find((day) => day.lessons.some((lesson) => lesson.id === lessonId));
+    if (!matchingDay) {
+      return;
+    }
+
+    const currentMap = this.collapsedDays();
+    const newMap = new Map(currentMap);
+    newMap.set(matchingDay.date, false);
+    this.collapsedDays.set(newMap);
   }
 
   formatDayHeader(dateString: string): string {
