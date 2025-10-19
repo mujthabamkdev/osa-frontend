@@ -87,30 +87,28 @@
               <div class="list-group">
                 @for (subject of subjects(); track subject.id) {
                   <div
-                    class="list-group-item"
+                    class="list-group-item list-group-item-action subject-card"
+                    role="button"
+                    tabindex="0"
+                    (click)="selectSubject(subject)"
                     [class.active]="selectedSubject()?.id === subject.id"
                   >
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div>
-                        <div class="fw-semibold">{{ subject.name }}</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                      <div class="subject-meta">
+                        <div class="fw-semibold mb-1">{{ subject.name }}</div>
                         <small class="text-muted">Order {{ subject.order_in_course }}</small>
+                        <small class="text-muted">Instructor: {{ teacherName(subject.instructor_id) }}</small>
                       </div>
                       <div class="btn-group btn-group-sm">
                         <button
-                          class="btn btn-outline-primary"
-                          (click)="selectSubject(subject)"
-                        >
-                          Manage Lessons
-                        </button>
-                        <button
                           class="btn btn-outline-secondary"
-                          (click)="openSubjectModal(subject)"
+                          (click)="$event.stopPropagation(); openSubjectModal(subject)"
                         >
                           Edit
                         </button>
                         <button
                           class="btn btn-outline-danger"
-                          (click)="deleteSubject(subject)"
+                          (click)="$event.stopPropagation(); deleteSubject(subject)"
                         >
                           Delete
                         </button>
@@ -160,7 +158,7 @@
               <div class="list-group">
                 @for (lesson of lessons(); track lesson.id) {
                   <div
-                    class="list-group-item"
+                    class="list-group-item lesson-card"
                     [class.active]="selectedLesson()?.id === lesson.id"
                   >
                     <div class="d-flex justify-content-between align-items-start">
@@ -288,28 +286,37 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Create Course</h5>
-            <button type="button" class="btn-close" (click)="showCourseModal.set(false)"></button>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close create course dialog"
+              (click)="showCourseModal.set(false)"
+            >
+              <span class="visually-hidden">Close</span>
+            </button>
           </div>
           <div class="modal-body">
             <form #courseForm="ngForm" (ngSubmit)="createCourse()">
               <div class="mb-3">
-                <label class="form-label">Title</label>
+                <label class="form-label" for="courseTitleInput">Title</label>
                 <input
                   type="text"
                   class="form-control"
                   name="title"
                   required
+                  id="courseTitleInput"
                   [ngModel]="courseDraft().title"
                   (ngModelChange)="updateCourseTitle($event)"
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label">Description</label>
+                <label class="form-label" for="courseDescriptionInput">Description</label>
                 <textarea
                   class="form-control"
                   rows="3"
                   name="description"
                   required
+                  id="courseDescriptionInput"
                   [ngModel]="courseDraft().description"
                   (ngModelChange)="updateCourseDescription($event)"
                 ></textarea>
@@ -339,54 +346,76 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ editingSubjectId() ? 'Edit Subject' : 'Add Subject' }}</h5>
-            <button type="button" class="btn-close" (click)="showSubjectModal.set(false)"></button>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close subject dialog"
+              (click)="showSubjectModal.set(false)"
+            >
+              <span class="visually-hidden">Close</span>
+            </button>
           </div>
           <div class="modal-body">
             <form #subjectFormRef="ngForm" (ngSubmit)="saveSubject()">
               <div class="mb-3">
-                <label class="form-label">Name</label>
+                <label class="form-label" for="subjectNameInput">Name</label>
                 <input
                   type="text"
                   class="form-control"
                   name="subjectName"
                   required
+                  id="subjectNameInput"
                   [ngModel]="subjectForm().name"
                   (ngModelChange)="updateSubjectForm('name', $event)"
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label">Description</label>
+                <label class="form-label" for="subjectDescriptionInput">Description</label>
                 <textarea
                   class="form-control"
                   rows="3"
                   name="subjectDescription"
+                  id="subjectDescriptionInput"
                   [ngModel]="subjectForm().description"
                   (ngModelChange)="updateSubjectForm('description', $event)"
                 ></textarea>
               </div>
               <div class="row g-3">
                 <div class="col-6">
-                  <label class="form-label">Display Order</label>
+                  <label class="form-label" for="subjectOrderInput">Display Order</label>
                   <input
                     type="number"
                     min="1"
                     class="form-control"
                     name="subjectOrder"
                     required
+                    id="subjectOrderInput"
                     [ngModel]="subjectForm().order_in_course"
                     (ngModelChange)="updateSubjectForm('order_in_course', $event)"
                   />
                 </div>
                 <div class="col-6">
-                  <label class="form-label">Instructor ID</label>
-                  <input
-                    type="number"
-                    min="1"
-                    class="form-control"
+                  <div class="d-flex align-items-center justify-content-between">
+                    <label class="form-label mb-0" for="subjectInstructorSelect">Instructor</label>
+                    @if (teachersLoading()) {
+                      <span class="spinner-border spinner-border-sm text-secondary" aria-hidden="true"></span>
+                    }
+                  </div>
+                  <select
+                    class="form-select"
                     name="subjectInstructor"
+                    [disabled]="teachersLoading()"
+                    id="subjectInstructorSelect"
                     [ngModel]="subjectForm().instructor_id ?? ''"
                     (ngModelChange)="updateSubjectForm('instructor_id', $event)"
-                  />
+                  >
+                    <option value="">Unassigned</option>
+                    @for (teacher of teachers(); track teacher.id) {
+                      <option [value]="teacher.id">
+                        {{ teacher.full_name || teacher.email }}
+                      </option>
+                    }
+                  </select>
                 </div>
               </div>
               <div class="d-flex justify-content-end gap-2 mt-4">
@@ -414,50 +443,61 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ editingLessonId() ? 'Edit Lesson' : 'Add Lesson' }}</h5>
-            <button type="button" class="btn-close" (click)="showLessonModal.set(false)"></button>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close lesson dialog"
+              (click)="showLessonModal.set(false)"
+            >
+              <span class="visually-hidden">Close</span>
+            </button>
           </div>
           <div class="modal-body">
             <form #lessonFormRef="ngForm" (ngSubmit)="saveLesson()">
               <div class="mb-3">
-                <label class="form-label">Title</label>
+                <label class="form-label" for="lessonTitleInput">Title</label>
                 <input
                   type="text"
                   class="form-control"
                   name="lessonTitle"
                   required
+                  id="lessonTitleInput"
                   [ngModel]="lessonForm().title"
                   (ngModelChange)="updateLessonForm('title', $event)"
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label">Description</label>
+                <label class="form-label" for="lessonDescriptionInput">Description</label>
                 <textarea
                   class="form-control"
                   rows="3"
                   name="lessonDescription"
+                  id="lessonDescriptionInput"
                   [ngModel]="lessonForm().description ?? ''"
                   (ngModelChange)="updateLessonForm('description', $event)"
                 ></textarea>
               </div>
               <div class="row g-3">
                 <div class="col-6">
-                  <label class="form-label">Display Order</label>
+                  <label class="form-label" for="lessonOrderInput">Display Order</label>
                   <input
                     type="number"
                     min="1"
                     class="form-control"
                     name="lessonOrder"
                     required
+                    id="lessonOrderInput"
                     [ngModel]="lessonForm().order_in_subject"
                     (ngModelChange)="updateLessonForm('order_in_subject', $event)"
                   />
                 </div>
                 <div class="col-6">
-                  <label class="form-label">Scheduled Date</label>
+                  <label class="form-label" for="lessonDateInput">Scheduled Date</label>
                   <input
                     type="date"
                     class="form-control"
                     name="lessonDate"
+                    id="lessonDateInput"
                     [ngModel]="lessonForm().scheduled_date ?? ''"
                     (ngModelChange)="updateLessonForm('scheduled_date', $event)"
                   />
@@ -488,27 +528,36 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ editingContentId() ? 'Edit Content' : 'Add Content' }}</h5>
-            <button type="button" class="btn-close" (click)="showContentModal.set(false)"></button>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close content dialog"
+              (click)="showContentModal.set(false)"
+            >
+              <span class="visually-hidden">Close</span>
+            </button>
           </div>
           <div class="modal-body">
             <form #contentFormRef="ngForm" (ngSubmit)="saveContent()">
               <div class="mb-3">
-                <label class="form-label">Title</label>
+                <label class="form-label" for="contentTitleInput">Title</label>
                 <input
                   type="text"
                   class="form-control"
                   name="contentTitle"
                   required
+                  id="contentTitleInput"
                   [ngModel]="contentForm().title"
                   (ngModelChange)="updateContentForm('title', $event)"
                 />
               </div>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label">Type</label>
+                  <label class="form-label" for="contentTypeSelect">Type</label>
                   <select
                     class="form-select"
                     name="contentType"
+                    id="contentTypeSelect"
                     required
                     [ngModel]="contentForm().content_type"
                     (ngModelChange)="updateContentForm('content_type', $event)"
@@ -520,34 +569,37 @@
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Display Order</label>
+                  <label class="form-label" for="contentOrderInput">Display Order</label>
                   <input
                     type="number"
                     min="1"
                     class="form-control"
                     name="contentOrder"
                     required
+                    id="contentOrderInput"
                     [ngModel]="contentForm().order_in_lesson"
                     (ngModelChange)="updateContentForm('order_in_lesson', $event)"
                   />
                 </div>
               </div>
               <div class="mb-3 mt-3">
-                <label class="form-label">Content URL</label>
+                <label class="form-label" for="contentUrlInput">Content URL</label>
                 <input
                   type="url"
                   class="form-control"
                   name="contentUrl"
+                  id="contentUrlInput"
                   [ngModel]="contentForm().content_url ?? ''"
                   (ngModelChange)="updateContentForm('content_url', $event)"
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label">Content Text</label>
+                <label class="form-label" for="contentTextInput">Content Text</label>
                 <textarea
                   class="form-control"
                   rows="4"
                   name="contentText"
+                  id="contentTextInput"
                   [ngModel]="contentForm().content_text ?? ''"
                   (ngModelChange)="updateContentForm('content_text', $event)"
                 ></textarea>

@@ -1,8 +1,26 @@
+import { CourseAttachment, CourseQuiz } from './course.models';
+export interface DashboardTotals {
+  users: number;
+  activeUsers: number;
+  students: number;
+  teachers: number;
+  parents: number;
+  admins: number;
+  courses: number;
+  enrollments: number;
+}
+
+export interface DashboardActive {
+  students: number;
+  teachers: number;
+}
+
 export interface DashboardStats {
-  totalCourses: number;
-  activeStudents: number;
-  activeTeachers: number;
-  totalEnrollments: number;
+  totals: DashboardTotals;
+  active: DashboardActive;
+  unansweredQuestions: number;
+  systemHealth: string;
+  generatedAt: string;
 }
 
 export interface StudentStats {
@@ -48,8 +66,8 @@ export interface CourseClass {
   order: number;
   progress?: number;
   completed?: boolean;
-  attachments?: any[];
-  quizzes?: any[];
+  attachments?: CourseAttachment[];
+  quizzes?: CourseQuiz[];
   created_at: string;
 }
 

@@ -12,6 +12,7 @@ import {
   CourseSubjectPayload,
   CreateCourseRequest,
 } from '../../../core/models/course.models';
+import { User } from '../../../core/models/user.models';
 
 @Component({
   selector: 'app-admin-course-management',
@@ -37,6 +38,9 @@ export class CourseManagementComponent implements OnInit {
   readonly contents = signal<CourseLessonContent[]>([]);
   readonly contentsLoading = signal(false);
   readonly contentSaving = signal(false);
+
+  readonly teachers = signal<User[]>([]);
+  readonly teachersLoading = signal(false);
 
   readonly selectedCourseId = signal<number | null>(null);
   readonly selectedSubjectId = signal<number | null>(null);
@@ -93,8 +97,18 @@ export class CourseManagementComponent implements OnInit {
     this.lessons().find((lesson) => lesson.id === this.selectedLessonId()) ?? null
   );
 
+  readonly teacherLookup = computed(() => {
+    const lookup: Record<number, string> = {};
+    for (const teacher of this.teachers()) {
+      const label = teacher.full_name?.trim() || teacher.email;
+      lookup[teacher.id] = label;
+    }
+    return lookup;
+  });
+
   ngOnInit(): void {
     this.loadCourses();
+    this.loadTeacherOptions();
   }
 
   loadCourses(): void {
@@ -161,13 +175,13 @@ export class CourseManagementComponent implements OnInit {
           const stillExists = subjects.some((subject) => subject.id === this.selectedSubjectId());
           if (!stillExists) {
             this.selectedSubjectId.set(subjects[0].id);
-            this.loadLessons(subjects[0].id);
+            this.loadLessons(courseId, subjects[0].id);
             return;
           }
-          this.loadLessons(this.selectedSubjectId()!);
+          this.loadLessons(courseId, this.selectedSubjectId()!);
         } else {
           this.selectedSubjectId.set(subjects[0].id);
-          this.loadLessons(subjects[0].id);
+          this.loadLessons(courseId, subjects[0].id);
         }
       },
       error: (error) => {
@@ -185,16 +199,20 @@ export class CourseManagementComponent implements OnInit {
     if (this.selectedSubjectId() === subject.id) {
       return;
     }
+    const courseId = this.selectedCourseId();
+    if (!courseId) {
+      return;
+    }
     this.selectedSubjectId.set(subject.id);
     this.selectedLessonId.set(null);
     this.lessons.set([]);
     this.contents.set([]);
-    this.loadLessons(subject.id);
+    this.loadLessons(courseId, subject.id);
   }
 
-  private loadLessons(subjectId: number): void {
+  private loadLessons(courseId: number, subjectId: number): void {
     this.lessonsLoading.set(true);
-    this.apiService.getSubjectLessons(subjectId).subscribe({
+    this.apiService.getSubjectLessons(courseId, subjectId).subscribe({
       next: (lessons) => {
         this.lessons.set(lessons);
         this.lessonsLoading.set(false);
@@ -207,13 +225,13 @@ export class CourseManagementComponent implements OnInit {
           const stillExists = lessons.some((lesson) => lesson.id === this.selectedLessonId());
           if (!stillExists) {
             this.selectedLessonId.set(lessons[0].id);
-            this.loadContents(lessons[0].id);
+            this.loadContents(courseId, subjectId, lessons[0].id);
             return;
           }
-          this.loadContents(this.selectedLessonId()!);
+          this.loadContents(courseId, subjectId, this.selectedLessonId()!);
         } else {
           this.selectedLessonId.set(lessons[0].id);
-          this.loadContents(lessons[0].id);
+          this.loadContents(courseId, subjectId, lessons[0].id);
         }
       },
       error: (error) => {
@@ -230,19 +248,19 @@ export class CourseManagementComponent implements OnInit {
     if (this.selectedLessonId() === lesson.id) {
       return;
     }
-    this.selectedLessonId.set(lesson.id);
-    this.contents.set([]);
-    this.loadContents(lesson.id);
-  }
-
-  private loadContents(lessonId: number): void {
-    this.contentsLoading.set(true);
+    const courseId = this.selectedCourseId();
     const subjectId = this.selectedSubjectId();
-    if (!subjectId) {
-      this.contentsLoading.set(false);
+    if (!courseId || !subjectId) {
       return;
     }
-    this.apiService.getLessonContents(subjectId, lessonId).subscribe({
+    this.selectedLessonId.set(lesson.id);
+    this.contents.set([]);
+    this.loadContents(courseId, subjectId, lesson.id);
+  }
+
+  private loadContents(courseId: number, subjectId: number, lessonId: number): void {
+    this.contentsLoading.set(true);
+    this.apiService.getLessonContents(courseId, subjectId, lessonId).subscribe({
       next: (contents) => {
         this.contents.set(contents);
         this.contentsLoading.set(false);
@@ -373,27 +391,28 @@ export class CourseManagementComponent implements OnInit {
   }
 
   saveLesson(): void {
+    const courseId = this.selectedCourseId();
     const subjectId = this.selectedSubjectId();
-    if (!subjectId || this.lessonSaving()) {
+    if (!courseId || !subjectId || this.lessonSaving()) {
       return;
     }
     this.lessonSaving.set(true);
     const lessonId = this.editingLessonId();
     const payload = { ...this.lessonForm(), subject_id: subjectId };
     const request$ = lessonId
-      ? this.apiService.updateSubjectLesson(subjectId, lessonId, payload)
-      : this.apiService.createSubjectLesson(subjectId, payload);
+      ? this.apiService.updateSubjectLesson(courseId, subjectId, lessonId, payload)
+      : this.apiService.createSubjectLesson(courseId, subjectId, payload);
 
     request$.subscribe({
       next: (lesson) => {
         this.lessonSaving.set(false);
         this.showLessonModal.set(false);
-        this.loadLessons(subjectId);
+        this.loadLessons(courseId, subjectId);
         if (!lessonId) {
           this.selectedLessonId.set(lesson.id);
-          this.loadContents(lesson.id);
+          this.loadContents(courseId, subjectId, lesson.id);
         } else {
-          this.loadContents(lessonId);
+          this.loadContents(courseId, subjectId, lessonId);
         }
       },
       error: (error) => {
@@ -404,20 +423,21 @@ export class CourseManagementComponent implements OnInit {
   }
 
   deleteLesson(lesson: CourseLesson): void {
+    const courseId = this.selectedCourseId();
     const subjectId = this.selectedSubjectId();
-    if (!subjectId) {
+    if (!courseId || !subjectId) {
       return;
     }
     if (!confirm(`Delete lesson "${lesson.title}" and all associated content?`)) {
       return;
     }
-    this.apiService.deleteSubjectLesson(subjectId, lesson.id).subscribe({
+    this.apiService.deleteSubjectLesson(courseId, subjectId, lesson.id).subscribe({
       next: () => {
         if (this.selectedLessonId() === lesson.id) {
           this.selectedLessonId.set(null);
           this.contents.set([]);
         }
-        this.loadLessons(subjectId);
+        this.loadLessons(courseId, subjectId);
       },
       error: (error) => console.error('Failed to delete lesson', error),
     });
@@ -441,9 +461,10 @@ export class CourseManagementComponent implements OnInit {
   }
 
   saveContent(): void {
+    const courseId = this.selectedCourseId();
     const subjectId = this.selectedSubjectId();
     const lessonId = this.selectedLessonId();
-    if (!subjectId || !lessonId || this.contentSaving()) {
+    if (!courseId || !subjectId || !lessonId || this.contentSaving()) {
       return;
     }
     this.contentSaving.set(true);
@@ -455,14 +476,14 @@ export class CourseManagementComponent implements OnInit {
       content_text: this.normalizeOptionalField(this.contentForm().content_text),
     };
     const request$ = contentId
-      ? this.apiService.updateLessonContent(subjectId, lessonId, contentId, payload)
-      : this.apiService.createLessonContent(subjectId, lessonId, payload);
+      ? this.apiService.updateLessonContent(courseId, subjectId, lessonId, contentId, payload)
+      : this.apiService.createLessonContent(courseId, subjectId, lessonId, payload);
 
     request$.subscribe({
       next: () => {
         this.contentSaving.set(false);
         this.showContentModal.set(false);
-        this.loadContents(lessonId);
+        this.loadContents(courseId, subjectId, lessonId);
       },
       error: (error) => {
         console.error('Failed to save content', error);
@@ -472,18 +493,49 @@ export class CourseManagementComponent implements OnInit {
   }
 
   deleteContent(content: CourseLessonContent): void {
+    const courseId = this.selectedCourseId();
     const subjectId = this.selectedSubjectId();
     const lessonId = this.selectedLessonId();
-    if (!subjectId || !lessonId) {
+    if (!courseId || !subjectId || !lessonId) {
       return;
     }
     if (!confirm(`Delete content "${content.title}"?`)) {
       return;
     }
-    this.apiService.deleteLessonContent(subjectId, lessonId, content.id).subscribe({
-      next: () => this.loadContents(lessonId),
+    this.apiService.deleteLessonContent(courseId, subjectId, lessonId, content.id).subscribe({
+      next: () => this.loadContents(courseId, subjectId, lessonId),
       error: (error) => console.error('Failed to delete content', error),
     });
+  }
+
+  private loadTeacherOptions(): void {
+    this.teachersLoading.set(true);
+    this.apiService.getUsers().subscribe({
+      next: (users) => {
+        const teacherUsers = users
+          .filter((user) => user.role === 'teacher')
+          .sort((a, b) => {
+            const aName = (a.full_name ?? a.email).toLowerCase();
+            const bName = (b.full_name ?? b.email).toLowerCase();
+            return aName.localeCompare(bName);
+          });
+        this.teachers.set(teacherUsers);
+        this.teachersLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Failed to load teachers', error);
+        this.teachers.set([]);
+        this.teachersLoading.set(false);
+      },
+    });
+  }
+
+  teacherName(instructorId?: number | null): string {
+    if (!instructorId) {
+      return 'Unassigned';
+    }
+    const lookup = this.teacherLookup();
+    return lookup[instructorId] ?? `Teacher #${instructorId}`;
   }
 
   updateCourseTitle(title: string): void {

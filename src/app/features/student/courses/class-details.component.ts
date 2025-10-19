@@ -23,7 +23,7 @@ interface Teacher {
   id: number;
   email: string;
   full_name: string;
-  role: string;
+  role?: string;
 }
 
 interface Attachment {
@@ -104,6 +104,47 @@ interface CourseDetails {
   subjects: Subject[];
   schedule: DaySchedule[];
   live_classes: LiveClass[];
+}
+
+interface ApiLessonContentResponse {
+  id?: number;
+  title?: string;
+  content_type?: string;
+  content_url?: string;
+  content_text?: string;
+  source?: string;
+}
+
+interface ApiLessonResponse {
+  id: number;
+  title?: string;
+  description?: string;
+  order_in_subject?: number;
+  order_in_course?: number;
+  subject_id?: number;
+  scheduled_date?: string | null;
+  contents?: ApiLessonContentResponse[];
+  quiz?: Quiz | null;
+  progress?: LessonProgress | null;
+}
+
+interface ApiSubjectResponse {
+  id: number;
+  name?: string;
+  description?: string;
+  order_in_course?: number;
+  lessons?: ApiLessonResponse[];
+}
+
+interface ApiCourseDetailsResponse {
+  id: number;
+  title: string;
+  description: string;
+  teacher_id: number;
+  teacher?: Teacher | null;
+  created_at: string;
+  subjects?: ApiSubjectResponse[];
+  live_classes?: LiveClass[];
 }
 
 @Component({
@@ -209,11 +250,11 @@ export class ClassDetailsComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (rawData: any) => {
+        next: (rawData) => {
           console.log('Course details API response:', rawData);
 
           // Transform backend data structure to match frontend expectations
-          const data = this.transformCourseData(rawData);
+          const data = this.transformCourseData(rawData as ApiCourseDetailsResponse);
           console.log('Course details transformed:', data);
 
           this.courseDetails.set(data);
@@ -233,7 +274,7 @@ export class ClassDetailsComponent implements OnInit {
       });
   }
 
-  private transformCourseData(rawData: any): CourseDetails {
+  private transformCourseData(rawData: ApiCourseDetailsResponse): CourseDetails {
     console.log('Transforming course data...', rawData);
 
     const subjects: Subject[] = [];
@@ -257,14 +298,16 @@ export class ClassDetailsComponent implements OnInit {
               order: lessonData.order_in_course || 0,
               subject_id: subject.id,
               subject_name: subject.name || 'Subject',
-              attachments: (lessonData.contents || []).map((content: any, idx: number) => ({
+              attachments: (lessonData.contents || []).map(
+                (content: ApiLessonContentResponse, idx: number) => ({
                 id: content.id || idx,
                 title: content.title || 'Content',
                 file_type: content.content_type || 'document',
                 file_url: content.content_url || '',
                 source: content.source || 'upload',
                 description: content.content_text || '',
-              })),
+                })
+              ),
               quiz: lessonData.quiz || null,
               progress: lessonData.progress || null,
             };
@@ -294,8 +337,8 @@ export class ClassDetailsComponent implements OnInit {
         for (const lesson of subject.lessons) {
           // Find the lesson data from the API response to get scheduled_date
           const lessonData = rawData.subjects
-            .find((s: any) => s.id === subject.id)?.lessons
-            .find((l: any) => l.id === lesson.id);
+            ?.find((candidate) => candidate.id === subject.id)
+            ?.lessons?.find((candidateLesson) => candidateLesson.id === lesson.id);
 
           if (lessonData && lessonData.scheduled_date) {
             const dateStr = this.extractDate(lessonData.scheduled_date);
@@ -324,7 +367,7 @@ export class ClassDetailsComponent implements OnInit {
       title: rawData.title,
       description: rawData.description,
       teacher_id: rawData.teacher_id,
-      teacher: rawData.teacher,
+  teacher: rawData.teacher ?? undefined,
       created_at: rawData.created_at,
       subjects,
       schedule,

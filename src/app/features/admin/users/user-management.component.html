@@ -44,14 +44,24 @@
                   <td>{{ user.created_at | date: 'short' }}</td>
                   <td class="text-end">
                     <div class="btn-group btn-group-sm">
-                      <button class="btn btn-outline-secondary" (click)="toggleUserStatus(user)">
+                      <button class="btn btn-outline-secondary" type="button" (click)="toggleUserStatus(user)">
                         {{ user.is_active ? 'Deactivate' : 'Activate' }}
                       </button>
-                      <button class="btn btn-outline-primary" (click)="editUser(user)">
-                        <i class="bi bi-pencil"></i>
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        (click)="editUser(user)"
+                        [attr.aria-label]="'Edit user ' + user.email"
+                      >
+                        <i class="bi bi-pencil" aria-hidden="true"></i>
                       </button>
-                      <button class="btn btn-outline-danger" (click)="deleteUser(user)">
-                        <i class="bi bi-trash"></i>
+                      <button
+                        class="btn btn-outline-danger"
+                        type="button"
+                        (click)="deleteUser(user)"
+                        [attr.aria-label]="'Delete user ' + user.email"
+                      >
+                        <i class="bi bi-trash" aria-hidden="true"></i>
                       </button>
                     </div>
                   </td>
@@ -70,37 +80,45 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ modalTitle() }}</h5>
-            <button type="button" class="btn-close" (click)="showUserModal.set(false)"></button>
+            <button
+              type="button"
+              class="btn-close"
+              (click)="showUserModal.set(false)"
+              aria-label="Close user modal"
+            ></button>
           </div>
           <div class="modal-body">
             <form #userFormRef="ngForm" (ngSubmit)="saveUser()">
               <div class="mb-3">
-                <label class="form-label">Email</label>
+                <label class="form-label" for="userEmailInput">Email</label>
                 <input
                   type="email"
                   class="form-control"
                   name="email"
                   required
+                  id="userEmailInput"
                   [ngModel]="userForm().email"
                   (ngModelChange)="updateUserField('email', $event)"
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label">Full Name</label>
+                <label class="form-label" for="userFullNameInput">Full Name</label>
                 <input
                   type="text"
                   class="form-control"
                   name="fullName"
+                  id="userFullNameInput"
                   [ngModel]="userForm().full_name ?? ''"
                   (ngModelChange)="updateUserField('full_name', $event)"
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label">Password</label>
+                <label class="form-label" for="userPasswordInput">Password</label>
                 <input
                   type="password"
                   class="form-control"
                   name="password"
+                  id="userPasswordInput"
                   [required]="modalMode() === 'create'"
                   [ngModel]="userForm().password"
                   (ngModelChange)="updateUserField('password', $event)"
@@ -111,11 +129,12 @@
               </div>
               <div class="row g-3">
                 <div class="col-sm-6">
-                  <label class="form-label">Role</label>
+                  <label class="form-label" for="userRoleSelect">Role</label>
                   <select
                     class="form-select"
                     name="role"
                     required
+                    id="userRoleSelect"
                     [ngModel]="userForm().role"
                     (ngModelChange)="updateUserField('role', $event)"
                   >
@@ -126,7 +145,7 @@
                   </select>
                 </div>
                 <div class="col-sm-6">
-                  <label class="form-label d-block">Status</label>
+                  <label class="form-label d-block" for="userStatusSwitch">Status</label>
                   <div class="form-check form-switch">
                     <input
                       class="form-check-input"

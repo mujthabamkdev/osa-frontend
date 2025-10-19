@@ -86,7 +86,12 @@
               <div class="card">
                 <div
                   class="card-header bg-light day-header"
+                  role="button"
+                  tabindex="0"
                   (click)="toggleDay(daySchedule.date)"
+                  (keydown.enter)="toggleDay(daySchedule.date)"
+                  (keydown.space)="toggleDay(daySchedule.date)"
+                  [attr.aria-expanded]="!isDayCollapsed(daySchedule.date)"
                 >
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -113,7 +118,12 @@
                           <div
                             class="card lesson-card"
                             [class.active-lesson]="isActiveLessonId(lesson.id)"
+                            role="button"
+                            tabindex="0"
                             (click)="selectLesson(lesson)"
+                            (keydown.enter)="selectLesson(lesson)"
+                            (keydown.space)="selectLesson(lesson)"
+                            [attr.aria-pressed]="isActiveLessonId(lesson.id)"
                             style="cursor: pointer"
                           >
                             <div class="card-body">
@@ -173,7 +183,15 @@
           @for (subject of courseDetails()?.subjects; track subject.id) {
             <div class="col-12">
               <div class="card subject-card">
-                <div class="card-header subject-header" (click)="toggleSubject(subject.id)">
+                <div
+                  class="card-header subject-header"
+                  role="button"
+                  tabindex="0"
+                  (click)="toggleSubject(subject.id)"
+                  (keydown.enter)="toggleSubject(subject.id)"
+                  (keydown.space)="toggleSubject(subject.id)"
+                  [attr.aria-expanded]="!isSubjectCollapsed(subject.id)"
+                >
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <h5 class="mb-1">{{ subject.title }}</h5>
@@ -199,7 +217,12 @@
                           <div
                             class="card lesson-card"
                             [class.active-lesson]="isActiveLessonId(lesson.id)"
+                            role="button"
+                            tabindex="0"
                             (click)="selectLesson(lesson)"
+                            (keydown.enter)="selectLesson(lesson)"
+                            (keydown.space)="selectLesson(lesson)"
+                            [attr.aria-pressed]="isActiveLessonId(lesson.id)"
                             style="cursor: pointer"
                           >
                             <div class="card-body">

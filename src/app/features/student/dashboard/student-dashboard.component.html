@@ -116,8 +116,13 @@
                       class="card h-100 course-card"
                       [class.disabled]="!isCourseAccessible(course)"
                       [class.opacity-50]="!isCourseAccessible(course)"
+                      role="button"
+                      tabindex="0"
                       (click)="isCourseAccessible(course) && viewCourse(course.id)"
+                      (keydown.enter)="onCourseCardKeydown($event, course)"
+                      (keydown.space)="onCourseCardKeydown($event, course)"
                       [style.cursor]="isCourseAccessible(course) ? 'pointer' : 'not-allowed'"
+                      [attr.aria-disabled]="!isCourseAccessible(course)"
                     >
                       <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -262,20 +267,22 @@
                             </button>
                             <ul class="dropdown-menu">
                               <li>
-                                <a
+                                <button
+                                  type="button"
                                   class="dropdown-item"
                                   (click)="openNotesModal(note)"
                                 >
                                   <i class="bi bi-pencil me-2"></i>Edit
-                                </a>
+                                </button>
                               </li>
                               <li>
-                                <a
+                                <button
+                                  type="button"
                                   class="dropdown-item text-danger"
                                   (click)="deleteNote(note.id)"
                                 >
                                   <i class="bi bi-trash me-2"></i>Delete
-                                </a>
+                                </button>
                               </li>
                             </ul>
                           </div>
@@ -421,8 +428,11 @@
         <button
           type="button"
           class="btn-close"
+          aria-label="Dismiss error"
           (click)="apiService.clearError()"
-        ></button>
+        >
+          <span class="visually-hidden">Dismiss error</span>
+        </button>
       </div>
     }
   }
@@ -444,8 +454,11 @@
           <button
             type="button"
             class="btn-close"
+            aria-label="Close notes modal"
             (click)="closeNotesModal()"
-          ></button>
+          >
+            <span class="visually-hidden">Close notes modal</span>
+          </button>
         </div>
         <div class="modal-body">
           <form>

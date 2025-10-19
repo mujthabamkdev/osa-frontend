@@ -35,7 +35,6 @@
       >
         <ul
           class="navbar-nav"
-          (click)="closeMobileMenu()"
         >
           @if (authService.isAdmin()) {
             <li class="nav-item">
@@ -44,6 +43,7 @@
                 routerLink="/admin/dashboard"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -55,6 +55,7 @@
                 routerLink="/admin/users"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-people me-1"></i>
                 Users
@@ -66,6 +67,7 @@
                 routerLink="/admin/courses"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-journal-text me-1"></i>
                 Courses
@@ -77,6 +79,7 @@
                 routerLink="/admin/settings"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-gear-wide-connected me-1"></i>
                 Settings
@@ -89,6 +92,7 @@
                 class="nav-link"
                 routerLink="/teacher/dashboard"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -99,6 +103,7 @@
                 class="nav-link"
                 routerLink="/teacher/courses"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-book me-1"></i>
                 My Courses
@@ -109,6 +114,7 @@
                 class="nav-link"
                 routerLink="/teacher/students"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-people me-1"></i>
                 Students
@@ -119,6 +125,7 @@
                 class="nav-link"
                 routerLink="/teacher/exams"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-journal-check me-1"></i>
                 Exams
@@ -129,6 +136,7 @@
                 class="nav-link"
                 routerLink="/teacher/live-classes"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-broadcast me-1"></i>
                 Live Classes
@@ -139,6 +147,7 @@
                 class="nav-link"
                 routerLink="/teacher/questions"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-question-circle me-1"></i>
                 Q&amp;A
@@ -151,6 +160,7 @@
                 class="nav-link"
                 routerLink="/student/dashboard"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -161,6 +171,7 @@
                 class="nav-link"
                 routerLink="/student/courses"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-book me-1"></i>
                 Courses
@@ -173,6 +184,7 @@
                 class="nav-link"
                 routerLink="/parent/dashboard"
                 routerLinkActive="active"
+                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -298,7 +310,12 @@
   @if (mobileMenuOpen()) {
     <div
       class="mobile-menu-backdrop"
+      role="button"
+      tabindex="0"
+      aria-label="Close mobile navigation"
       (click)="closeMobileMenu()"
+      (keyup.enter)="closeMobileMenu()"
+      (keydown.space)="closeMobileMenu(); $event.preventDefault()"
     ></div>
   }
 }
@@ -328,7 +345,10 @@
         type="button"
         class="btn-close"
         (click)="notificationService.remove(notification.id)"
-      ></button>
+        aria-label="Dismiss notification"
+      >
+        <span class="visually-hidden">Dismiss</span>
+      </button>
     </div>
   }
 </div>

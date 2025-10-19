@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Class } from '../../../core/models/school.models';
-import { Enrollment } from '../../../core/models/enrollment.models';
 
 @Component({
   templateUrl: './student-courses.component.html',

@@ -1249,3 +1249,45 @@ body {
     opacity: 1;
   }
 }
+
+.subject-card,
+.lesson-card {
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--color-card-border);
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.subject-card:hover,
+.lesson-card:hover,
+.subject-card.active,
+.lesson-card.active {
+  border-color: rgba(var(--color-teal-500-rgb), 0.6);
+  background-color: rgba(var(--color-teal-500-rgb), 0.08);
+  box-shadow: 0 12px 30px rgba(var(--color-teal-500-rgb), 0.12);
+}
+
+[data-color-scheme='dark'] .subject-card,
+[data-color-scheme='dark'] .lesson-card {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-color-scheme='dark'] .subject-card:hover,
+[data-color-scheme='dark'] .lesson-card:hover,
+[data-color-scheme='dark'] .subject-card.active,
+[data-color-scheme='dark'] .lesson-card.active {
+  background-color: rgba(var(--color-teal-300-rgb), 0.16);
+  border-color: rgba(var(--color-teal-300-rgb), 0.6);
+  box-shadow: 0 16px 36px rgba(var(--color-teal-300-rgb), 0.2);
+}
+
+.subject-card .subject-meta small {
+  display: inline-block;
+  margin-right: 0.75rem;
+}
+
+.subject-card .subject-meta small:last-child {
+  margin-right: 0;
+}

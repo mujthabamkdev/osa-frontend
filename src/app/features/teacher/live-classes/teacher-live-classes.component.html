@@ -12,14 +12,28 @@
   @if (error(); as message) {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       {{ message }}
-      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Dismiss error"
+        (click)="error.set(null)"
+      >
+        <span class="visually-hidden">Dismiss error</span>
+      </button>
     </div>
   }
 
   @if (successMessage(); as message) {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
       {{ message }}
-      <button type="button" class="btn-close" (click)="successMessage.set(null)"></button>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Dismiss success message"
+        (click)="successMessage.set(null)"
+      >
+        <span class="visually-hidden">Dismiss success message</span>
+      </button>
     </div>
   }
 

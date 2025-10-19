@@ -64,8 +64,11 @@
             <button
               type="button"
               class="btn-close"
+              aria-label="Close create course modal"
               (click)="showCreateModal.set(false)"
-            ></button>
+            >
+              <span class="visually-hidden">Close modal</span>
+            </button>
           </div>
           <div class="modal-body">
             <form
@@ -73,10 +76,16 @@
               #courseForm="ngForm"
             >
               <div class="mb-3">
-                <label class="form-label">Course Title</label>
+                <label
+                  class="form-label"
+                  for="courseTitle"
+                >
+                  Course Title
+                </label>
                 <input
                   type="text"
                   class="form-control"
+                  id="courseTitle"
                   [ngModel]="newCourse().title"
                   (ngModelChange)="updateTitle($event)"
                   name="title"
@@ -84,10 +93,16 @@
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label">Description</label>
+                <label
+                  class="form-label"
+                  for="courseDescription"
+                >
+                  Description
+                </label>
                 <textarea
                   class="form-control"
                   rows="3"
+                  id="courseDescription"
                   [ngModel]="newCourse().description"
                   (ngModelChange)="updateDescription($event)"
                   name="description"

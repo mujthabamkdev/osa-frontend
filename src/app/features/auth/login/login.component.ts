@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BaseComponent } from '../../../shared/components/base.component';
-import { signal } from '@angular/core';
 
 interface LoginCredentials {
   email: string;

@@ -25,4 +25,4 @@ export interface UpdateUserRequest {
   is_active?: boolean;
 }
 
-export interface UserResponse extends User {}
+export type UserResponse = User;

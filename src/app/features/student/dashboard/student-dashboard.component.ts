@@ -4,13 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
-import { Course } from '../../../core/models/course.models';
+import { CourseLessonOverview } from '../../../core/models/course.models';
 import {
   StudentProgress,
   StudentStats,
   EnrolledCourse,
   Note,
+  CourseLevel,
 } from '../../../core/models/dashboard.models';
+import { firstValueFrom } from 'rxjs';
+import { StudentProgressEntry } from '../../../core/models/teacher.models';
 
 @Component({
   templateUrl: './student-dashboard.component.html',
@@ -33,7 +36,7 @@ export class StudentDashboardComponent implements OnInit {
     hoursStudied: 0,
   });
   readonly enrolledCourses = signal<EnrolledCourse[]>([]);
-  readonly recentProgress = signal<StudentProgress[]>([]);
+  readonly recentProgress = signal<StudentProgressEntry[]>([]);
   readonly notes = signal<Note[]>([]);
   readonly showNotesModal = signal(false);
   readonly selectedNote = signal<Note | null>(null);
@@ -69,21 +72,23 @@ export class StudentDashboardComponent implements OnInit {
 
           // Load course levels/chapters
           try {
-            const levels = await this.apiService.getCourseLevels(progress.course_id).toPromise();
-            if (levels && levels.length > 0) {
-              course.levels = levels.map((level: any) => ({
-                id: level.id,
-                course_id: level.course_id,
-                title: level.title,
-                description: level.description,
-                order: level.order,
-                progress: 0, // Will be calculated based on completed classes
-                created_at: level.created_at,
+            const levels = await firstValueFrom(
+              this.apiService.getCourseLevels(progress.course_id)
+            );
+
+            if (levels.length > 0) {
+              course.levels = levels.map((lesson: CourseLessonOverview): CourseLevel => ({
+                id: lesson.id,
+                course_id: lesson.course_id,
+                title: lesson.title,
+                description: lesson.description ?? '',
+                order: lesson.order,
+                progress: lesson.progress ?? 0,
+                created_at: lesson.created_at ?? '',
               }));
 
-              // Calculate level progress (mock for now)
               course.totalLevels = course.levels.length;
-              course.completedLevels = Math.floor((course.progress / 100) * course.levels.length);
+              course.completedLevels = Math.floor((course.progress / 100) * course.totalLevels);
             } else {
               course.levels = [];
               course.totalLevels = 0;
@@ -129,7 +134,7 @@ export class StudentDashboardComponent implements OnInit {
 
     // Load recent progress (mock data for now)
     this.apiService.getStudentProgress(user.id).subscribe({
-      next: (progress: StudentProgress[]) => {
+      next: (progress: StudentProgressEntry[]) => {
         this.recentProgress.set(progress.slice(0, 5)); // Show last 5 activities
       },
       error: (error) => {
@@ -137,20 +142,20 @@ export class StudentDashboardComponent implements OnInit {
         // Set mock progress data
         this.recentProgress.set([
           {
-            course_id: 1,
-            course_title: 'Introduction to Islamic Studies',
-            progress: 75,
-            completed_lessons: 15,
-            total_lessons: 20,
-            last_accessed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            session_id: 1,
+            session_title: 'Lesson 3',
+            subject_name: 'Islamic History',
+            completed: true,
+            score: 85,
+            completed_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           },
           {
-            course_id: 2,
-            course_title: 'Quran Recitation Basics',
-            progress: 45,
-            completed_lessons: 9,
-            total_lessons: 20,
-            last_accessed: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+            session_id: 2,
+            session_title: 'Lesson 5',
+            subject_name: 'Quran Recitation Basics',
+            completed: false,
+            score: null,
+            completed_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
           },
         ]);
       },
@@ -327,6 +332,17 @@ export class StudentDashboardComponent implements OnInit {
     if (progress >= 80) return 'bg-success';
     if (progress >= 50) return 'bg-warning';
     return 'bg-info';
+  }
+
+  onCourseCardKeydown(event: KeyboardEvent | Event, course: EnrolledCourse): void {
+    if (!(event instanceof KeyboardEvent)) {
+      return;
+    }
+
+    if ((event.key === 'Enter' || event.key === ' ') && this.isCourseAccessible(course)) {
+      event.preventDefault();
+      this.viewCourse(course.id);
+    }
   }
 
   formatDate(dateString: string): string {

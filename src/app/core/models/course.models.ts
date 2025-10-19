@@ -101,7 +101,10 @@ export interface CourseLesson {
   title: string;
   description?: string | null;
   scheduled_date?: string | null;
+  created_at?: string | null;
   order_in_subject: number;
+  progress?: number | null;
+  quiz?: CourseQuiz | null;
   contents?: CourseLessonContent[];
 }
 
@@ -149,4 +152,19 @@ export interface CourseDetails extends CourseResponse {
     end_time: string;
     meeting_link?: string | null;
   }>;
+}
+
+export interface CourseLessonOverview {
+  id: number;
+  course_id: number;
+  subject_id: number;
+  subject_title: string;
+  title: string;
+  description?: string | null;
+  order: number;
+  progress?: number | null;
+  attachments: CourseLessonContent[];
+  quiz?: CourseQuiz | null;
+  scheduled_date?: string | null;
+  created_at?: string | null;
 }

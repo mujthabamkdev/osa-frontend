@@ -12,7 +12,14 @@
   @if (error(); as message) {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       {{ message }}
-      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Dismiss error"
+        (click)="error.set(null)"
+      >
+        <span class="visually-hidden">Dismiss error</span>
+      </button>
     </div>
   }
 
@@ -185,14 +192,28 @@
           @if (resultsError(); as resultsMessage) {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
               {{ resultsMessage }}
-              <button type="button" class="btn-close" (click)="resultsError.set(null)"></button>
+              <button
+                type="button"
+                class="btn-close"
+                aria-label="Dismiss results error"
+                (click)="resultsError.set(null)"
+              >
+                <span class="visually-hidden">Dismiss results error</span>
+              </button>
             </div>
           }
 
           @if (resultsSuccess(); as successMessage) {
             <div class="alert alert-success alert-dismissible fade show" role="alert">
               {{ successMessage }}
-              <button type="button" class="btn-close" (click)="resultsSuccess.set(null)"></button>
+              <button
+                type="button"
+                class="btn-close"
+                aria-label="Dismiss success message"
+                (click)="resultsSuccess.set(null)"
+              >
+                <span class="visually-hidden">Dismiss success message</span>
+              </button>
             </div>
           }
 
