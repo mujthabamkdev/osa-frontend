@@ -28,13 +28,13 @@
 }
 
 .badge.bg-warning-subtle {
-  background-color: rgba(255, 193, 7, 0.16);
-  color: #8a6d07;
+  background-color: rgba(var(--color-orange-500-rgb), 0.12);
+  color: var(--color-warning);
 }
 
 .badge.bg-success-subtle {
-  background-color: rgba(40, 167, 69, 0.16);
-  color: #1b6f3a;
+  background-color: rgba(var(--color-teal-500-rgb), 0.15);
+  color: var(--color-primary-active);
 }
 
 .invalid-feedback {

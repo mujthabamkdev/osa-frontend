@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,10 +16,12 @@ import { firstValueFrom } from 'rxjs';
 import { StudentProgressEntry } from '../../../core/models/teacher.models';
 
 @Component({
-  templateUrl: './student-dashboard.component.html',
   selector: 'app-student-dashboard',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  templateUrl: './student-dashboard.component.html',
+  styleUrl: './student-dashboard.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentDashboardComponent implements OnInit {
   readonly authService = inject(AuthService);
@@ -346,7 +348,15 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
+    if (!dateString) {
+      return 'Just now';
+    }
+
     const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) {
+      return 'Just now';
+    }
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));

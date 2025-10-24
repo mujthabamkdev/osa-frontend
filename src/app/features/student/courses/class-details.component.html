@@ -1,43 +1,50 @@
 <div class="course-container">
   <div class="course-header sticky-top shadow-sm">
-    <div class="container-fluid py-3">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-          <button class="btn btn-outline-secondary btn-sm" (click)="goBack()">
-            <i class="bi bi-arrow-left"></i>
-          </button>
-          <div>
-            @if (courseDetails()) {
-              <h2 class="mb-0">{{ courseDetails()!.title }}</h2>
-            }
-            @if (courseDetails()?.teacher) {
-              <small class="text-muted">
-                Instructor: {{ courseDetails()!.teacher!.full_name }}
-              </small>
-            }
-          </div>
+    <div class="course-header__inner">
+      <div class="course-header__primary">
+        <button class="course-header__back" type="button" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i>
+          <span class="course-header__back-label">Back</span>
+        </button>
+        <div class="course-header__info">
+          @if (courseDetails()) {
+            <h1 class="course-header__title">{{ courseDetails()!.title }}</h1>
+          }
+          @if (courseDetails()?.teacher) {
+            <p class="course-header__subtitle">
+              Instructor: {{ courseDetails()!.teacher!.full_name }}
+            </p>
+          }
         </div>
-        <div class="d-flex gap-2">
+      </div>
+
+      <div class="course-header__actions">
+  <div class="course-header__view-toggle" role="group" aria-label="Course view modes">
           <button
-            class="btn btn-sm"
-            [class.btn-primary]="viewMode() === 'calendar'"
-            [class.btn-outline-primary]="viewMode() !== 'calendar'"
+            type="button"
+            class="course-header__toggle"
+            [class.course-header__toggle--active]="viewMode() === 'calendar'"
             (click)="viewMode.set('calendar')"
+            [attr.aria-pressed]="viewMode() === 'calendar'"
           >
-            <i class="bi bi-calendar me-1"></i> Daily Calendar
+            <i class="bi bi-calendar"></i>
+            <span>Daily Calendar</span>
           </button>
           <button
-            class="btn btn-sm"
-            [class.btn-primary]="viewMode() === 'subject'"
-            [class.btn-outline-primary]="viewMode() !== 'subject'"
+            type="button"
+            class="course-header__toggle"
+            [class.course-header__toggle--active]="viewMode() === 'subject'"
             (click)="viewMode.set('subject')"
+            [attr.aria-pressed]="viewMode() === 'subject'"
           >
-            <i class="bi bi-book me-1"></i> By Subject
-          </button>
-          <button class="btn btn-outline-secondary btn-sm" (click)="refreshCourse()">
-            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            <i class="bi bi-book"></i>
+            <span>By Subject</span>
           </button>
         </div>
+        <button class="course-header__refresh" type="button" (click)="refreshCourse()">
+          <i class="bi bi-arrow-clockwise"></i>
+          <span>Refresh</span>
+        </button>
       </div>
     </div>
   </div>
@@ -112,63 +119,74 @@
                 </div>
                 @if (!isDayCollapsed(daySchedule.date)) {
                   <div class="card-body">
-                    <div class="row g-3">
-                      @for (lesson of daySchedule.lessons; track lesson.id) {
-                        <div class="col-md-6 col-lg-4">
-                          <div
-                            class="card lesson-card"
-                            [class.active-lesson]="isActiveLessonId(lesson.id)"
-                            role="button"
-                            tabindex="0"
-                            (click)="selectLesson(lesson)"
-                            (keydown.enter)="selectLesson(lesson)"
-                            (keydown.space)="selectLesson(lesson)"
-                            [attr.aria-pressed]="isActiveLessonId(lesson.id)"
-                            style="cursor: pointer"
-                          >
-                            <div class="card-body">
-                              <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                  <h6 class="card-title mb-1">{{ lesson.title }}</h6>
-                                  <small class="text-muted">
-                                    <i class="bi bi-book me-1"></i>{{ lesson.subject_name }}
-                                  </small>
-                                </div>
-                                @if (lesson.progress?.completed) {
-                                  <div class="text-success">
-                                    <i class="bi bi-check-circle-fill"></i>
-                                  </div>
-                                }
-                              </div>
-                              <p class="card-text text-muted small mb-2">
-                                {{ lesson.description }}
-                              </p>
-                              <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                  <i class="bi bi-play-circle me-1"></i>
-                                  {{ lesson.attachments.length }} videos
-                                </small>
-                                @if (lesson.quiz) {
-                                  <small class="text-primary">
-                                    <i class="bi bi-question-circle me-1"></i>
-                                    Quiz
-                                  </small>
-                                }
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        @if (isActiveLessonId(lesson.id)) {
-                          <div class="col-12">
-                            <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>
-                          </div>
-                        }
-                      }
-                    </div>
                     @if (daySchedule.lessons.length === 0) {
                       <div class="text-center text-muted py-3">
                         No lessons scheduled for this day
                       </div>
+                    } @else {
+                      <div class="row g-3">
+                        @for (lesson of daySchedule.lessons; track lesson.id) {
+                          <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
+                            <div
+                              class="card lesson-card"
+                              [class.active-lesson]="isActiveLessonId(lesson.id)"
+                              role="button"
+                              tabindex="0"
+                              (click)="selectLesson(lesson)"
+                              (keydown.enter)="selectLesson(lesson)"
+                              (keydown.space)="selectLesson(lesson)"
+                              [attr.aria-pressed]="isActiveLessonId(lesson.id)"
+                              style="cursor: pointer"
+                            >
+                              <div class="card-body lesson-card-body">
+                                @if (lesson.scheduled_date) {
+                                  <div class="lesson-date-badge">
+                                    <span class="lesson-date-day">
+                                      {{ formatLessonDay(lesson.scheduled_date) }}
+                                    </span>
+                                    <span class="lesson-date-month">
+                                      {{ formatLessonMonth(lesson.scheduled_date) }}
+                                    </span>
+                                  </div>
+                                }
+                                <div class="lesson-card-content">
+                                  <div class="lesson-card-header">
+                                    <div class="lesson-card-title">
+                                      <h6 class="mb-1 text-truncate">{{ lesson.title }}</h6>
+                                      <small class="text-muted text-truncate">
+                                        <i class="bi bi-book me-1"></i>{{ lesson.subject_name }}
+                                      </small>
+                                    </div>
+                                    @if (lesson.progress?.completed) {
+                                      <div class="lesson-status text-success">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                      </div>
+                                    }
+                                  </div>
+                                  <p class="lesson-card-description">
+                                    {{ lesson.description || 'Lesson overview coming soon.' }}
+                                  </p>
+                                  <div class="lesson-card-meta">
+                                    <span class="lesson-card-meta-item">
+                                      <i class="bi bi-play-circle me-1"></i>{{ lesson.attachments.length }} media
+                                    </span>
+                                    @if (lesson.quiz) {
+                                      <span class="lesson-card-meta-item text-primary">
+                                        <i class="bi bi-question-circle me-1"></i>Quiz
+                                      </span>
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                      @if (selectedLessonBelongsToDay(daySchedule)) {
+                        <div class="lesson-detail-wrapper mt-4">
+                          <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>
+                        </div>
+                      }
                     }
                   </div>
                 }
@@ -213,7 +231,7 @@
                   <div class="card-body">
                     <div class="row g-3">
                       @for (lesson of subject.lessons; track lesson.id) {
-                        <div class="col-md-6 col-lg-4">
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-2 col-xl-1">
                           <div
                             class="card lesson-card"
                             [class.active-lesson]="isActiveLessonId(lesson.id)"
@@ -225,40 +243,55 @@
                             [attr.aria-pressed]="isActiveLessonId(lesson.id)"
                             style="cursor: pointer"
                           >
-                            <div class="card-body">
-                              <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6 class="card-title mb-0">{{ lesson.title }}</h6>
-                                @if (lesson.progress?.completed) {
-                                  <div class="text-success">
-                                    <i class="bi bi-check-circle-fill"></i>
+                            <div class="card-body lesson-card-body">
+                              @if (lesson.scheduled_date) {
+                                <div class="lesson-date-badge">
+                                  <span class="lesson-date-day">
+                                    {{ formatLessonDay(lesson.scheduled_date) }}
+                                  </span>
+                                  <span class="lesson-date-month">
+                                    {{ formatLessonMonth(lesson.scheduled_date) }}
+                                  </span>
+                                </div>
+                              }
+                              <div class="lesson-card-content">
+                                <div class="lesson-card-header">
+                                  <div class="lesson-card-title">
+                                    <h6 class="mb-1 text-truncate">{{ lesson.title }}</h6>
+                                    <small class="text-muted text-truncate">
+                                      <i class="bi bi-book me-1"></i>{{ lesson.subject_name }}
+                                    </small>
                                   </div>
-                                }
-                              </div>
-                              <p class="card-text text-muted small mb-2">
-                                {{ lesson.description }}
-                              </p>
-                              <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                  <i class="bi bi-play-circle me-1"></i>
-                                  {{ lesson.attachments.length }} videos
-                                </small>
-                                @if (lesson.quiz) {
-                                  <small class="text-primary">
-                                    <i class="bi bi-question-circle me-1"></i>
-                                    Quiz
-                                  </small>
-                                }
+                                  @if (lesson.progress?.completed) {
+                                    <div class="lesson-status text-success">
+                                      <i class="bi bi-check-circle-fill"></i>
+                                    </div>
+                                  }
+                                </div>
+                                <p class="lesson-card-description">
+                                  {{ lesson.description || 'Lesson overview coming soon.' }}
+                                </p>
+                                <div class="lesson-card-meta">
+                                  <span class="lesson-card-meta-item">
+                                    <i class="bi bi-play-circle me-1"></i>{{ lesson.attachments.length }} media
+                                  </span>
+                                  @if (lesson.quiz) {
+                                    <span class="lesson-card-meta-item text-primary">
+                                      <i class="bi bi-question-circle me-1"></i>Quiz
+                                    </span>
+                                  }
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                        @if (isActiveLessonId(lesson.id)) {
-                          <div class="col-12">
-                            <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>
-                          </div>
-                        }
                       }
                     </div>
+                    @if (selectedLessonBelongsToSubject(subject.id)) {
+                      <div class="lesson-detail-wrapper mt-4">
+                        <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>
+                      </div>
+                    }
                   </div>
                 }
               </div>
@@ -497,72 +530,110 @@
                     </div>
 
                     <div class="card notes-card">
-                      <div class="card-header">
+                      <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">My Notes</h5>
+                        <div class="d-flex gap-2">
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="toggleKeyboard()"
+                          >
+                            <i class="bi" [class.bi-keyboard-fill]="showKeyboard()" [class.bi-keyboard]="!showKeyboard()"></i>
+                            {{ showKeyboard() ? 'Hide' : 'Show' }} Keyboard
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="toggleNotesVisibility()"
+                          >
+                            <i class="bi" [class.bi-eye-slash]="showNotes()" [class.bi-eye]="!showNotes()"></i>
+                            {{ showNotes() ? 'Hide' : 'Show' }} Notes
+                          </button>
+                        </div>
                       </div>
-                      <div class="card-body">
-                        @if (notesLoading()) {
-                          <div class="text-center py-3">
-                            <div class="spinner-border text-primary" role="status"></div>
-                            <p class="small text-muted mt-2">Loading your notes...</p>
-                          </div>
-                        }
+                      @if (showNotes()) {
+                        <div class="card-body">
+                          @if (notesLoading()) {
+                            <div class="text-center py-3">
+                              <div class="spinner-border text-primary" role="status"></div>
+                              <p class="small text-muted mt-2">Loading your notes...</p>
+                            </div>
+                          }
 
-                        @if (!notesLoading() && notesError()) {
-                          <div class="alert alert-warning">{{ notesError() }}</div>
-                        }
+                          @if (!notesLoading() && notesError()) {
+                            <div class="alert alert-warning">{{ notesError() }}</div>
+                          }
 
-                        @if (!notesLoading() && !notesError() && courseNotes().length === 0) {
-                          <p class="text-muted small">You have not created any notes for this course yet.</p>
-                        }
+                          @if (!notesLoading() && !notesError() && courseNotes().length === 0) {
+                            <p class="text-muted small">You have not created any notes for this course yet.</p>
+                          }
 
-                        @if (courseNotes().length > 0) {
-                          <div class="notes-list mb-4">
-                            @for (note of courseNotes(); track note.id) {
-                              <div class="note-card">
-                                <h6 class="mb-1">{{ note.title }}</h6>
-                                <p class="small text-muted mb-2">{{ note.created_at | date: 'mediumDate' }}</p>
-                                <p class="note-content">{{ note.content }}</p>
+                          @if (courseNotes().length > 0) {
+                            <div class="notes-list mb-4">
+                              @for (note of courseNotes(); track note.id) {
+                                <div class="note-card">
+                                  <h6 class="mb-1">{{ note.title }}</h6>
+                                  <p class="small text-muted mb-2">{{ note.created_at | date: 'mediumDate' }}</p>
+                                  <p class="note-content">{{ note.content }}</p>
+                                </div>
+                              }
+                            </div>
+                          }
+
+                          <form [formGroup]="noteForm" (ngSubmit)="saveNote()" novalidate>
+                            <div class="mb-3">
+                              <label class="form-label" for="noteTitle">Title</label>
+                              <input
+                                id="noteTitle"
+                                type="text"
+                                class="form-control"
+                                formControlName="title"
+                                placeholder="Quick note title"
+                              />
+                              @if (noteForm.controls.title.touched && noteForm.controls.title.hasError('required')) {
+                                <div class="text-danger small mt-1">Title is required.</div>
+                              }
+                            </div>
+
+                            <div class="mb-3">
+                              <label class="form-label" for="noteContent">Content</label>
+                              <textarea
+                                id="noteContent"
+                                rows="3"
+                                class="form-control"
+                                formControlName="content"
+                                placeholder="Write your key takeaways or reflections"
+                              ></textarea>
+                              @if (noteForm.controls.content.touched && noteForm.controls.content.hasError('required')) {
+                                <div class="text-danger small mt-1">Content is required.</div>
+                              }
+                            </div>
+
+                            @if (showKeyboard()) {
+                              <div class="arabic-keyboard mb-3">
+                                @for (row of arabicKeyboardRows(); track $index) {
+                                  <div class="keyboard-row">
+                                    @for (key of row; track key) {
+                                      <button
+                                        type="button"
+                                        class="btn keyboard-key"
+                                        (click)="insertArabicCharacter(key)"
+                                      >
+                                        {{ key }}
+                                      </button>
+                                    }
+                                  </div>
+                                }
                               </div>
                             }
-                          </div>
-                        }
 
-                        <form [formGroup]="noteForm" (ngSubmit)="saveNote()" novalidate>
-                          <div class="mb-3">
-                            <label class="form-label" for="noteTitle">Title</label>
-                            <input
-                              id="noteTitle"
-                              type="text"
-                              class="form-control"
-                              formControlName="title"
-                              placeholder="Quick note title"
-                            />
-                            @if (noteForm.controls.title.touched && noteForm.controls.title.hasError('required')) {
-                              <div class="text-danger small mt-1">Title is required.</div>
-                            }
-                          </div>
-
-                          <div class="mb-3">
-                            <label class="form-label" for="noteContent">Content</label>
-                            <textarea
-                              id="noteContent"
-                              rows="3"
-                              class="form-control"
-                              formControlName="content"
-                              placeholder="Write your key takeaways or reflections"
-                            ></textarea>
-                            @if (noteForm.controls.content.touched && noteForm.controls.content.hasError('required')) {
-                              <div class="text-danger small mt-1">Content is required.</div>
-                            }
-                          </div>
-
-                          <button type="submit" class="btn btn-outline-primary w-100" [disabled]="noteSubmitting()">
-                            <i class="bi bi-journal-plus me-1"></i>
-                            {{ noteSubmitting() ? 'Saving...' : 'Save Note' }}
-                          </button>
-                        </form>
-                      </div>
+                            <button type="submit" class="btn btn-outline-primary w-100" [disabled]="noteSubmitting()">
+                              <i class="bi bi-journal-plus me-1"></i>
+                              {{ noteSubmitting() ? 'Saving...' : 'Save Note' }}
+                            </button>
+                          </form>
+                        </div>
+                      }
                     </div>
                   </div>
                 </div>

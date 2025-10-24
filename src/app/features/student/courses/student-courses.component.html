@@ -20,20 +20,40 @@
     } @else {
       @for (cls of availableClasses(); track cls.id) {
         <div class="col-md-6 col-lg-4">
-          <div class="card h-100">
+          <div
+            class="card h-100 class-card"
+            [class.class-card--active]="isClassActive(cls)"
+            [class.class-card--previous]="isClassPrevious(cls)"
+            [class.class-card--locked]="isClassLocked(cls)"
+            [attr.aria-disabled]="isClassLocked(cls)"
+          >
             <div class="card-body">
-              <h5 class="card-title">{{ cls.name }}</h5>
-              <p class="card-text">
-                <small class="text-muted"> Year {{ cls.year }} </small>
-              </p>
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <h5 class="card-title mb-1">{{ cls.name }}</h5>
+                  <small class="text-muted">Year {{ cls.year }}</small>
+                </div>
+                <span
+                  class="badge class-card__badge"
+                  [class.bg-success]="isClassActive(cls)"
+                  [class.bg-secondary]="isClassPrevious(cls)"
+                  [class.bg-dark]="isClassLocked(cls)"
+                >
+                  {{ classStatusLabel(cls) }}
+                </span>
+              </div>
               <div class="d-flex justify-content-between align-items-center">
                 <small class="text-muted">Created: {{ cls.created_at | date: 'short' }}</small>
                 <button
-                  class="btn btn-primary btn-sm"
+                  class="btn btn-sm"
                   type="button"
+                  [class.btn-primary]="isClassActive(cls)"
+                  [class.btn-outline-primary]="isClassPrevious(cls)"
+                  [class.btn-outline-secondary]="isClassLocked(cls)"
+                  [disabled]="isClassLocked(cls)"
                   (click)="viewClass(cls.id)"
                 >
-                  View Class
+                  {{ classActionLabel(cls) }}
                 </button>
               </div>
             </div>

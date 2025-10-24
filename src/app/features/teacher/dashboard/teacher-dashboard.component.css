@@ -5,11 +5,11 @@
 }
 
 .dashboard-card {
-  background: var(--bs-body-bg);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-teal-500-rgb), 0.12);
   border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 24px rgba(var(--color-teal-500-rgb), 0.08);
 }
 
 .dashboard-card h4 {
@@ -28,24 +28,24 @@
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--bs-secondary-color);
+  color: rgba(var(--color-slate-500-rgb), 0.75);
   margin-bottom: 1rem;
 }
 
 .table-responsive {
   border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(var(--color-teal-500-rgb), 0.12);
   overflow: hidden;
 }
 
 .table thead {
-  background: rgba(99, 102, 241, 0.12);
-  color: var(--bs-secondary-color);
+  background: rgba(var(--color-teal-500-rgb), 0.12);
+  color: rgba(var(--color-slate-500-rgb), 0.75);
 }
 
 .badge-soft {
-  background-color: rgba(99, 102, 241, 0.12);
-  color: #6366f1;
+  background-color: rgba(var(--color-teal-500-rgb), 0.12);
+  color: var(--color-primary);
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
   font-size: 0.75rem;

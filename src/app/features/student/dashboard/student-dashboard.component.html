@@ -1,436 +1,211 @@
-<div class="container-fluid py-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h2 class="mb-0 fw-bold">Student Dashboard</h2>
-      <p class="text-muted mb-0">
-  Welcome back,
-  {{ authService.user()?.full_name || authService.user()?.email }}
+<div class="dashboard-shell">
+  <section class="dashboard-hero">
+    <div class="hero-content">
+      <span class="hero-label">Learning Journey</span>
+      <h1 class="hero-title">
+        Assalamu alaikum,
+        <span class="hero-highlight">
+          {{ authService.user()?.full_name || authService.user()?.email }}
+        </span>
+      </h1>
+      <p class="hero-subtitle">
+        Pick up where you left off, review your lessons, and stay on track with your studies.
       </p>
+      <div class="hero-stats">
+        <div class="stat-pill">
+          <i class="bi bi-journal-bookmark"></i>
+          <div>
+            <span class="stat-label">Courses</span>
+            <span class="stat-value">{{ stats().enrolledCourses }}</span>
+          </div>
+        </div>
+        <div class="stat-pill">
+          <i class="bi bi-lightning-charge"></i>
+          <div>
+            <span class="stat-label">In Progress</span>
+            <span class="stat-value">{{ stats().inProgressCourses }}</span>
+          </div>
+        </div>
+        <div class="stat-pill">
+          <i class="bi bi-activity"></i>
+          <div>
+            <span class="stat-label">Overall</span>
+            <span class="stat-value">{{ stats().totalProgress }}%</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="d-flex gap-2">
-      <button
-        class="btn btn-outline-secondary"
-        type="button"
-        (click)="refreshData()"
-        [disabled]="loading()"
-      >
-        <i
-          class="bi bi-arrow-clockwise me-1"
-          [class]="loading() ? 'bi-arrow-clockwise spinning' : 'bi-arrow-clockwise'"
-        ></i>
+    <div class="hero-actions">
+      <button class="btn btn-primary" type="button" (click)="viewMyCourses()">
+        <i class="bi bi-play-circle me-1"></i>
+        Continue learning
+      </button>
+      <button class="btn btn-outline-light" type="button" (click)="openNotesModal()">
+        <i class="bi bi-pencil me-1"></i>
+        Quick note
+      </button>
+      <button class="btn btn-outline-light" type="button" (click)="refreshData()" [disabled]="loading()">
+        <i class="bi bi-arrow-clockwise me-1" [class.spinning]="loading()"></i>
         Refresh
       </button>
-      <button
-        class="btn btn-outline-danger"
-        type="button"
-        (click)="logout()"
-      >
-        <i class="bi bi-box-arrow-right me-1"></i>
-        Logout
-      </button>
     </div>
-  </div>
+  </section>
 
-  <!-- Loading State -->
   @if (loading()) {
-    <div class="text-center py-5">
-      <div
-        class="spinner-border text-primary"
-        role="status"
-      >
-        <span class="visually-hidden">Loading...</span>
+    <div class="loading-state">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading dashboard</span>
       </div>
-      <p class="mt-2 text-muted">Loading your dashboard...</p>
+      <p class="loading-text">Preparing your personalised dashboard…</p>
     </div>
   } @else {
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-      <div class="col-md-3 mb-3">
-        <div class="card h-100 border-primary">
-          <div class="card-body text-center">
-            <i class="bi bi-book text-primary fs-1 mb-2"></i>
-            <h4 class="mb-1">{{ stats().enrolledCourses }}</h4>
-            <p class="text-muted mb-0">Enrolled Courses</p>
-          </div>
+    <section class="dashboard-section">
+      <header class="section-header">
+        <div>
+          <h2 class="section-title">Active courses</h2>
+          <p class="section-subtitle">Continue with your enrolled classes and track progress in real time.</p>
         </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="card h-100 border-success">
-          <div class="card-body text-center">
-            <i class="bi bi-check-circle text-success fs-1 mb-2"></i>
-            <h4 class="mb-1">{{ stats().completedCourses }}</h4>
-            <p class="text-muted mb-0">Completed Courses</p>
+        <button class="btn btn-outline-primary" type="button" (click)="viewAllCourses()">
+          Browse catalogue
+        </button>
+      </header>
+
+      @if (enrolledCourses().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="bi bi-collection-play"></i>
           </div>
+          <h3 class="empty-title">No enrolled courses yet</h3>
+          <p class="empty-description">
+            Explore the course library and join a class to start your learning journey.
+          </p>
+          <button class="btn btn-primary" type="button" (click)="goToHome()">
+            Discover courses
+          </button>
         </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="card h-100 border-warning">
-          <div class="card-body text-center">
-            <i class="bi bi-clock text-warning fs-1 mb-2"></i>
-            <h4 class="mb-1">{{ stats().inProgressCourses }}</h4>
-            <p class="text-muted mb-0">In Progress</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="card h-100 border-info">
-          <div class="card-body text-center">
-            <i class="bi bi-graph-up text-info fs-1 mb-2"></i>
-            <h4 class="mb-1">{{ stats().totalProgress }}%</h4>
-            <p class="text-muted mb-0">Overall Progress</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- My Courses Section -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="mb-0">My Courses</h5>
-          </div>
-          <div class="card-body">
-            @if (enrolledCourses().length === 0) {
-              <div class="text-center py-4">
-                <i class="bi bi-book text-muted fs-1 mb-3"></i>
-                <h6 class="text-muted">No courses enrolled yet</h6>
-                <p class="text-muted mb-3">
-                  Start your learning journey by enrolling in courses from the home page
-                </p>
-                <button
-                  class="btn btn-primary"
-                  type="button"
-                  (click)="goToHome()"
-                >
-                  <i class="bi bi-house me-1"></i>
-                  Browse Courses
-                </button>
-              </div>
-            } @else {
-              <div class="row">
-                @for (course of enrolledCourses(); track course.id) {
-                  <div class="col-md-6 mb-4">
-                    <div
-                      class="card h-100 course-card"
-                      [class.disabled]="!isCourseAccessible(course)"
-                      [class.opacity-50]="!isCourseAccessible(course)"
-                      role="button"
-                      tabindex="0"
-                      (click)="isCourseAccessible(course) && viewCourse(course.id)"
-                      (keydown.enter)="onCourseCardKeydown($event, course)"
-                      (keydown.space)="onCourseCardKeydown($event, course)"
-                      [style.cursor]="isCourseAccessible(course) ? 'pointer' : 'not-allowed'"
-                      [attr.aria-disabled]="!isCourseAccessible(course)"
-                    >
-                      <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                          <h6 class="card-title mb-1">{{ course.title }}</h6>
-                          <span
-                            class="badge"
-                            [class]="getStatusBadgeClass(course.status)"
-                          >
-                            {{ getStatusText(course.status) }}
-                          </span>
-                        </div>
-                        <p class="card-text text-muted small mb-3">
-                          {{ course.description }}
-                        </p>
-
-                        <!-- Active Class Information -->
-                        @if (course.active_class_title) {
-                          <div class="mb-3">
-                            <div class="d-flex align-items-center">
-                              <i class="bi bi-play-circle-fill text-primary me-2"></i>
-                              <small class="text-primary fw-medium"
-                                >Active Class: {{ course.active_class_title }}</small
-                              >
-                            </div>
-                          </div>
-                        }
-
-                        <!-- Course Progress -->
-                        <div class="mb-3">
-                          <div class="d-flex justify-content-between align-items-center mb-1">
-                            <small class="text-muted">Overall Progress</small>
-                            <small class="fw-medium">{{ course.progress }}%</small>
-                          </div>
-                          <div
-                            class="progress"
-                            style="height: 8px"
-                          >
-                            <div
-                              class="progress-bar"
-                              [class]="getProgressBarClass(course.progress)"
-                              [style.width.%]="course.progress"
-                            ></div>
-                          </div>
-                        </div>
-
-                        <!-- Course Levels -->
-                        @if (course.levels && course.levels.length > 0) {
-                          <div class="mb-3">
-                            <small class="text-muted d-block mb-2">Course Structure</small>
-                            <div class="d-flex flex-wrap gap-1">
-                              @for (level of course.levels.slice(0, 3); track level.id) {
-                                <span class="badge bg-light text-dark small">
-                                  <i class="bi bi-layer me-1"></i>
-                                  {{ level.title }}
-                                </span>
-                              }
-                              @if (course.levels.length > 3) {
-                                <span class="badge bg-light text-dark small">
-                                  +{{ course.levels.length - 3 }} more
-                                </span>
-                              }
-                            </div>
-                          </div>
-                        }
-
-                        <div class="d-flex justify-content-between align-items-center">
-                          <small class="text-muted">
-                            <i class="bi bi-clock me-1"></i>
-                            Last accessed: {{ formatDate(course.lastAccessed) }}
-                          </small>
-                          <button
-                            class="btn btn-sm btn-outline-primary"
-                            [disabled]="!isCourseAccessible(course)"
-                            type="button"
-                            (click)="
-                              isCourseAccessible(course) && viewCourse(course.id);
-                              $event.stopPropagation()
-                            "
-                          >
-                            <i class="bi bi-play-circle me-1"></i>
-                            {{ isCourseAccessible(course) ? 'Continue' : 'Not Available' }}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Notes Section -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">My Notes</h5>
-            <button
-              class="btn btn-sm btn-outline-success"
-              type="button"
-              (click)="openNotesModal()"
+      } @else {
+        <div class="course-grid">
+          @for (course of enrolledCourses(); track course.id) {
+            <article
+              class="course-card"
+              [class.course-card--disabled]="!isCourseAccessible(course)"
+              tabindex="0"
+              role="button"
+              (click)="isCourseAccessible(course) && viewCourse(course.id)"
+              (keydown.enter)="onCourseCardKeydown($event, course)"
+              (keydown.space)="onCourseCardKeydown($event, course)"
+              [attr.aria-disabled]="!isCourseAccessible(course)"
             >
-              <i class="bi bi-plus-circle me-1"></i>
-              Add Note
-            </button>
-          </div>
-          <div class="card-body">
-            @if (notes().length === 0) {
-              <div class="text-center py-4">
-                <i class="bi bi-sticky text-muted fs-1 mb-3"></i>
-                <h6 class="text-muted">No notes yet</h6>
-                <p class="text-muted mb-3">
-                  Create your first note to keep track of important information
-                </p>
-                <button
-                  class="btn btn-success"
-                  type="button"
-                  (click)="openNotesModal()"
+              <div class="course-card__header">
+                <div>
+                  <h3 class="course-card__title">{{ course.title }}</h3>
+                  <p class="course-card__meta">
+                    <i class="bi bi-clock-history me-1"></i>
+                    Updated {{ formatDate(course.lastAccessed) }}
+                  </p>
+                </div>
+                <span
+                  class="status-pill"
+                  [class.bg-success]="getStatusBadgeClass(course.status) === 'bg-success'"
+                  [class.bg-warning]="getStatusBadgeClass(course.status) === 'bg-warning'"
+                  [class.bg-secondary]="getStatusBadgeClass(course.status) === 'bg-secondary'"
                 >
-                  <i class="bi bi-plus-circle me-1"></i>
-                  Create Note
-                </button>
-              </div>
-            } @else {
-              <div class="row">
-                @for (note of notes(); track note.id) {
-                  <div class="col-md-6 mb-3">
-                    <div class="card h-100 note-card">
-                      <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                          <h6 class="card-title mb-1">{{ note.title }}</h6>
-                          <div class="dropdown">
-                            <button
-                              class="btn btn-sm btn-outline-secondary"
-                              type="button"
-                              data-bs-toggle="dropdown"
-                            >
-                              <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                              <li>
-                                <button
-                                  type="button"
-                                  class="dropdown-item"
-                                  (click)="openNotesModal(note)"
-                                >
-                                  <i class="bi bi-pencil me-2"></i>Edit
-                                </button>
-                              </li>
-                              <li>
-                                <button
-                                  type="button"
-                                  class="dropdown-item text-danger"
-                                  (click)="deleteNote(note.id)"
-                                >
-                                  <i class="bi bi-trash me-2"></i>Delete
-                                </button>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                        <p class="card-text text-muted small mb-2">
-                          {{
-                            note.content.length > 100
-                              ? note.content.substring(0, 100) + '...'
-                              : note.content
-                          }}
-                        </p>
-                        <small class="text-muted">
-                          <i class="bi bi-clock me-1"></i>
-                          {{ formatDate(note.updated_at) }}
-                        </small>
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- My Progress Section -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="mb-0">My Progress</h5>
-          </div>
-          <div class="card-body">
-            @if (enrolledCourses().length === 0) {
-              <div class="text-center py-4">
-                <i class="bi bi-graph-up text-muted fs-1 mb-3"></i>
-                <h6 class="text-muted">No progress to show yet</h6>
-                <p class="text-muted mb-0">Enroll in courses to start tracking your progress</p>
-              </div>
-            } @else {
-              <div class="row">
-                <!-- Overall Progress Summary -->
-                <div class="col-md-4 mb-3">
-                  <div class="card h-100 border-primary">
-                    <div class="card-body text-center">
-                      <i class="bi bi-trophy text-primary fs-1 mb-2"></i>
-                      <h4 class="mb-1">{{ stats().totalProgress }}%</h4>
-                      <p class="text-muted mb-0">Overall Progress</p>
-                      <small class="text-muted">Across all courses</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Courses Completed -->
-                <div class="col-md-4 mb-3">
-                  <div class="card h-100 border-success">
-                    <div class="card-body text-center">
-                      <i class="bi bi-check-circle text-success fs-1 mb-2"></i>
-                      <h4 class="mb-1">{{ stats().completedCourses }}</h4>
-                      <p class="text-muted mb-0">Courses Completed</p>
-                      <small class="text-muted"
-                        >Out of {{ stats().enrolledCourses }} enrolled</small
-                      >
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Study Streak/Time -->
-                <div class="col-md-4 mb-3">
-                  <div class="card h-100 border-info">
-                    <div class="card-body text-center">
-                      <i class="bi bi-calendar-check text-info fs-1 mb-2"></i>
-                      <h4 class="mb-1">{{ stats().hoursStudied || 0 }}</h4>
-                      <p class="text-muted mb-0">Hours Studied</p>
-                      <small class="text-muted">This month</small>
-                    </div>
-                  </div>
-                </div>
+                  {{ getStatusText(course.status) }}
+                </span>
               </div>
 
-              <!-- Detailed Progress by Course -->
-              @if (enrolledCourses().length > 0) {
-                <div class="mt-4">
-                  <h6 class="mb-3">Course Progress Details</h6>
-                  <div class="row">
-                    @for (course of enrolledCourses(); track course.id) {
-                      <div class="col-md-6 mb-3">
-                        <div class="card">
-                          <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                              <h6 class="card-title mb-1">{{ course.title }}</h6>
-                              <span
-                                class="badge"
-                                [class]="getStatusBadgeClass(course.status)"
-                              >
-                                {{ getStatusText(course.status) }}
-                              </span>
-                            </div>
-                            <div class="mb-2">
-                              <div class="d-flex justify-content-between align-items-center mb-1">
-                                <small class="text-muted">Progress</small>
-                                <small class="fw-medium">{{ course.progress }}%</small>
-                              </div>
-                              <div
-                                class="progress"
-                                style="height: 6px"
-                              >
-                                <div
-                                  class="progress-bar"
-                                  [class]="getProgressBarClass(course.progress)"
-                                  [style.width.%]="course.progress"
-                                ></div>
-                              </div>
-                            </div>
-                            @if (course.levels && course.levels.length > 0) {
-                              <small class="text-muted">
-                                {{ course.completedLevels || 0 }} of
-                                {{ course.totalLevels || course.levels.length }}
-                                levels completed
-                              </small>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    }
-                  </div>
+              <p class="course-card__description">{{ course.description }}</p>
+
+              @if (course.active_class_title) {
+                <div class="course-card__active">
+                  <i class="bi bi-broadcast me-1"></i>
+                  {{ course.active_class_title }}
                 </div>
               }
-            }
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Error State -->
+              <div class="course-card__progress">
+                <div class="progress-labels">
+                  <span>Progress</span>
+                  <span>{{ course.progress }}%</span>
+                </div>
+                <div class="progress-track">
+                  <div
+                    class="progress-fill"
+                    [class.bg-success]="getProgressBarClass(course.progress) === 'bg-success'"
+                    [class.bg-warning]="getProgressBarClass(course.progress) === 'bg-warning'"
+                    [class.bg-info]="getProgressBarClass(course.progress) === 'bg-info'"
+                    [style.width.%]="course.progress"
+                  ></div>
+                </div>
+              </div>
+
+              @if (course.levels && course.levels.length > 0) {
+                <div class="course-card__levels">
+                  @for (level of course.levels.slice(0, 3); track level.id) {
+                    <span class="level-pill">
+                      <i class="bi bi-layer me-1"></i>{{ level.title }}
+                    </span>
+                  }
+                  @if (course.levels.length > 3) {
+                    <span class="level-pill level-pill--more">+{{ course.levels.length - 3 }}</span>
+                  }
+                </div>
+              }
+
+              <div class="course-card__actions">
+                <button
+                  class="btn btn-sm btn-outline-primary"
+                  type="button"
+                  [disabled]="!isCourseAccessible(course)"
+                  (click)="isCourseAccessible(course) && viewCourse(course.id); $event.stopPropagation()"
+                >
+                  {{ isCourseAccessible(course) ? 'Open class' : 'Locked' }}
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="dashboard-section">
+      <header class="section-header">
+        <div>
+          <h2 class="section-title">Recent activity</h2>
+          <p class="section-subtitle">Quick glance at the lessons and quizzes you recently touched.</p>
+        </div>
+      </header>
+
+      @if (recentProgress().length === 0) {
+        <div class="empty-state empty-state--subtle">
+          <p class="empty-description mb-0">Your recent learning activity will show here once you complete lessons.</p>
+        </div>
+      } @else {
+        <div class="activity-list">
+          @for (entry of recentProgress(); track entry.session_id) {
+            <div class="activity-card">
+              <div class="activity-icon" [class.completed]="entry.completed">
+                <i class="bi" [class.bi-check2-circle]="entry.completed" [class.bi-play-circle]="!entry.completed"></i>
+              </div>
+              <div class="activity-content">
+                <h4 class="activity-title">{{ entry.session_title }}</h4>
+                <p class="activity-meta">
+                  {{ entry.subject_name || 'Lesson' }} · {{ formatDate(entry.completed_at || '') }}
+                </p>
+              </div>
+              @if (entry.score !== null && entry.score !== undefined) {
+                <span class="activity-score">{{ entry.score }}%</span>
+              }
+            </div>
+          }
+        </div>
+      }
+    </section>
+
     @if (apiService.apiError(); as error) {
-      <div
-        class="alert alert-danger alert-dismissible fade show mt-3"
-        role="alert"
-      >
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
         {{ error }}
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Dismiss error"
-          (click)="apiService.clearError()"
-        >
+        <button type="button" class="btn-close" aria-label="Dismiss error" (click)="apiService.clearError()">
           <span class="visually-hidden">Dismiss error</span>
         </button>
       </div>

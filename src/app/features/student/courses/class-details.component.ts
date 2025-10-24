@@ -67,6 +67,7 @@ interface Lesson {
   attachments: Attachment[];
   quiz: Quiz | null;
   progress: LessonProgress | null;
+  scheduled_date: string | null;
 }
 
 interface Subject {
@@ -197,6 +198,17 @@ export class ClassDetailsComponent implements OnInit {
     content: ['', [Validators.required, Validators.maxLength(2000)]],
   });
 
+  showNotes = signal(true);
+  showKeyboard = signal(false);
+
+  private readonly arabicRows = [
+    ['ض', 'ص', 'ث', 'ق', 'ف', 'غ', 'ع', 'ه', 'خ', 'ح', 'ج', 'د'],
+    ['ش', 'س', 'ي', 'ب', 'ل', 'ا', 'ت', 'ن', 'م', 'ك', 'ط'],
+    ['ئ', 'ء', 'ؤ', 'ر', 'لا', 'ى', 'ة', 'و', 'ز', 'ظ'],
+  ];
+
+  arabicKeyboardRows = computed(() => this.arabicRows);
+
   courseNotes = computed(() => {
     const courseId = this.courseDetails()?.id;
     if (!courseId) {
@@ -258,7 +270,10 @@ export class ClassDetailsComponent implements OnInit {
           console.log('Course details transformed:', data);
 
           this.courseDetails.set(data);
-          this.collapsedDays.set(new Map());
+
+          const collapsedMap = new Map<string, boolean>();
+          data.schedule.forEach((day) => collapsedMap.set(day.date, true));
+          this.collapsedDays.set(collapsedMap);
           this.loadCourseNotes();
 
           // Auto-select first lesson if available
@@ -310,6 +325,9 @@ export class ClassDetailsComponent implements OnInit {
               ),
               quiz: lessonData.quiz || null,
               progress: lessonData.progress || null,
+              scheduled_date: lessonData.scheduled_date
+                ? this.extractDate(lessonData.scheduled_date)
+                : null,
             };
             lessons.push(lesson);
             lessonMap.set(lesson.id, lesson);
@@ -388,6 +406,74 @@ export class ClassDetailsComponent implements OnInit {
     return dateString.split('T')[0];
   }
 
+  lessonHasDate(lesson: Lesson | null): boolean {
+    return !!lesson?.scheduled_date;
+  }
+
+  private toLocalDate(date: string | null | undefined): Date | null {
+    if (!date) {
+      return null;
+    }
+    const parts = date.split('-').map((part) => Number.parseInt(part, 10));
+    if (parts.length < 3) {
+      return null;
+    }
+    const [year, month, day] = parts;
+    if ([year, month, day].some((value) => Number.isNaN(value))) {
+      return null;
+    }
+    return new Date(year, month - 1, day);
+  }
+
+  formatLessonDay(date: string | null | undefined): string {
+    const parsed = this.toLocalDate(date);
+    return parsed ? parsed.getDate().toString().padStart(2, '0') : '';
+  }
+
+  formatLessonMonth(date: string | null | undefined): string {
+    const parsed = this.toLocalDate(date);
+    return parsed
+      ? parsed
+          .toLocaleDateString('en-US', {
+            month: 'short',
+          })
+          .toUpperCase()
+      : '';
+  }
+
+  toggleNotesVisibility(): void {
+    this.showNotes.update((value) => !value);
+  }
+
+  toggleKeyboard(): void {
+    this.showKeyboard.update((value) => !value);
+  }
+
+  insertArabicCharacter(char: string): void {
+    const control = this.noteForm.controls.content;
+    const textarea = document.getElementById('noteContent') as HTMLTextAreaElement | null;
+
+    if (!textarea) {
+      control.setValue((control.value ?? '') + char);
+      control.markAsDirty();
+      return;
+    }
+
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const currentValue = control.value ?? '';
+    const nextValue = currentValue.slice(0, start) + char + currentValue.slice(end);
+
+    control.setValue(nextValue);
+    control.markAsDirty();
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + char.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  }
+
   selectLesson(lesson: Lesson): void {
     this.selectedLesson.set(lesson);
     this.expandDayForLesson(lesson.id);
@@ -423,7 +509,7 @@ export class ClassDetailsComponent implements OnInit {
   }
 
   isDayCollapsed(date: string): boolean {
-    return this.collapsedDays().get(date) ?? false;
+    return this.collapsedDays().get(date) ?? true;
   }
 
   private expandDayForLesson(lessonId: number): void {
@@ -437,6 +523,22 @@ export class ClassDetailsComponent implements OnInit {
     const newMap = new Map(currentMap);
     newMap.set(matchingDay.date, false);
     this.collapsedDays.set(newMap);
+  }
+
+  selectedLessonBelongsToDay(day: DaySchedule): boolean {
+    const activeLesson = this.selectedLesson();
+    if (!activeLesson) {
+      return false;
+    }
+    return day.lessons.some((lesson) => lesson.id === activeLesson.id);
+  }
+
+  selectedLessonBelongsToSubject(subjectId: number): boolean {
+    const activeLesson = this.selectedLesson();
+    if (!activeLesson) {
+      return false;
+    }
+    return activeLesson.subject_id === subjectId;
   }
 
   formatDayHeader(dateString: string): string {

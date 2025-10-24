@@ -1,5 +1,5 @@
 .contact-option {
-  border: 1px solid rgba(11, 70, 51, 0.08);
+  border: 1px solid rgba(var(--color-teal-500-rgb), 0.12);
   border-radius: 16px;
   padding: 1.75rem 1.5rem;
   height: 100%;
@@ -7,5 +7,5 @@
 
 .contact-option i {
   font-size: 2rem;
-  color: #0f6848;
+  color: var(--color-primary);
 }

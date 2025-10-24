@@ -44,6 +44,7 @@ export interface EnrolledCourse {
   completedLevels?: number;
   active_class_id?: number;
   active_class_title?: string;
+  active_class_year?: number;
 }
 
 export interface CourseLevel {
@@ -80,6 +81,11 @@ export interface StudentProgress {
   last_accessed: string;
   active_class_id?: number;
   active_class_title?: string;
+  active_class?: {
+    id: number | null;
+    name?: string | null;
+    year?: number | null;
+  } | null;
   // Optional fields for flexibility
   id?: number;
   title?: string;

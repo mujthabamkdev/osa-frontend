@@ -1,0 +1,42 @@
+.class-card {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.class-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.75rem 1.5rem rgba(33, 37, 41, 0.08);
+}
+
+.class-card--active {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0.75rem 1.5rem rgba(13, 110, 253, 0.15);
+}
+
+.class-card--active .card-title {
+  color: var(--bs-primary);
+}
+
+.class-card--previous {
+  opacity: 0.8;
+}
+
+.class-card--locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.class-card--locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.class-card--locked .btn {
+  cursor: not-allowed;
+}
+
+.class-card__badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
