@@ -1,9 +1,8 @@
-import { Component, inject, signal, OnInit, computed, DestroyRef } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
-import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 
 // Types
@@ -11,7 +10,7 @@ interface Teacher {
   id: number;
   email: string;
   full_name: string;
-  role: string;
+  role?: string;
 }
 
 interface Attachment {
@@ -94,17 +93,62 @@ interface CourseDetails {
   live_classes: LiveClass[];
 }
 
+interface ApiCourseLessonContentResponse {
+  id?: number;
+  title?: string;
+  content_type?: string;
+  file_url?: string;
+  content_url?: string;
+  source?: string;
+  description?: string;
+}
+
+interface ApiCourseSessionResponse {
+  id?: number;
+  title?: string;
+  description?: string;
+  order?: number;
+  contents?: ApiCourseLessonContentResponse[];
+  quiz?: Quiz | null;
+  progress?: LessonProgress | null;
+  scheduled_date?: string | null;
+}
+
+interface ApiCourseSubjectResponse {
+  id: number;
+  name?: string;
+  description?: string;
+  order_in_class?: number;
+  sessions?: ApiCourseSessionResponse[];
+}
+
+interface ApiCourseClassResponse {
+  id?: number;
+  subjects?: ApiCourseSubjectResponse[];
+}
+
+interface ApiCourseDetailsResponse {
+  id: number;
+  title: string;
+  description: string;
+  teacher_id: number;
+  teacher?: Teacher | null;
+  created_at: string;
+  classes?: ApiCourseClassResponse[];
+  live_classes?: LiveClass[];
+}
+
 @Component({
   selector: 'app-course-details',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule],
   templateUrl: './course-details.component.html',
   styleUrl: './course-details.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private authService = inject(AuthService);
   private apiService = inject(ApiService);
   private destroyRef = inject(DestroyRef);
 
@@ -137,11 +181,11 @@ export class CourseDetailsComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (rawData: any) => {
+        next: (rawData) => {
           console.log('Course details API response:', rawData);
 
           // Transform backend data structure to match frontend expectations
-          const data = this.transformCourseData(rawData);
+          const data = this.transformCourseData(rawData as ApiCourseDetailsResponse);
           console.log('Course details transformed:', data);
 
           this.courseDetails.set(data);
@@ -153,11 +197,11 @@ export class CourseDetailsComponent implements OnInit {
       });
   }
 
-  private transformCourseData(rawData: any): CourseDetails {
+  private transformCourseData(rawData: ApiCourseDetailsResponse): CourseDetails {
     console.log('Transforming course data...', rawData);
 
     const subjects: Subject[] = [];
-    const schedule: DaySchedule[] = [];
+    const scheduleMap = new Map<string, DaySchedule>();
 
     // Build subjects with lessons from classes structure
     if (rawData.classes && Array.isArray(rawData.classes)) {
@@ -171,32 +215,49 @@ export class CourseDetailsComponent implements OnInit {
             // Transform sessions into lessons
             if (subject.sessions && Array.isArray(subject.sessions)) {
               // Sort sessions by order first
-              const sortedSessions = subject.sessions.sort(
-                (a: any, b: any) => (a.order || 0) - (b.order || 0)
+              const sortedSessions = [...subject.sessions].sort(
+                (a, b) => (a.order ?? 0) - (b.order ?? 0)
               );
 
               // Create lessons with "Day X" naming
-              sortedSessions.forEach((session: any, dayIndex: number) => {
+              sortedSessions.forEach((session, dayIndex) => {
                 const dayNumber = dayIndex + 1; // Day 1, Day 2, etc.
                 const lesson: Lesson = {
-                  id: session.id || Math.random(),
+                  id: session.id ?? subject.id * 1000 + dayNumber,
                   title: `Day ${dayNumber}`, // Renamed to Day 1, Day 2, etc.
                   description: session.description || session.title || '', // Use session title as description
-                  order: session.order || dayIndex,
+                  order: session.order ?? dayIndex,
                   subject_id: subject.id,
                   subject_name: subject.name || 'Subject',
-                  attachments: (session.contents || []).map((content: any, idx: number) => ({
-                    id: content.id || idx,
+                  attachments: (session.contents ?? []).map((content, idx) => ({
+                    id: content.id ?? idx,
                     title: content.title || 'Content',
                     file_type: content.content_type || 'document',
-                    file_url: content.file_url || '',
+                    file_url: content.file_url || content.content_url || '',
                     source: content.source || 'upload',
                     description: content.description || '',
                   })),
-                  quiz: session.quiz || null,
-                  progress: session.progress || null,
+                  quiz: session.quiz ?? null,
+                  progress: session.progress ?? null,
                 };
                 lessons.push(lesson);
+
+                if (session.scheduled_date) {
+                  const dateKey = session.scheduled_date;
+                  const parsedDate = new Date(dateKey);
+                  if (!Number.isNaN(parsedDate.getTime())) {
+                    const existingSchedule = scheduleMap.get(dateKey);
+                    if (existingSchedule) {
+                      existingSchedule.lessons.push(lesson);
+                    } else {
+                      scheduleMap.set(dateKey, {
+                        date: dateKey,
+                        dateObj: parsedDate,
+                        lessons: [lesson],
+                      });
+                    }
+                  }
+                }
               });
             }
 
@@ -217,11 +278,13 @@ export class CourseDetailsComponent implements OnInit {
       title: rawData.title,
       description: rawData.description,
       teacher_id: rawData.teacher_id,
-      teacher: rawData.teacher,
+      teacher: rawData.teacher ?? undefined,
       created_at: rawData.created_at,
       subjects,
-      schedule,
-      live_classes: rawData.live_classes || [],
+      schedule: Array.from(scheduleMap.values()).sort(
+        (a, b) => a.date.localeCompare(b.date)
+      ),
+      live_classes: rawData.live_classes ?? [],
     };
 
     console.log('Transformation complete. Subjects:', subjects.length);

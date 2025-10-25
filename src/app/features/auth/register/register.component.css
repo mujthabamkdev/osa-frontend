@@ -1,63 +1,72 @@
+.bg-gradient-primary {
+  background: linear-gradient(135deg, rgba(var(--color-teal-500-rgb), 0.06) 0%, rgba(var(--color-teal-500-rgb), 0.12) 100%);
+  min-height: 100vh;
+}
 
-      .bg-gradient-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-      }
-      .card {
-        backdrop-filter: blur(10px);
-        background: rgba(255, 255, 255, 0.95);
-        border: none !important;
-        position: relative;
-      }
-      .input-group-text {
-        background-color: transparent;
-        border-right: none;
-      }
-      .form-control,
-      .form-select {
-        border-left: none;
-      }
-      .form-control:focus,
-      .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-      }
-      .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        padding: 12px;
-        font-weight: 500;
-      }
-      .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      }
-      .progress-bar.bg-danger {
-        background: #dc3545 !important;
-      }
-      .progress-bar.bg-warning {
-        background: #ffc107 !important;
-      }
-      .progress-bar.bg-info {
-        background: #0dcaf0 !important;
-      }
-      .progress-bar.bg-success {
-        background: #198754 !important;
-      }
-      .loading-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255, 255, 255, 0.95);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-        border-radius: 0.5rem;
-        backdrop-filter: blur(5px);
-      }
-    `,
-  
+.card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  border: none !important;
+  position: relative;
+}
+
+.input-group-text {
+  background-color: transparent;
+  border-right: none;
+}
+
+.input-group .form-control,
+.input-group .form-select {
+  border-left: none;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem rgba(var(--color-teal-500-rgb), 0.25);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  border: none;
+  padding: 12px;
+  font-weight: 500;
+  color: var(--color-btn-primary-text);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--color-teal-500-rgb), 0.4);
+}
+
+.progress-bar.bg-danger {
+  background: var(--color-error) !important;
+}
+
+.progress-bar.bg-warning {
+  background: var(--color-warning) !important;
+}
+
+.progress-bar.bg-info {
+  background: rgba(var(--color-teal-500-rgb), 0.5) !important;
+}
+
+.progress-bar.bg-success {
+  background: var(--color-success) !important;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 0.5rem;
+  backdrop-filter: blur(5px);
+}

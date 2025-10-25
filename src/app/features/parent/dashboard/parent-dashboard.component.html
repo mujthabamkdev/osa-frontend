@@ -46,6 +46,7 @@
         type="button"
         class="btn-close"
         (click)="apiService.clearError()"
+        aria-label="Dismiss error"
       ></button>
     </div>
   }
@@ -180,8 +181,9 @@
               <button
                 class="btn btn-sm btn-light"
                 (click)="closeChildDetails()"
+                aria-label="Close child details"
               >
-                <i class="bi bi-x-lg"></i>
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
               </button>
             </div>
             <div class="card-body">

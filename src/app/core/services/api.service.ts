@@ -1,15 +1,28 @@
 // src/app/core/services/api.service.ts
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap, catchError, throwError, map } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Observable, tap, catchError, throwError, map, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { User, CreateUserRequest } from '../models/user.models';
-import { Course, CreateCourseRequest } from '../models/course.models';
+import { User, CreateUserRequest, UpdateUserRequest, UserRole } from '../models/user.models';
+import { AuthResponse, RegistrationResponse } from '../models/auth.models';
+import {
+  Course,
+  CreateCourseRequest,
+  CourseDetails,
+  CourseLesson,
+  CourseLessonContent,
+  CourseLessonContentPayload,
+  CourseLessonOverview,
+  CourseLessonPayload,
+  CourseSubject,
+  CourseSubjectPayload,
+} from '../models/course.models';
 import {
   DashboardStats,
   StudentProgress,
   TeacherStats,
   ParentChild,
+  Note,
 } from '../models/dashboard.models';
 import { Enrollment } from '../models/enrollment.models';
 import {
@@ -44,6 +57,19 @@ import {
   StudentReport,
   StudentProgressEntry,
 } from '../models/teacher.models';
+import {
+  AdminSettings,
+  AdminSettingsUpdate,
+  PendingUser,
+  ApproveUserPayload,
+  StudentAdmin,
+  AdminParent,
+  TeacherAdmin,
+  TeacherAssignments,
+  TeacherReassignmentResponse,
+  UpdateStudentEnrollmentsPayload,
+  UpdateParentChildrenPayload,
+} from '../models/admin.models';
 
 @Injectable({
   providedIn: 'root',
@@ -55,6 +81,9 @@ export class ApiService {
   // Signals for loading states
   private readonly isLoading = signal(false);
   private readonly error = signal<string | null>(null);
+
+  private readonly cache = new Map<string, { expiresAt: number; stream: Observable<unknown> }>();
+  private readonly defaultCacheMs = 60_000;
 
   readonly loading = this.isLoading.asReadonly();
   readonly apiError = this.error.asReadonly();
@@ -72,7 +101,7 @@ export class ApiService {
     return this.performRequest(() => this.http.get<User>(`${this.baseUrl}/users/me`));
   }
 
-  updateUser(id: number, userData: Partial<User>): Observable<User> {
+  updateUser(id: number, userData: UpdateUserRequest): Observable<User> {
     return this.performRequest(() => this.http.put<User>(`${this.baseUrl}/users/${id}`, userData));
   }
 
@@ -83,6 +112,128 @@ export class ApiService {
   toggleUserStatus(id: number): Observable<User> {
     return this.performRequest(() =>
       this.http.patch<User>(`${this.baseUrl}/users/${id}/toggle-status`, {})
+    );
+  }
+
+  getPendingUsers(role?: UserRole): Observable<PendingUser[]> {
+    let params = new HttpParams();
+    if (role) {
+      params = params.set('role', role);
+    }
+
+    return this.performRequest(() =>
+      this.http.get<User[]>(`${this.baseUrl}/admin/users`, { params }).pipe(
+        map((users) =>
+          users
+            .filter((user) => !user.is_active)
+            .map<PendingUser>((user) => ({
+              id: user.id,
+              email: user.email,
+              full_name: user.full_name ?? null,
+              role: (user.role ?? 'student') as UserRole,
+              created_at: user.created_at,
+            }))
+        )
+      )
+    );
+  }
+
+  approveUser(userId: number, payload: ApproveUserPayload): Observable<StudentAdmin | AdminParent> {
+    return this.performRequest(() =>
+      this.http.post<StudentAdmin | AdminParent>(
+        `${this.baseUrl}/admin/users/${userId}/approve`,
+        payload
+      )
+    );
+  }
+
+  getAdminStudents(): Observable<StudentAdmin[]> {
+    const params = new HttpParams().set('role', 'student');
+    return this.performRequest(() =>
+      this.http.get<User[]>(`${this.baseUrl}/admin/users`, { params }).pipe(
+        map((users) =>
+          users.map<StudentAdmin>((user) => ({
+            id: user.id,
+            email: user.email,
+            full_name: user.full_name ?? null,
+            created_at: user.created_at,
+            enrollments: (user as any).enrollments || [],
+          }))
+        )
+      )
+    );
+  }
+
+  updateStudentEnrollments(
+    studentId: number,
+    payload: UpdateStudentEnrollmentsPayload
+  ): Observable<StudentAdmin> {
+    return this.performRequest(() =>
+      this.http.put<StudentAdmin>(
+        `${this.baseUrl}/admin/students/${studentId}/enrollments`,
+        payload
+      )
+    );
+  }
+
+  getAdminParents(): Observable<AdminParent[]> {
+    const params = new HttpParams().set('role', 'parent');
+    return this.http.get<User[]>(`${this.baseUrl}/admin/users`, { params }).pipe(
+      map((users) =>
+        users.map<AdminParent>((user) => ({
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name ?? null,
+          created_at: user.created_at,
+          children: [],
+        }))
+      )
+    );
+  }
+
+  updateParentChildren(
+    parentId: number,
+    payload: UpdateParentChildrenPayload
+  ): Observable<AdminParent> {
+    return this.performRequest(() =>
+      this.http.put<AdminParent>(`${this.baseUrl}/admin/parents/${parentId}/children`, payload)
+    );
+  }
+
+  getAdminTeachers(): Observable<TeacherAdmin[]> {
+    const params = new HttpParams().set('role', 'teacher');
+    return this.performRequest(() =>
+      this.http.get<User[]>(`${this.baseUrl}/admin/users`, { params }).pipe(
+        map((users) =>
+          users.map<TeacherAdmin>((user) => ({
+            id: user.id,
+            email: user.email,
+            full_name: user.full_name ?? null,
+            created_at: user.created_at,
+            subjects: [],
+          }))
+        )
+      )
+    );
+  }
+
+  getTeacherAssignments(teacherId: number): Observable<TeacherAssignments> {
+    return this.performRequest(() =>
+      this.http.get<TeacherAssignments>(`${this.baseUrl}/admin/teachers/${teacherId}/assignments`)
+    );
+  }
+
+  reassignTeacher(
+    teacherId: number,
+    replacementTeacherId: number
+  ): Observable<TeacherReassignmentResponse> {
+    return this.performRequest(() =>
+      this.http.post<TeacherReassignmentResponse>(
+        `${this.baseUrl}/admin/teachers/${teacherId}/reassign`,
+        {
+          replacement_teacher_id: replacementTeacherId,
+        }
+      )
     );
   }
 
@@ -110,56 +261,242 @@ export class ApiService {
   }
 
   // Course Details endpoints
-  getCourseDetails(courseId: number): Observable<any> {
-    return this.performRequest(() => this.http.get<any>(`${this.baseUrl}/courses/${courseId}`));
-  }
+  getCourseDetails(
+    courseId: number,
+    options?: { forceRefresh?: boolean; cacheMs?: number }
+  ): Observable<CourseDetails> {
+    const { forceRefresh = false, cacheMs = this.defaultCacheMs } = options ?? {};
+    const cacheKey = `course-details:${courseId}`;
 
-  completeLesson(courseId: number, chapterId: number, quizScore?: number): Observable<any> {
-    return this.performRequest(() =>
-      this.http.post(`${this.baseUrl}/courses/${courseId}/chapters/${chapterId}/complete`, {
-        quiz_score: quizScore,
-      })
+    if (forceRefresh) {
+      this.cache.delete(cacheKey);
+    } else {
+      const cached = this.getFromCache<CourseDetails>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    return this.getCachedObservable<CourseDetails>(
+      cacheKey,
+      () =>
+        this.performRequest(() =>
+          this.http.get<CourseDetails>(`${this.baseUrl}/courses/${courseId}`)
+        ),
+      cacheMs
     );
   }
 
-  getCourseProgress(courseId: number): Observable<any> {
+  completeLesson(
+    courseId: number,
+    chapterId: number,
+    quizScore?: number
+  ): Observable<Record<string, unknown>> {
     return this.performRequest(() =>
-      this.http.get<any>(`${this.baseUrl}/courses/${courseId}/progress`)
-    );
-  }
-
-  getCourseLevels(courseId: number): Observable<any[]> {
-    return this.performRequest(() =>
-      this.http.get<any>(`${this.baseUrl}/courses/${courseId}`)
-    ).pipe(
-      tap((response) => response),
-      map((response) => {
-        // Flatten subjects and their lessons into a levels array
-        const levels: any[] = [];
-        if (response?.subjects) {
-          response.subjects.forEach((subject: any) => {
-            if (subject.lessons && Array.isArray(subject.lessons)) {
-              subject.lessons.forEach((lesson: any) => {
-                levels.push({
-                  id: lesson.id,
-                  course_id: courseId,
-                  subject_id: subject.id,
-                  subject_title: subject.name,
-                  title: lesson.title,
-                  description: lesson.description,
-                  order: lesson.order_in_course,
-                  progress: lesson.progress,
-                  attachments: lesson.contents || [],
-                  quiz: lesson.quiz,
-                  scheduled_date: lesson.scheduled_date,
-                  created_at: lesson.created_at,
-                });
-              });
-            }
-          });
+      this.http.post<Record<string, unknown>>(
+        `${this.baseUrl}/courses/${courseId}/chapters/${chapterId}/complete`,
+        {
+          quiz_score: quizScore,
         }
+      )
+    );
+  }
+
+  getCourseProgress(courseId: number): Observable<StudentProgress> {
+    return this.performRequest(() =>
+      this.http.get<StudentProgress>(`${this.baseUrl}/courses/${courseId}/progress`)
+    );
+  }
+
+  getCourseLevels(courseId: number): Observable<CourseLessonOverview[]> {
+    return this.performRequest(() =>
+      this.http.get<CourseDetails>(`${this.baseUrl}/courses/${courseId}`)
+    ).pipe(
+      map((response) => {
+        const levels: CourseLessonOverview[] = [];
+
+        response.subjects?.forEach((subject) => {
+          subject.lessons?.forEach((lesson) => {
+            levels.push({
+              id: lesson.id,
+              course_id: courseId,
+              subject_id: subject.id,
+              subject_title: subject.name,
+              title: lesson.title,
+              description: lesson.description ?? null,
+              order: lesson.order_in_subject,
+              progress: lesson.progress ?? null,
+              attachments: lesson.contents ?? [],
+              quiz: lesson.quiz ?? null,
+              scheduled_date: lesson.scheduled_date ?? null,
+              created_at: lesson.created_at ?? null,
+            });
+          });
+        });
+
         return levels;
       })
+    );
+  }
+
+  getCourseSubjects(courseId: number): Observable<CourseSubject[]> {
+    return this.performRequest(() =>
+      this.http.get<CourseSubject[]>(`${this.baseUrl}/courses/${courseId}/subjects`)
+    );
+  }
+
+  createCourseSubject(courseId: number, payload: CourseSubjectPayload): Observable<CourseSubject> {
+    return this.performRequest(() =>
+      this.http.post<CourseSubject>(`${this.baseUrl}/courses/${courseId}/subjects`, {
+        ...payload,
+        course_id: courseId,
+      })
+    );
+  }
+
+  updateCourseSubject(
+    courseId: number,
+    subjectId: number,
+    payload: CourseSubjectPayload
+  ): Observable<CourseSubject> {
+    return this.performRequest(() =>
+      this.http.put<CourseSubject>(`${this.baseUrl}/courses/${courseId}/subjects/${subjectId}`, {
+        ...payload,
+        course_id: courseId,
+      })
+    );
+  }
+
+  deleteCourseSubject(courseId: number, subjectId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(`${this.baseUrl}/courses/${courseId}/subjects/${subjectId}`)
+    );
+  }
+
+  getSubjectLessons(courseId: number, subjectId: number): Observable<CourseLesson[]> {
+    return this.performRequest(() =>
+      this.http.get<CourseLesson[]>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons`
+      )
+    );
+  }
+
+  createSubjectLesson(
+    courseId: number,
+    subjectId: number,
+    payload: CourseLessonPayload
+  ): Observable<CourseLesson> {
+    return this.performRequest(() =>
+      this.http.post<CourseLesson>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons`,
+        {
+          ...payload,
+          subject_id: subjectId,
+        }
+      )
+    );
+  }
+
+  updateSubjectLesson(
+    courseId: number,
+    subjectId: number,
+    lessonId: number,
+    payload: Partial<CourseLessonPayload>
+  ): Observable<CourseLesson> {
+    return this.performRequest(() =>
+      this.http.put<CourseLesson>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons/${lessonId}`,
+        {
+          ...payload,
+          subject_id: subjectId,
+        }
+      )
+    );
+  }
+
+  deleteSubjectLesson(courseId: number, subjectId: number, lessonId: number): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons/${lessonId}`
+      )
+    );
+  }
+
+  getLessonContents(
+    courseId: number,
+    subjectId: number,
+    lessonId: number
+  ): Observable<CourseLessonContent[]> {
+    return this.performRequest(() =>
+      this.http.get<CourseLessonContent[]>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons/${lessonId}/contents`
+      )
+    );
+  }
+
+  createLessonContent(
+    courseId: number,
+    subjectId: number,
+    lessonId: number,
+    payload: CourseLessonContentPayload
+  ): Observable<CourseLessonContent> {
+    return this.performRequest(() =>
+      this.http.post<CourseLessonContent>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons/${lessonId}/contents`,
+        {
+          ...payload,
+          lesson_id: lessonId,
+        }
+      )
+    );
+  }
+
+  updateLessonContent(
+    courseId: number,
+    subjectId: number,
+    lessonId: number,
+    contentId: number,
+    payload: Partial<CourseLessonContentPayload>
+  ): Observable<CourseLessonContent> {
+    return this.performRequest(() =>
+      this.http.put<CourseLessonContent>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons/${lessonId}/contents/${contentId}`,
+        {
+          ...payload,
+          lesson_id: lessonId,
+        }
+      )
+    );
+  }
+
+  deleteLessonContent(
+    courseId: number,
+    subjectId: number,
+    lessonId: number,
+    contentId: number
+  ): Observable<void> {
+    return this.performRequest(() =>
+      this.http.delete<void>(
+        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons/${lessonId}/contents/${contentId}`
+      )
+    );
+  }
+
+  getAdminSettings(): Observable<AdminSettings> {
+    return this.performRequest(() =>
+      this.http.get<AdminSettings>(`${this.baseUrl}/admin/settings`)
+    );
+  }
+
+  updateAdminSettings(payload: AdminSettingsUpdate): Observable<AdminSettings> {
+    return this.performRequest(() =>
+      this.http.put<AdminSettings>(`${this.baseUrl}/admin/settings`, payload)
+    );
+  }
+
+  resetAdminSettings(): Observable<AdminSettings> {
+    return this.performRequest(() =>
+      this.http.post<AdminSettings>(`${this.baseUrl}/admin/settings/reset`, {})
     );
   }
 
@@ -188,8 +525,10 @@ export class ApiService {
     );
   }
 
-  getStudentProgress(studentId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/students/${studentId}/progress`);
+  getStudentProgress(studentId: number): Observable<StudentProgressEntry[]> {
+    return this.performRequest(() =>
+      this.http.get<StudentProgressEntry[]>(`${this.baseUrl}/students/${studentId}/progress`)
+    );
   }
 
   updateStudentProgress(courseId: number, progress: number): Observable<void> {
@@ -200,9 +539,18 @@ export class ApiService {
     );
   }
 
+  getCourseClasses(courseId: number): Observable<Class[]> {
+    return this.performRequest(() =>
+      this.http.get<Class[]>(`${this.baseUrl}/school/courses/${courseId}/classes`)
+    );
+  }
+
   askLessonQuestion(lessonId: number, payload: LessonQuestionPayload): Observable<LessonQuestion> {
     return this.performRequest(() =>
-      this.http.post<LessonQuestion>(`${this.baseUrl}/students/lessons/${lessonId}/questions`, payload)
+      this.http.post<LessonQuestion>(
+        `${this.baseUrl}/students/lessons/${lessonId}/questions`,
+        payload
+      )
     );
   }
 
@@ -248,7 +596,9 @@ export class ApiService {
   }
 
   createExam(payload: ExamCreateRequest): Observable<Exam> {
-    return this.performRequest(() => this.http.post<Exam>(`${this.baseUrl}/teachers/exams`, payload));
+    return this.performRequest(() =>
+      this.http.post<Exam>(`${this.baseUrl}/teachers/exams`, payload)
+    );
   }
 
   getTeacherExams(): Observable<Exam[]> {
@@ -256,7 +606,9 @@ export class ApiService {
   }
 
   getExam(examId: number): Observable<Exam> {
-    return this.performRequest(() => this.http.get<Exam>(`${this.baseUrl}/teachers/exams/${examId}`));
+    return this.performRequest(() =>
+      this.http.get<Exam>(`${this.baseUrl}/teachers/exams/${examId}`)
+    );
   }
 
   getExamResults(examId: number): Observable<ExamResult[]> {
@@ -343,7 +695,29 @@ export class ApiService {
 
   // Admin-specific endpoints
   getDashboardStats(): Observable<DashboardStats> {
-    return this.performRequest(() => this.http.get<DashboardStats>(`${this.baseUrl}/admin/stats`));
+    return this.performRequest(() =>
+      this.http.get<DashboardStats>(`${this.baseUrl}/admin/stats`)
+    ).pipe(
+      map((data) => ({
+        totals: {
+          users: data?.totals?.users ?? 0,
+          activeUsers: data?.totals?.activeUsers ?? 0,
+          students: data?.totals?.students ?? 0,
+          teachers: data?.totals?.teachers ?? 0,
+          parents: data?.totals?.parents ?? 0,
+          admins: data?.totals?.admins ?? 0,
+          courses: data?.totals?.courses ?? 0,
+          enrollments: data?.totals?.enrollments ?? 0,
+        },
+        active: {
+          students: data?.active?.students ?? 0,
+          teachers: data?.active?.teachers ?? 0,
+        },
+        unansweredQuestions: data?.unansweredQuestions ?? 0,
+        systemHealth: data?.systemHealth ?? 'unknown',
+        generatedAt: data?.generatedAt ?? new Date().toISOString(),
+      }))
+    );
   }
 
   getUsersByRole(role: string): Observable<User[]> {
@@ -398,21 +772,67 @@ export class ApiService {
     );
   }
 
+  private getFromCache<T>(key: string): Observable<T> | null {
+    const cached = this.cache.get(key);
+    if (!cached) {
+      return null;
+    }
+
+    if (cached.expiresAt <= Date.now()) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.stream as Observable<T>;
+  }
+
+  private getCachedObservable<T>(
+    key: string,
+    requestFactory: () => Observable<T>,
+    cacheMs: number
+  ): Observable<T> {
+    if (cacheMs <= 0) {
+      return requestFactory();
+    }
+
+    const stream$ = requestFactory().pipe(
+      tap({
+        error: () => this.cache.delete(key),
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+
+    this.cache.set(key, {
+      expiresAt: Date.now() + cacheMs,
+      stream: stream$,
+    });
+
+    return stream$;
+  }
+
   getEnrolledCourses(userId: number): Observable<StudentProgress[]> {
-    return this.http.get<StudentProgress[]>(`${this.baseUrl}/students/${userId}/enrolled-courses`);
+    return this.performRequest(() =>
+      this.http.get<StudentProgress[]>(`${this.baseUrl}/students/${userId}/enrolled-courses`)
+    );
   }
 
-  getParentChildren(parentId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/parents/${parentId}/children`);
+  getParentChildren(parentId: number): Observable<ParentChild[]> {
+    return this.performRequest(() =>
+      this.http.get<ParentChild[]>(`${this.baseUrl}/parents/${parentId}/children`)
+    );
   }
 
-  getChildAcademicReport(childId: number): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/students/${childId}/academic-report`);
+  getChildAcademicReport(childId: number): Observable<StudentReport> {
+    return this.performRequest(() =>
+      this.http.get<StudentReport>(`${this.baseUrl}/students/${childId}/academic-report`)
+    );
   }
 
   // Notes endpoints
-  getStudentNotes(studentId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/students/${studentId}/notes`);
+  getStudentNotes(studentId: number): Observable<Note[]> {
+    return this.performRequest(() =>
+      this.http.get<Note[]>(`${this.baseUrl}/students/${studentId}/notes`)
+    );
   }
 
   createNote(
@@ -420,9 +840,9 @@ export class ApiService {
     title: string,
     content: string,
     courseId?: number
-  ): Observable<any> {
+  ): Observable<Note> {
     return this.performRequest(() =>
-      this.http.post(`${this.baseUrl}/students/${studentId}/notes`, {
+      this.http.post<Note>(`${this.baseUrl}/students/${studentId}/notes`, {
         title,
         content,
         course_id: courseId,
@@ -430,18 +850,23 @@ export class ApiService {
     );
   }
 
-  updateNote(studentId: number, noteId: number, title?: string, content?: string): Observable<any> {
+  updateNote(
+    studentId: number,
+    noteId: number,
+    title?: string,
+    content?: string
+  ): Observable<Note> {
     return this.performRequest(() =>
-      this.http.put(`${this.baseUrl}/students/${studentId}/notes/${noteId}`, {
+      this.http.put<Note>(`${this.baseUrl}/students/${studentId}/notes/${noteId}`, {
         title,
         content,
       })
     );
   }
 
-  deleteNote(studentId: number, noteId: number): Observable<any> {
+  deleteNote(studentId: number, noteId: number): Observable<void> {
     return this.performRequest(() =>
-      this.http.delete(`${this.baseUrl}/students/${studentId}/notes/${noteId}`)
+      this.http.delete<void>(`${this.baseUrl}/students/${studentId}/notes/${noteId}`)
     );
   }
 
@@ -611,20 +1036,29 @@ export class ApiService {
     );
   }
 
-  login(email: string, password: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/login`, {
-      email: email,
-      password: password,
-    });
+  login(email: string, password: string): Observable<AuthResponse> {
+    return this.performRequest(() =>
+      this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, {
+        email,
+        password,
+      })
+    );
   }
 
-  register(email: string, password: string, fullName: string, role: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/register`, {
-      email: email,
-      password: password,
-      fullName: fullName,
-      role: role,
-    });
+  register(
+    email: string,
+    password: string,
+    fullName: string,
+    role: UserRole
+  ): Observable<AuthResponse | RegistrationResponse> {
+    return this.performRequest(() =>
+      this.http.post<AuthResponse | RegistrationResponse>(`${this.baseUrl}/auth/register`, {
+        email,
+        password,
+        full_name: fullName,
+        role,
+      })
+    );
   }
 
   // Clear error signal

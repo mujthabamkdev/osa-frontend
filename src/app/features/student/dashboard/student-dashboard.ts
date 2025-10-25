@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Course } from '../../../core/models/course.models';
+import { StudentProgressEntry } from '../../../core/models/teacher.models';
 
 interface StudentProgress {
   course_id: number;
@@ -304,8 +305,11 @@ interface StudentProgress {
           <button
             type="button"
             class="btn-close"
+            aria-label="Dismiss error"
             (click)="apiService.clearError()"
-          ></button>
+          >
+            <span class="visually-hidden">Dismiss error</span>
+          </button>
         </div>
       }
     </div>
@@ -425,7 +429,17 @@ export class StudentDashboardComponent implements OnInit {
     const currentUser = this.authService.currentUser();
     if (currentUser && currentUser.id) {
       this.apiService.getStudentProgress(currentUser.id).subscribe({
-        next: (progress) => this.progressData.set(progress),
+        next: (progressEntries: StudentProgressEntry[]) => {
+          const mappedProgress: StudentProgress[] = progressEntries.map((entry, index) => ({
+            course_id: entry.session_id ?? index + 1,
+            course_title: entry.subject_name,
+            progress: entry.completed ? 100 : 0,
+            completed_lessons: entry.completed ? 1 : 0,
+            total_lessons: 1,
+            last_accessed: entry.completed_at ?? '',
+          }));
+          this.progressData.set(mappedProgress);
+        },
         error: () => {
           // Mock progress data
           this.progressData.set([

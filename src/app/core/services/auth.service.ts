@@ -1,14 +1,20 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, tap, throwError, of, catchError, map, retry, delay } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-
-interface User {
-  id: number;
+import { AuthResponse, RegistrationResponse } from '../models/auth.models';
+import { User, UserRole } from '../models/user.models';
+interface LoginCredentials {
   email: string;
+  password: string;
+}
+
+interface RegisterPayload {
+  email: string;
+  password: string;
   fullName: string;
-  role: string;
+  role: UserRole;
 }
 
 interface TokenData {
@@ -20,7 +26,10 @@ interface TokenData {
   providedIn: 'root',
 })
 export class AuthService {
-  private baseUrl = environment.apiUrl;
+  private readonly baseUrl = environment.apiUrl;
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+
   private currentUserSignal = signal<User | null>(null);
   private tokenDataSignal = signal<TokenData | null>(null);
 
@@ -30,7 +39,7 @@ export class AuthService {
   // Public getters
   currentUser = this.currentUserSignal.asReadonly();
   user = this.currentUserSignal.asReadonly();
-  userRole = signal<string | null>(null);
+  userRole = signal<UserRole | null>(null);
 
   // Computed signals for reactive auth state
   isAuthenticated = computed(() => {
@@ -45,20 +54,17 @@ export class AuthService {
     return Date.now() >= tokenData.expiresAt;
   });
 
-  constructor(
-    private http: HttpClient,
-    private router: Router
-  ) {
+  constructor() {
     // Load token and user data from storage on initialization
     this.loadStoredAuthData();
   }
 
-  login(email: string, password: string): Observable<any>;
-  login(credentials: { email: string; password: string }): Observable<any>;
+  login(email: string, password: string): Observable<AuthResponse>;
+  login(credentials: LoginCredentials): Observable<AuthResponse>;
   login(
-    emailOrCredentials: string | { email: string; password: string },
+    emailOrCredentials: string | LoginCredentials,
     password?: string
-  ): Observable<any> {
+  ): Observable<AuthResponse> {
     this.loading.set(true);
     this.authError.set(null);
 
@@ -73,28 +79,9 @@ export class AuthService {
       pwd = emailOrCredentials.password;
     }
 
-    return this.http.post(`${this.baseUrl}/auth/login`, { email, password: pwd }).pipe(
-      tap((response: any) => {
-        console.log('Auth service login response:', response);
-        const token = response.access_token || response.token;
-        if (token) {
-          // Store token with expiration time (30 minutes from now)
-          const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes in milliseconds
-          const tokenData: TokenData = {
-            token,
-            expiresAt,
-          };
-
-          this.storeTokenData(tokenData);
-          this.currentUserSignal.set(response.user);
-          this.userRole.set(response.user?.role || null);
-
-          console.log('User set in auth service:', this.currentUserSignal());
-          console.log('User role set:', this.userRole());
-          console.log('Token expires at:', new Date(expiresAt));
-        }
-      }),
-      catchError((error) => {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, { email, password: pwd }).pipe(
+      tap((response) => this.storeAuthSession(response)),
+      catchError((error: HttpErrorResponse) => {
         this.loading.set(false);
         this.authError.set(error.error?.detail || 'Login failed');
         return throwError(() => error);
@@ -103,33 +90,30 @@ export class AuthService {
     );
   }
 
-  register(userData: any): Observable<any> {
+  register(userData: RegisterPayload): Observable<AuthResponse | RegistrationResponse> {
     this.loading.set(true);
     this.authError.set(null);
 
-    return this.http.post(`${this.baseUrl}/auth/register`, userData).pipe(
-      tap((response: any) => {
-        const token = response.access_token || response.token;
-        if (token) {
-          // Store token with expiration time (30 minutes from now)
-          const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes in milliseconds
-          const tokenData: TokenData = {
-            token,
-            expiresAt,
-          };
-
-          this.storeTokenData(tokenData);
-          this.currentUserSignal.set(response.user);
-          this.userRole.set(response.user?.role || null);
-        }
-      }),
-      catchError((error) => {
-        this.loading.set(false);
-        this.authError.set(error.error?.detail || 'Registration failed');
-        return throwError(() => error);
-      }),
-      tap(() => this.loading.set(false))
-    );
+    return this.http
+      .post<AuthResponse | RegistrationResponse>(`${this.baseUrl}/auth/register`, {
+        email: userData.email,
+        password: userData.password,
+        full_name: userData.fullName,
+        role: userData.role,
+      })
+      .pipe(
+        tap((response) => {
+          if (this.isAuthResponse(response)) {
+            this.storeAuthSession(response);
+          }
+        }),
+        catchError((error: HttpErrorResponse) => {
+          this.loading.set(false);
+          this.authError.set(error.error?.detail || 'Registration failed');
+          return throwError(() => error);
+        }),
+        tap(() => this.loading.set(false))
+      );
   }
 
   logout(): void {
@@ -168,10 +152,10 @@ export class AuthService {
     }
 
     // Otherwise, validate with server
-    return this.http.get(`${this.baseUrl}/users/me`).pipe(
+    return this.http.get<User>(`${this.baseUrl}/users/me`).pipe(
       retry({
         count: 2,
-        delay: (error, retryIndex) => {
+        delay: (error: HttpErrorResponse, retryIndex) => {
           // Only retry on network errors, not auth errors
           if (this.isAuthError(error)) {
             return throwError(() => error);
@@ -180,14 +164,14 @@ export class AuthService {
           return of(retryIndex).pipe(delay(1000 * retryIndex));
         },
       }),
-      map((user: any) => {
+      map((user) => {
         this.currentUserSignal.set(user);
         this.userRole.set(user.role);
         // Store user data locally
         localStorage.setItem('authUser', JSON.stringify(user));
         return true;
       }),
-      catchError((error) => {
+      catchError((error: HttpErrorResponse) => {
         // Only consider auth errors as invalid token
         if (this.isAuthError(error)) {
           this.clearStoredAuthData();
@@ -201,29 +185,28 @@ export class AuthService {
     );
   }
 
-  private isAuthError(error: any): boolean {
-    // Only consider 401 (Unauthorized) and 403 (Forbidden) as auth errors
-    return error?.status === 401 || error?.status === 403;
+  private isAuthError(error: unknown): error is HttpErrorResponse {
+    return error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403);
   }
 
-  loadUserData(): Observable<any> {
+  loadUserData(): Observable<User> {
     if (!this.hasValidToken()) {
       return throwError(() => new Error('No valid token available'));
     }
 
-    if (this.currentUserSignal()) {
-      // User data already loaded
-      return of(this.currentUserSignal());
+    const existingUser = this.currentUserSignal();
+    if (existingUser) {
+      return of(existingUser);
     }
 
-    return this.http.get(`${this.baseUrl}/users/me`).pipe(
-      tap((user: any) => {
+    return this.http.get<User>(`${this.baseUrl}/users/me`).pipe(
+      tap((user) => {
         this.currentUserSignal.set(user);
         this.userRole.set(user.role);
         // Store user data locally for faster subsequent loads
         localStorage.setItem('authUser', JSON.stringify(user));
       }),
-      catchError((error) => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Failed to load user data:', error);
         // Only logout on actual authentication errors
         if (this.isAuthError(error)) {
@@ -234,15 +217,15 @@ export class AuthService {
     );
   }
 
-  getUserRole(): string | null {
+  getUserRole(): UserRole | null {
     return this.userRole();
   }
 
-  hasRole(role: string): boolean {
+  hasRole(role: UserRole): boolean {
     return this.getUserRole() === role;
   }
 
-  hasAnyRole(roles: string[]): boolean {
+  hasAnyRole(roles: readonly UserRole[]): boolean {
     const userRole = this.getUserRole();
     return userRole ? roles.includes(userRole) : false;
   }
@@ -267,7 +250,34 @@ export class AuthService {
     this.authError.set(null);
   }
 
-  refreshToken(): Observable<any> {
+  private readonly storeAuthSession = (response: AuthResponse): void => {
+    const token = response.access_token ?? response.token;
+    if (!token) {
+      return;
+    }
+
+    const expiresAt = Date.now() + 30 * 60 * 1000;
+    const tokenData: TokenData = {
+      token,
+      expiresAt,
+    };
+
+    this.storeTokenData(tokenData);
+    if (response.user) {
+      this.currentUserSignal.set(response.user);
+      this.userRole.set(response.user.role);
+      localStorage.setItem('authUser', JSON.stringify(response.user));
+    }
+  };
+
+  private readonly isAuthResponse = (
+    value: AuthResponse | RegistrationResponse
+  ): value is AuthResponse => {
+    const candidate = value as AuthResponse;
+    return Boolean(candidate?.access_token || candidate?.token);
+  };
+
+  refreshToken(): Observable<never> {
     // For now, this is a placeholder. In a full implementation,
     // you would call a refresh endpoint with a refresh token
     // Since this backend doesn't have refresh tokens yet, we return an error
@@ -336,8 +346,8 @@ export class AuthService {
     if (token && !this.currentUserSignal()) {
       this.loading.set(true);
       // Load user data from API using the token
-      this.http.get(`${this.baseUrl}/users/me`).subscribe({
-        next: (user: any) => {
+      this.http.get<User>(`${this.baseUrl}/users/me`).subscribe({
+        next: (user) => {
           this.currentUserSignal.set(user);
           this.userRole.set(user.role);
 
@@ -346,7 +356,7 @@ export class AuthService {
 
           this.loading.set(false);
         },
-        error: (error) => {
+        error: (error: HttpErrorResponse) => {
           console.error('Failed to load user from token:', error);
           this.loading.set(false);
           // Only logout on actual authentication errors, not network/server errors

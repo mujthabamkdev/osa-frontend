@@ -1,0 +1,6 @@
+.support-block {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-teal-500-rgb), 0.12);
+}

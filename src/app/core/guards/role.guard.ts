@@ -9,7 +9,7 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const rolesArray = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
   // First, try to get user from signal
-  let user = authService.user();
+  const user = authService.user();
 
   // If user signal is not populated, try to decode from token
   if (!user) {

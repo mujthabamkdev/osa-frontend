@@ -22,12 +22,14 @@ export const routes: Routes = [
       {
         path: 'login',
         loadComponent: () =>
-          import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+          import('@features/auth/login/login.component').then((m) => m.LoginComponent),
       },
       {
         path: 'register',
         loadComponent: () =>
-          import('./features/auth/register/register.component').then((m) => m.RegisterComponent),
+          import('@features/auth/register/register.component').then(
+            (m) => m.RegisterComponent
+          ),
       },
     ],
   },
@@ -39,22 +41,47 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/admin/dashboard/admin-dashboard.component').then(
+          import('@features/admin/dashboard/admin-dashboard.component').then(
             (m) => m.AdminDashboardComponent
           ),
       },
       {
         path: 'users',
         loadComponent: () =>
-          import('./features/admin/users/user-management.component').then(
+          import('@features/admin/users/user-management.component').then(
             (m) => m.UserManagementComponent
           ),
       },
       {
         path: 'courses',
         loadComponent: () =>
-          import('./features/admin/course/course-management.component').then(
+          import('@features/admin/course/course-management.component').then(
             (m) => m.CourseManagementComponent
+          ),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('@features/admin/settings/settings-management.component').then(
+            (m) => m.SettingsManagementComponent
+          ),
+      },
+    ],
+  },
+  {
+    path: 'account',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('@features/account/profile/profile.component').then((m) => m.ProfileComponent),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('@features/account/settings/account-settings.component').then(
+            (m) => m.AccountSettingsComponent
           ),
       },
     ],
@@ -67,44 +94,55 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/teacher/dashboard/teacher-dashboard.component').then(
+          import('@features/teacher/dashboard/teacher-dashboard.component').then(
             (m) => m.TeacherDashboardComponent
           ),
       },
       {
         path: 'courses',
         loadComponent: () =>
-          import('./features/teacher/courses/course-management.component').then(
+          import('@features/teacher/courses/course-management.component').then(
             (m) => m.TeacherCourseManagementComponent
           ),
       },
       {
         path: 'students',
         loadComponent: () =>
-          import('./features/teacher/students/teacher-students.component').then(
+          import('@features/teacher/students/teacher-students.component').then(
             (m) => m.TeacherStudentsComponent
           ),
       },
       {
         path: 'exams',
         loadComponent: () =>
-          import('./features/teacher/exams/teacher-exams.component').then(
+          import('@features/teacher/exams/teacher-exams.component').then(
             (m) => m.TeacherExamsComponent
           ),
       },
       {
         path: 'live-classes',
         loadComponent: () =>
-          import('./features/teacher/live-classes/teacher-live-classes.component').then(
+          import('@features/teacher/live-classes/teacher-live-classes.component').then(
             (m) => m.TeacherLiveClassesComponent
           ),
       },
       {
         path: 'questions',
         loadComponent: () =>
-          import('./features/teacher/questions/teacher-questions.component').then(
+          import('@features/teacher/questions/teacher-questions.component').then(
             (m) => m.TeacherQuestionsComponent
           ),
+      },
+    ],
+  },
+  {
+    path: 'support',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'help',
+        loadComponent: () =>
+          import('@features/support/help/help.component').then((m) => m.HelpComponent),
       },
     ],
   },
@@ -116,14 +154,14 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/student/dashboard/student-dashboard.component').then(
+          import('@features/student/dashboard/student-dashboard.component').then(
             (m) => m.StudentDashboardComponent
           ),
       },
       {
         path: 'courses',
         loadChildren: () =>
-          import('./features/student/courses/courses.routes').then((m) => m.coursesRoutes),
+          import('@features/student/courses/courses.routes').then((m) => m.coursesRoutes),
       },
     ],
   },
@@ -135,7 +173,7 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/parent/dashboard/parent-dashboard.component').then(
+          import('@features/parent/dashboard/parent-dashboard.component').then(
             (m) => m.ParentDashboardComponent
           ),
       },
@@ -144,14 +182,16 @@ export const routes: Routes = [
   {
     path: 'unauthorized',
     loadComponent: () =>
-      import('./shared/components/unauthorized/unauthorized.component').then(
+      import('@shared/components/unauthorized/unauthorized.component').then(
         (m) => m.UnauthorizedComponent
       ),
   },
   {
     path: 'not-found',
     loadComponent: () =>
-      import('./shared/components/not-found/not-found.component').then((m) => m.NotFoundComponent),
+      import('@shared/components/not-found/not-found.component').then(
+        (m) => m.NotFoundComponent
+      ),
   },
   {
     path: '**',

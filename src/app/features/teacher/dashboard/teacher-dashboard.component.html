@@ -35,7 +35,14 @@
   @if (error(); as message) {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       {{ message }}
-      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Dismiss error"
+        (click)="error.set(null)"
+      >
+        <span class="visually-hidden">Dismiss error</span>
+      </button>
     </div>
   }
 

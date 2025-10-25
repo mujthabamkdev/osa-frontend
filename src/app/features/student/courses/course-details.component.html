@@ -87,7 +87,12 @@
             <div class="card subject-card">
               <div
                 class="card-header subject-header"
+                role="button"
+                tabindex="0"
                 (click)="toggleSubject(subject.id)"
+                (keydown.enter)="toggleSubject(subject.id)"
+                (keydown.space)="toggleSubject(subject.id)"
+                [attr.aria-expanded]="!isSubjectCollapsed(subject.id)"
               >
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
@@ -112,7 +117,12 @@
                         <div
                           class="card lesson-card"
                           [class.active-lesson]="isActiveLessonId(lesson.id)"
+                          role="button"
+                          tabindex="0"
                           (click)="selectLesson(lesson)"
+                          (keydown.enter)="selectLesson(lesson)"
+                          (keydown.space)="selectLesson(lesson)"
+                          [attr.aria-pressed]="isActiveLessonId(lesson.id)"
                           style="cursor: pointer"
                         >
                           <div class="card-body">

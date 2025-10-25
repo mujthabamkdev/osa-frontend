@@ -28,12 +28,11 @@
         </div>
       </a>
 
-      <!-- Mobile menu toggle -->
+      <!-- Hamburger Menu Button (Mobile) -->
       <button
-        class="navbar-toggler"
+        class="navbar-toggler d-lg-none ms-auto me-3"
         type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarNav"
+        (click)="toggleMobileMenu()"
         aria-controls="navbarNav"
         aria-expanded="false"
         aria-label="Toggle navigation"
@@ -41,12 +40,9 @@
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <div
-        class="collapse navbar-collapse"
-        id="navbarNav"
-      >
-        <!-- Main Navigation -->
-        <ul class="navbar-nav me-auto">
+      <!-- Navigation Menu -->
+      <div class="navbar-content" [class.show]="isMobileMenuOpen()" id="navbarNav">
+        <ul class="navbar-nav">
           @if (authService.isAdmin()) {
             <li class="nav-item">
               <a
@@ -54,6 +50,7 @@
                 routerLink="/admin/dashboard"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -65,9 +62,34 @@
                 routerLink="/admin/users"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-people me-1"></i>
                 Users
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/admin/courses"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                (click)="closeMobileMenu()"
+              >
+                <i class="bi bi-journal-text me-1"></i>
+                Courses
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/admin/settings"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                (click)="closeMobileMenu()"
+              >
+                <i class="bi bi-gear-wide-connected me-1"></i>
+                Settings
               </a>
             </li>
           }
@@ -77,6 +99,7 @@
                 class="nav-link"
                 routerLink="/teacher/dashboard"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -87,6 +110,7 @@
                 class="nav-link"
                 routerLink="/teacher/courses"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-book me-1"></i>
                 My Courses
@@ -97,6 +121,7 @@
                 class="nav-link"
                 routerLink="/teacher/students"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-people me-1"></i>
                 Students
@@ -107,6 +132,7 @@
                 class="nav-link"
                 routerLink="/teacher/exams"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-journal-check me-1"></i>
                 Exams
@@ -117,6 +143,7 @@
                 class="nav-link"
                 routerLink="/teacher/live-classes"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-broadcast me-1"></i>
                 Live Classes
@@ -127,6 +154,7 @@
                 class="nav-link"
                 routerLink="/teacher/questions"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-question-circle me-1"></i>
                 Q&amp;A
@@ -139,6 +167,7 @@
                 class="nav-link"
                 routerLink="/student/dashboard"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -149,6 +178,7 @@
                 class="nav-link"
                 routerLink="/student/courses"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-book me-1"></i>
                 Courses
@@ -161,6 +191,7 @@
                 class="nav-link"
                 routerLink="/parent/dashboard"
                 routerLinkActive="active"
+                (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -168,80 +199,96 @@
             </li>
           }
         </ul>
+      </div>
 
-        <!-- User Menu -->
-        <ul class="navbar-nav">
-          <!-- Theme Toggle -->
-          <li class="nav-item">
+      <!-- User Actions (Always visible) -->
+      <div class="navbar-actions">
+        <button
+          class="theme-toggle btn btn-outline-light"
+          type="button"
+          (click)="themeService.toggleTheme()"
+          aria-label="Toggle theme"
+        >
+          <i
+            class="bi theme-toggle-icon"
+            [class.bi-sun]="themeService.theme() === 'dark'"
+            [class.bi-moon]="themeService.theme() !== 'dark'"
+          ></i>
+          <span class="theme-toggle-label d-none d-md-inline">Toggle theme</span>
+        </button>
+
+        @if (authService.user(); as user) {
+          <div class="account-menu dropdown">
             <button
-              class="btn btn-outline-light btn-sm me-2 theme-toggle"
+              class="account-trigger d-flex align-items-center"
               type="button"
-              (click)="themeService.toggleTheme()"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
             >
-              <i
-                class="bi"
-                [class]="themeService.theme() === 'dark' ? 'bi-sun' : 'bi-moon'"
-              ></i>
+              <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-2">
+                <i class="bi bi-person text-dark"></i>
+              </div>
+              <span class="d-none d-md-inline">{{ user.full_name }}</span>
             </button>
-          </li>
-
-          <!-- User Dropdown -->
-          @if (authService.user(); as user) {
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle d-flex align-items-center"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-              >
-                <div
-                  class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-2"
-                >
-                  <i class="bi bi-person text-dark"></i>
-                </div>
-                <span class="d-none d-md-inline">{{ user.email }}</span>
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                  <h6 class="dropdown-header">{{ user.role | titlecase }}</h6>
-                </li>
-                <li><hr class="dropdown-divider" /></li>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <h6 class="dropdown-header">{{ user.role | titlecase }}</h6>
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              @if (authService.isAdmin()) {
                 <li>
                   <a
                     class="dropdown-item"
-                    href="#"
-                    ><i class="bi bi-person me-2"></i>Profile</a
+                    routerLink="/admin/dashboard"
                   >
-                </li>
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="#"
-                    ><i class="bi bi-gear me-2"></i>Settings</a
-                  >
-                </li>
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="#"
-                    ><i class="bi bi-question-circle me-2"></i>Help</a
-                  >
-                </li>
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <a
-                    class="dropdown-item text-danger"
-                    href="#"
-                    (click)="logout(); $event.preventDefault()"
-                  >
-                    <i class="bi bi-box-arrow-right me-2"></i>
-                    Logout
+                    <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
                   </a>
                 </li>
-              </ul>
-            </li>
-          }
-        </ul>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    routerLink="/admin/settings"
+                  >
+                    <i class="bi bi-gear-wide-connected me-2"></i>Admin Settings
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+              }
+              <li>
+                <a
+                  class="dropdown-item"
+                  routerLink="/account/profile"
+                ><i class="bi bi-person me-2"></i>Profile</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  routerLink="/account/settings"
+                ><i class="bi bi-gear me-2"></i>Settings</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  routerLink="/support/help"
+                ><i class="bi bi-question-circle me-2"></i>Help</a
+                >
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <a
+                  class="dropdown-item text-danger"
+                  href="#"
+                  (click)="logout(); $event.preventDefault()"
+                >
+                  <i class="bi bi-box-arrow-right me-2"></i>
+                  Logout
+                </a>
+              </li>
+            </ul>
+          </div>
+        }
       </div>
     </div>
   </nav>
@@ -272,7 +319,10 @@
         type="button"
         class="btn-close"
         (click)="notificationService.remove(notification.id)"
-      ></button>
+        aria-label="Dismiss notification"
+      >
+        <span class="visually-hidden">Dismiss</span>
+      </button>
     </div>
   }
 </div>

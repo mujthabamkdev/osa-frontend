@@ -1,5 +1,5 @@
 // src/app/app.component.ts - FIXED VERSION
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
@@ -8,6 +8,7 @@ import { LoadingService } from './core/services/loading.service';
 import { environment } from '../environments/environment';
 import { ThemeService } from './core/services/theme.service';
 import { NotificationService } from './core/services/notification.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-root',
@@ -22,16 +23,21 @@ export class AppComponent implements OnInit {
   readonly notificationService = inject(NotificationService);
   readonly themeService = inject(ThemeService);
   readonly router = inject(Router);
+  readonly destroyRef = inject(DestroyRef);
 
   readonly appName = environment.appName;
   readonly version = environment.version;
 
   readonly showNavbar = signal(false);
+  readonly isMobileMenuOpen = signal(false);
 
   ngOnInit(): void {
     // Listen to route changes to determine if navbar should be shown
     this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((event: NavigationEnd) => {
         const hideNavbarRoutes = ['/auth/login', '/auth/register', '/unauthorized'];
         this.showNavbar.set(!hideNavbarRoutes.some((route) => event.url.includes(route)));
@@ -60,5 +66,13 @@ export class AppComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen.update(open => !open);
+  }
+
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
   }
 }

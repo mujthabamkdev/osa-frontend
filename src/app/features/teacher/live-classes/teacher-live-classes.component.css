@@ -4,8 +4,9 @@
 }
 
 .card {
-  border: none;
+  border: 1px solid rgba(var(--color-teal-500-rgb), 0.12);
   border-radius: 1rem;
+  background-color: var(--color-surface);
 }
 
 .card-header {
@@ -28,7 +29,7 @@
   bottom: 0.5rem;
   left: 0.5rem;
   width: 2px;
-  background-color: rgba(13, 110, 253, 0.2);
+  background-color: rgba(var(--color-teal-500-rgb), 0.25);
 }
 
 .timeline-item {
@@ -47,13 +48,13 @@
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 50%;
-  background-color: #0d6efd;
-  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.12);
+  background-color: var(--color-primary);
+  box-shadow: 0 0 0 0.25rem rgba(var(--color-teal-500-rgb), 0.12);
 }
 
 .timeline-content {
   margin-left: 1.5rem;
-  background-color: rgba(13, 110, 253, 0.05);
+  background-color: rgba(var(--color-teal-500-rgb), 0.08);
   border-radius: 0.75rem;
   padding: 1rem 1.25rem;
 }
@@ -62,10 +63,10 @@
   font-size: 0.875rem;
   font-weight: 600;
   text-transform: uppercase;
-  color: #6c757d;
+  color: rgba(var(--color-slate-500-rgb), 0.75);
 }
 
 .badge.bg-secondary {
-  background-color: rgba(108, 117, 125, 0.25) !important;
-  color: #495057;
+  background-color: rgba(var(--color-teal-500-rgb), 0.12) !important;
+  color: rgba(var(--color-slate-500-rgb), 0.9);
 }

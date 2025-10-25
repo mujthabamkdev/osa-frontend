@@ -4,8 +4,8 @@
 }
 
 .badge-soft {
-  background-color: rgba(25, 135, 84, 0.15);
-  color: #198754;
+  background-color: rgba(var(--color-teal-500-rgb), 0.12);
+  color: var(--color-primary);
   border-radius: 999px;
   padding: 0.25rem 0.75rem;
   font-weight: 600;
@@ -16,16 +16,16 @@
 }
 
 .table tbody tr:hover {
-  background-color: rgba(13, 110, 253, 0.08);
+  background-color: rgba(var(--color-teal-500-rgb), 0.08);
 }
 
 .badge.bg-primary {
-  background-color: #0d6efd !important;
+  background-color: var(--color-primary) !important;
 }
 
 .btn-link {
   text-decoration: none;
-  color: #0d6efd;
+  color: var(--color-primary);
 }
 
 .btn-link:hover {
@@ -46,12 +46,12 @@
 }
 
 .table-responsive {
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(var(--color-teal-500-rgb), 0.1);
 }
 
 .list-group-item {
   border: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(var(--color-teal-500-rgb), 0.1);
 }
 
 .list-group-item:last-child {

@@ -1,151 +1,852 @@
 <div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>User Management</h2>
-    <button
-      class="btn btn-primary"
-      (click)="showCreateModal.set(true)"
-    >
-      <i class="bi bi-plus-circle me-1"></i>
-      Add User
-    </button>
-  </div>
-
-  <!-- Users Table -->
-  <div class="card">
-    <div class="card-body">
-      @if (loading()) {
-        <div class="text-center py-4">
-          <div class="spinner-border text-primary"></div>
-        </div>
-      } @else {
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (user of users(); track user.id) {
-                <tr>
-                  <td>{{ user.email }}</td>
-                  <td>
-                    <span class="badge bg-primary">{{ user.role | titlecase }}</span>
-                  </td>
-                  <td>
-                    <span
-                      class="badge"
-                      [class]="user.is_active ? 'bg-success' : 'bg-danger'"
-                    >
-                      {{ user.is_active ? 'Active' : 'Inactive' }}
-                    </span>
-                  </td>
-                  <td>{{ user.created_at | date: 'short' }}</td>
-                  <td>
-                    <div class="btn-group btn-group-sm">
-                      <button
-                        class="btn btn-outline-primary"
-                        (click)="editUser(user)"
-                      >
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button
-                        class="btn btn-outline-danger"
-                        (click)="deleteUser(user)"
-                      >
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <h2 class="mb-0">Admin Access Control</h2>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <div class="btn-group" role="group" aria-label="Admin view selector">
+        <button
+          type="button"
+          class="btn"
+          [class.btn-primary]="viewMode() === 'pending'"
+          [class.btn-outline-primary]="viewMode() !== 'pending'"
+          (click)="switchView('pending')"
+        >
+          Pending Approvals
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-primary]="viewMode() === 'students'"
+          [class.btn-outline-primary]="viewMode() !== 'students'"
+          (click)="switchView('students')"
+        >
+          Students
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-primary]="viewMode() === 'parents'"
+          [class.btn-outline-primary]="viewMode() !== 'parents'"
+          (click)="switchView('parents')"
+        >
+          Parents
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-primary]="viewMode() === 'teachers'"
+          [class.btn-outline-primary]="viewMode() !== 'teachers'"
+          (click)="switchView('teachers')"
+        >
+          Teachers
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Create User Modal -->
-  @if (showCreateModal()) {
-    <div
-      class="modal show d-block"
-      style="background: rgba(0, 0, 0, 0.5)"
-    >
+  @if (viewMode() === 'students') {
+    <div class="d-flex justify-content-start mb-3">
+      <button type="button" class="btn btn-primary" (click)="openStudentModal()">
+        <i class="bi bi-plus-circle me-1"></i>
+        Add Student
+      </button>
+    </div>
+  }
+
+  @switch (viewMode()) {
+    @case ('pending') {
+      <div class="card">
+        <div class="card-body">
+          @if (loadingPending()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary"></div>
+            </div>
+          } @else if (!pendingUsers().length) {
+            <p class="text-muted mb-0">No accounts are waiting for approval.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Requested</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (user of pendingUsers(); track user.id) {
+                    <tr>
+                      <td>{{ user.email }}</td>
+                      <td>
+                        @if (editingUserId() === user.id) {
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              [ngModel]="editingUserName()"
+                              (ngModelChange)="editingUserName.set($event)"
+                              (keyup.enter)="saveUserName()"
+                              (keyup.escape)="cancelEditingName()"
+                              #nameInput
+                            />
+                            <button
+                              class="btn btn-sm btn-success"
+                              (click)="saveUserName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              (click)="cancelEditingName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="d-flex align-items-center gap-2">
+                            <span>{{ user.full_name || '—' }}</span>
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="startEditingName(user.id, user.full_name ?? null)"
+                              title="Edit name"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                          </div>
+                        }
+                      </td>
+                      <td><span class="badge bg-warning text-dark">{{ user.role | titlecase }}</span></td>
+                      <td>{{ user.created_at | date: 'short' }}</td>
+                      <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                          <button class="btn btn-outline-primary" type="button" (click)="openApprovalModal(user)">
+                            Approve
+                          </button>
+                          <button class="btn btn-outline-danger" type="button" (click)="rejectPendingUser(user)">
+                            Remove
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @case ('students') {
+      <div class="card">
+        <div class="card-body">
+          @if (loadingStudents()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary"></div>
+            </div>
+          } @else if (!students().length) {
+            <p class="text-muted mb-0">No active students yet. Add a student to get started.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Courses & Classes</th>
+                    <th>Joined</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (student of students(); track student.id) {
+                    <tr>
+                      <td>{{ student.email }}</td>
+                      <td>
+                        @if (editingUserId() === student.id) {
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              [ngModel]="editingUserName()"
+                              (ngModelChange)="editingUserName.set($event)"
+                              (keyup.enter)="saveUserName()"
+                              (keyup.escape)="cancelEditingName()"
+                              #nameInput
+                            />
+                            <button
+                              class="btn btn-sm btn-success"
+                              (click)="saveUserName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              (click)="cancelEditingName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="d-flex align-items-center gap-2">
+                            <span>{{ student.full_name || '—' }}</span>
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="startEditingName(student.id, student.full_name ?? null)"
+                              title="Edit name"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                          </div>
+                        }
+                      </td>
+                      <td>
+                        @if (student.enrollments.length) {
+                          <ul class="mb-0 ps-3">
+                            @for (enrollment of student.enrollments; track enrollment.id) {
+                              <li>
+                                <strong>{{ enrollment.course_title }}</strong>
+                                <span class="text-muted ms-1">
+                                  @if (enrollment.class_id) {
+                                    ({{ enrollment.class_name || 'Class ' + enrollment.class_id }})
+                                  } @else {
+                                    (No class assigned)
+                                  }
+                                </span>
+                              </li>
+                            }
+                          </ul>
+                        } @else {
+                          <span class="text-muted">No course assignments</span>
+                        }
+                      </td>
+                      <td>{{ student.created_at | date: 'short' }}</td>
+                      <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                          <button class="btn btn-outline-primary" type="button" (click)="openEnrollmentModal(student)">
+                            Manage Courses
+                          </button>
+                          <button class="btn btn-outline-danger" type="button" (click)="deleteStudent(student)">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @case ('parents') {
+      <div class="card">
+        <div class="card-body">
+          @if (loadingParents()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary"></div>
+            </div>
+          } @else if (!parents().length) {
+            <p class="text-muted mb-0">No active parent accounts.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Linked Students</th>
+                    <th>Approved</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (parent of parents(); track parent.id) {
+                    <tr>
+                      <td>{{ parent.email }}</td>
+                      <td>
+                        @if (editingUserId() === parent.id) {
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              [ngModel]="editingUserName()"
+                              (ngModelChange)="editingUserName.set($event)"
+                              (keyup.enter)="saveUserName()"
+                              (keyup.escape)="cancelEditingName()"
+                              #nameInput
+                            />
+                            <button
+                              class="btn btn-sm btn-success"
+                              (click)="saveUserName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              (click)="cancelEditingName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="d-flex align-items-center gap-2">
+                            <span>{{ parent.full_name || '—' }}</span>
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="startEditingName(parent.id, parent.full_name ?? null)"
+                              title="Edit name"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                          </div>
+                        }
+                      </td>
+                      <td>
+                        @if (parent.children.length) {
+                          <ul class="mb-0 ps-3">
+                            @for (child of parent.children; track child.id) {
+                              <li>{{ child.full_name || child.email }}</li>
+                            }
+                          </ul>
+                        } @else {
+                          <span class="text-muted">No linked students</span>
+                        }
+                      </td>
+                      <td>{{ parent.created_at | date: 'short' }}</td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary" type="button" (click)="openParentModal(parent)">
+                          Manage Access
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @case ('teachers') {
+      <div class="card">
+        <div class="card-body">
+          @if (loadingTeachers()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary"></div>
+            </div>
+          } @else if (!teachers().length) {
+            <p class="text-muted mb-0">No active teacher accounts.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Joined</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (teacher of teachers(); track teacher.id) {
+                    <tr>
+                      <td>{{ teacher.email }}</td>
+                      <td>
+                        @if (editingUserId() === teacher.id) {
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              [ngModel]="editingUserName()"
+                              (ngModelChange)="editingUserName.set($event)"
+                              (keyup.enter)="saveUserName()"
+                              (keyup.escape)="cancelEditingName()"
+                              #nameInput
+                            />
+                            <button
+                              class="btn btn-sm btn-success"
+                              (click)="saveUserName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              (click)="cancelEditingName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="d-flex align-items-center gap-2">
+                            <span>{{ teacher.full_name || '—' }}</span>
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="startEditingName(teacher.id, teacher.full_name ?? null)"
+                              title="Edit name"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                          </div>
+                        }
+                      </td>
+                      <td>{{ teacher.created_at | date: 'short' }}</td>
+                      <td class="text-end">
+                        <button
+                          class="btn btn-sm btn-outline-danger"
+                          type="button"
+                          (click)="openTeacherModal(teacher)"
+                          [disabled]="teachers().length <= 1"
+                        >
+                          Transfer &amp; Delete
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  @if (approvalModalOpen() && selectedPendingUser()) {
+    <div class="modal show d-block" style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Approve {{ selectedPendingUser()?.role | titlecase }} Account</h5>
+            <button type="button" class="btn-close" (click)="closeApprovalModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-3 text-muted">
+              Review and assign access for <strong>{{ selectedPendingUser()?.email }}</strong>.
+            </p>
+
+            @if (selectedPendingUser()?.role === 'student') {
+              <div class="mb-3">
+                <span class="form-label d-block">Course Assignments</span>
+                @if (!approvalAssignments().length) {
+                  <p class="text-muted small mb-2">Add at least one course or activate without course access.</p>
+                }
+                <div class="vstack gap-3">
+                  @for (assignment of approvalAssignments(); track $index) {
+                    <div class="border rounded p-3">
+                      <div class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                          <label class="form-label" [attr.for]="'approval-course-' + $index">Course</label>
+                          <select
+                            class="form-select"
+                            [attr.id]="'approval-course-' + $index"
+                            [ngModel]="assignment.courseId"
+                            (ngModelChange)="updateApprovalCourse($index, $event)">
+                            <option [ngValue]="null">Select course</option>
+                            @for (course of courses(); track course.id) {
+                              <option [ngValue]="course.id">{{ course.title }}</option>
+                            }
+                          </select>
+                        </div>
+                        <div class="col-md-5">
+                          <label class="form-label" [attr.for]="'approval-class-' + $index">Class (optional)</label>
+                          @if (isClassLoading()(assignment.courseId)) {
+                            <div class="form-control"><span class="spinner-border spinner-border-sm"></span></div>
+                          } @else {
+                            <select
+                              class="form-select"
+                              [attr.id]="'approval-class-' + $index"
+                              [ngModel]="assignment.classId"
+                              (ngModelChange)="updateApprovalClass($index, $event)"
+                              [disabled]="!assignment.courseId"
+                            >
+                              <option [ngValue]="null">No class selected</option>
+                              @for (classOption of classOptionsForCourse()(assignment.courseId); track classOption.id) {
+                                <option [ngValue]="classOption.id">
+                                  {{ classOption.name }}
+                                </option>
+                              }
+                            </select>
+                          }
+                        </div>
+                        <div class="col-md-1 text-end">
+                          <button
+                            type="button"
+                            class="btn btn-outline-danger btn-sm"
+                            (click)="removeApprovalAssignment($index)"
+                            [disabled]="approvalAssignments().length === 1"
+                          >
+                            <i class="bi bi-x-lg"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <button type="button" class="btn btn-link px-0 mt-2" (click)="addApprovalAssignment()">
+                  <i class="bi bi-plus-circle me-1"></i>
+                  Add course assignment
+                </button>
+              </div>
+            }
+
+            @if (selectedPendingUser()?.role === 'parent') {
+              <div class="mb-3">
+                <span class="form-label d-block">Link to Students</span>
+                @if (!students().length) {
+                  <p class="text-muted">No students available to link yet.</p>
+                } @else {
+                  <div class="row row-cols-1 row-cols-md-2 g-2">
+                    @for (option of studentOptions(); track option.id) {
+                      <div class="col">
+                        <div class="form-check">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            [id]="'parent-link-' + option.id"
+                            [checked]="approvalChildIds().includes(option.id)"
+                            (change)="toggleApprovalChild(option.id)"
+                          />
+                          <label class="form-check-label" [for]="'parent-link-' + option.id">
+                            {{ option.label }}
+                          </label>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeApprovalModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="submitApproval()" [disabled]="approving()">
+              @if (approving()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Approve Account
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (enrollmentModalOpen() && selectedStudent()) {
+    <div class="modal show d-block" style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Manage Courses for {{ selectedStudent()?.full_name || selectedStudent()?.email }}</h5>
+            <button type="button" class="btn-close" (click)="closeEnrollmentModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="vstack gap-3">
+              @for (assignment of enrollmentAssignments(); track $index) {
+                <div class="border rounded p-3">
+                  <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                      <label class="form-label" [attr.for]="'enrollment-course-' + $index">Course</label>
+                      <select
+                        class="form-select"
+                        [attr.id]="'enrollment-course-' + $index"
+                        [ngModel]="assignment.courseId"
+                        (ngModelChange)="updateEnrollmentCourse($index, $event)"
+                      >
+                        <option [ngValue]="null">Select course</option>
+                        @for (course of courses(); track course.id) {
+                          <option [ngValue]="course.id">{{ course.title }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" [attr.for]="'enrollment-class-' + $index">Class (optional)</label>
+                      @if (isClassLoading()(assignment.courseId)) {
+                        <div class="form-control"><span class="spinner-border spinner-border-sm"></span></div>
+                      } @else {
+                        <select
+                          class="form-select"
+                          [disabled]="!assignment.courseId"
+                          [attr.id]="'enrollment-class-' + $index"
+                          [ngModel]="assignment.classId"
+                          (ngModelChange)="updateEnrollmentClass($index, $event)"
+                        >
+                          <option [ngValue]="null">No class selected</option>
+                          @for (classOption of classOptionsForCourse()(assignment.courseId); track classOption.id) {
+                            <option [ngValue]="classOption.id">
+                              {{ classOption.name }}
+                            </option>
+                          }
+                        </select>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="addEnrollmentAssignment()">
+                  <i class="bi bi-plus-circle me-1"></i>
+                  Add Course
+                </button>
+                @if (enrollmentAssignments().length > 1) {
+                  <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeEnrollmentAssignment(enrollmentAssignments().length - 1)">
+                    <i class="bi bi-dash-circle me-1"></i>
+                    Remove Last
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeEnrollmentModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="saveEnrollmentAssignments()" [disabled]="enrollmentSaving()">
+              @if (enrollmentSaving()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (parentModalOpen() && selectedParent()) {
+    <div class="modal show d-block" style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Manage Student Access for {{ selectedParent()?.email }}</h5>
+            <button type="button" class="btn-close" (click)="closeParentModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            @if (!students().length) {
+              <p class="text-muted mb-0">No students available to assign.</p>
+            } @else {
+              <div class="row row-cols-1 row-cols-md-2 g-2">
+                @for (option of studentOptions(); track option.id) {
+                  <div class="col">
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        [id]="'parent-select-' + option.id"
+                        [checked]="parentChildSelection().includes(option.id)"
+                        (change)="toggleParentChild(option.id)"
+                      />
+                      <label class="form-check-label" [for]="'parent-select-' + option.id">
+                        {{ option.label }}
+                      </label>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeParentModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="saveParentChildren()" [disabled]="parentSaving()">
+              @if (parentSaving()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Save Access
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (teacherModalOpen() && selectedTeacher()) {
+    <div class="modal show d-block" style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Transfer Assignments for
+              {{ selectedTeacher()?.full_name || selectedTeacher()?.email }}
+            </h5>
+            <button type="button" class="btn-close" (click)="closeTeacherModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted">
+              Select a replacement teacher to receive all courses and subjects currently owned by
+              {{ selectedTeacher()?.full_name || selectedTeacher()?.email }}. The teacher account will be removed after the transfer.
+            </p>
+
+            @if (teacherModalError()) {
+              <div class="alert alert-danger" role="alert">{{ teacherModalError() }}</div>
+            }
+
+            <div class="mb-4">
+              <label class="form-label" for="replacement-teacher">Replacement Teacher</label>
+              <select
+                id="replacement-teacher"
+                class="form-select"
+                [ngModel]="replacementTeacherId()"
+                (ngModelChange)="updateReplacementTeacher($event)"
+              >
+                <option [ngValue]="null">Select replacement teacher</option>
+                @for (option of replacementTeacherOptions(); track option.id) {
+                  <option [ngValue]="option.id">
+                    {{ option.full_name || option.email }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            @if (teacherAssignmentsLoading()) {
+              <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+              </div>
+            } @else if (teacherAssignments()) {
+              @let assignments = teacherAssignments();
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="fw-semibold mb-3">
+                      Courses ({{ assignments?.course_count }})
+                    </h6>
+                    @if (assignments && assignments.courses.length) {
+                      <ul class="mb-0 ps-3">
+                        @for (course of assignments?.courses ?? []; track course.id) {
+                          <li>{{ course.title }}</li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="text-muted mb-0">No courses assigned.</p>
+                    }
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="fw-semibold mb-3">
+                      Subjects ({{ assignments?.subject_count }})
+                    </h6>
+                    @if (assignments && assignments.subjects.length) {
+                      <ul class="mb-0 ps-3">
+                        @for (subject of assignments?.subjects ?? []; track subject.id) {
+                          <li>
+                            {{ subject.name }}
+                            <span class="text-muted">({{ subject.course_title }})</span>
+                          </li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="text-muted mb-0">No subjects directly assigned.</p>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mt-4">
+                <div class="col-12 col-md-4">
+                  <div class="small text-muted">
+                    Live classes: <strong>{{ assignments?.live_class_count }}</strong>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="small text-muted">
+                    Exams: <strong>{{ assignments?.exam_count }}</strong>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="small text-muted">
+                    Lesson answers: <strong>{{ assignments?.lesson_answer_count }}</strong>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <p class="text-muted mb-0">Assignments are unavailable.</p>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeTeacherModal()">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              (click)="confirmTeacherDeletion()"
+              [disabled]="replacementTeacherId() === null || teacherDeletionSaving()"
+            >
+              @if (teacherDeletionSaving()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Transfer &amp; Delete Teacher
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (studentModalOpen()) {
+    <div class="modal show d-block" style="background: rgba(0, 0, 0, 0.5)">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Create New User</h5>
-            <button
-              type="button"
-              class="btn-close"
-              (click)="showCreateModal.set(false)"
-            ></button>
+            <h5 class="modal-title">Add Student</h5>
+            <button type="button" class="btn-close" (click)="closeStudentModal()" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form
-              (ngSubmit)="createUser()"
-              #userForm="ngForm"
-            >
+            <form>
               <div class="mb-3">
-                <label class="form-label">Email</label>
+                <label class="form-label" for="studentFullNameInput">Full Name</label>
                 <input
+                  id="studentFullNameInput"
+                  type="text"
+                  class="form-control"
+                  [ngModel]="newStudentForm().full_name"
+                  (ngModelChange)="updateNewStudentField('full_name', $event)"
+                  name="studentFullName"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="studentEmailInput">Email</label>
+                <input
+                  id="studentEmailInput"
                   type="email"
                   class="form-control"
-                  [ngModel]="newUser().email"
-                  (ngModelChange)="updateEmail($event)"
-                  name="email"
+                  [ngModel]="newStudentForm().email"
+                  (ngModelChange)="updateNewStudentField('email', $event)"
+                  name="studentEmail"
                   required
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label">Password</label>
+                <label class="form-label" for="studentPasswordInput">Temporary Password</label>
                 <input
+                  id="studentPasswordInput"
                   type="password"
                   class="form-control"
-                  [ngModel]="newUser().password"
-                  (ngModelChange)="updatePassword($event)"
-                  name="password"
+                  [ngModel]="newStudentForm().password"
+                  (ngModelChange)="updateNewStudentField('password', $event)"
+                  name="studentPassword"
                   required
                 />
               </div>
-              <div class="mb-3">
-                <label class="form-label">Role</label>
-                <select
-                  class="form-select"
-                  [ngModel]="newUser().role"
-                  (ngModelChange)="updateRole($event)"
-                  name="role"
-                  required
-                >
-                  <option value="">Select Role</option>
-                  <option value="admin">Admin</option>
-                  <option value="teacher">Teacher</option>
-                  <option value="student">Student</option>
-                  <option value="parent">Parent</option>
-                </select>
-              </div>
-              <div class="d-flex justify-content-end gap-2">
-                <button
-                  type="button"
-                  class="btn btn-secondary"
-                  (click)="showCreateModal.set(false)"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  [disabled]="userForm.invalid"
-                >
-                  Create User
-                </button>
-              </div>
             </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeStudentModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="saveStudent()" [disabled]="creatingStudent()">
+              @if (creatingStudent()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Add Student
+            </button>
           </div>
         </div>
       </div>

@@ -10,20 +10,20 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators, FormGroup, FormControl } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
-import { Course } from '../../../core/models/course.models';
+import { Course, CourseDetails, CourseSubject as ApiCourseSubject, CourseLesson as ApiCourseLesson } from '../../../core/models/course.models';
 import { LessonQuestion } from '../../../core/models/teacher.models';
 
-interface CourseLesson {
+interface TeacherCourseLesson {
   id: number;
   title: string;
   description: string | null;
   scheduled_date: string | null;
 }
 
-interface CourseSubject {
+interface TeacherCourseSubject {
   id: number;
   name: string;
-  lessons: CourseLesson[];
+  lessons: TeacherCourseLesson[];
 }
 
 @Component({
@@ -44,7 +44,7 @@ export class TeacherQuestionsComponent implements OnInit {
   readonly questionError = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly courses = signal<Course[]>([]);
-  readonly subjects = signal<CourseSubject[]>([]);
+  readonly subjects = signal<TeacherCourseSubject[]>([]);
   readonly selectedCourseId = signal<number | null>(null);
   readonly selectedSubjectId = signal<number | null>(null);
   readonly selectedLessonId = signal<number | null>(null);
@@ -245,17 +245,21 @@ export class TeacherQuestionsComponent implements OnInit {
       .getCourseDetails(courseId)
       .pipe(finalize(() => this.loadingCourses.set(false)))
       .subscribe({
-        next: (course) => {
-          const subjects: CourseSubject[] = (course?.subjects ?? []).map((subject: any) => ({
-            id: subject.id,
-            name: subject.name,
-            lessons: (subject.lessons ?? []).map((lesson: any) => ({
-              id: lesson.id,
-              title: lesson.title,
-              description: lesson.description ?? null,
-              scheduled_date: lesson.scheduled_date ?? null,
-            })),
-          }));
+        next: (course: CourseDetails) => {
+          const subjects: TeacherCourseSubject[] = (course?.subjects ?? []).map(
+            (subject: ApiCourseSubject): TeacherCourseSubject => ({
+              id: subject.id,
+              name: subject.name,
+              lessons: (subject.lessons ?? []).map(
+                (lesson: ApiCourseLesson): TeacherCourseLesson => ({
+                  id: lesson.id,
+                  title: lesson.title,
+                  description: lesson.description ?? null,
+                  scheduled_date: lesson.scheduled_date ?? null,
+                })
+              ),
+            })
+          );
 
           this.subjects.set(subjects);
           const firstSubject = subjects[0]?.id ?? null;

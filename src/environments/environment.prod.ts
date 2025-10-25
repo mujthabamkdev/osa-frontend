@@ -1,1 +1,4 @@
-export const environment = { production: true, apiUrl: 'https://REPLACE_BACKEND_DOMAIN/api/v1' };
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.sevalla.com/api/v1'
+};

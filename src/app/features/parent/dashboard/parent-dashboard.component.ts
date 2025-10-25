@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
+import { ParentChild } from '../../../core/models/dashboard.models';
+import { StudentProgressEntry, StudentReport } from '../../../core/models/teacher.models';
 
 // Models
 interface Child {
@@ -72,9 +74,10 @@ export class ParentDashboardComponent implements OnInit {
 
     if (user) {
       this.apiService.getParentChildren(user.id).subscribe({
-        next: (children: Child[]) => {
-          this.children.set(children);
-          this.calculateSummary(children);
+        next: (children: ParentChild[]) => {
+          const mapped = children.map((child) => this.mapParentChild(child));
+          this.children.set(mapped);
+          this.calculateSummary(mapped);
           this.loading.set(false);
         },
         error: () => {
@@ -138,8 +141,9 @@ export class ParentDashboardComponent implements OnInit {
     this.loadingProgress.set(true);
 
     this.apiService.getStudentProgress(childId).subscribe({
-      next: (progress: ChildProgress[]) => {
-        this.selectedChildProgress.set(progress);
+      next: (progress: StudentProgressEntry[]) => {
+        const mapped = progress.map((entry) => this.mapProgressEntry(entry));
+        this.selectedChildProgress.set(mapped);
         this.loadingProgress.set(false);
       },
       error: () => {
@@ -172,8 +176,9 @@ export class ParentDashboardComponent implements OnInit {
 
   loadChildReport(childId: number): void {
     this.apiService.getChildAcademicReport(childId).subscribe({
-      next: (report: AcademicReport) => {
-        this.selectedChildReport.set(report);
+      next: (report: StudentReport) => {
+        const mapped = this.mapAcademicReport(report);
+        this.selectedChildReport.set(mapped);
       },
       error: () => {
         // Mock data
@@ -223,5 +228,77 @@ export class ParentDashboardComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
+  }
+
+  private mapParentChild(child: ParentChild): Child {
+    const name = child.name || 'Student';
+    const normalizedEmail = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '.')
+      .replace(/(^\.|\.$)/g, '');
+
+    return {
+      id: child.id,
+      name,
+      email: normalizedEmail ? `${normalizedEmail}@student.com` : 'student@school.com',
+      grade: 'N/A',
+      enrolledCourses: child.enrolledCourses ?? 0,
+      averageProgress: 0,
+      lastActive: new Date().toISOString(),
+    };
+  }
+
+  private mapProgressEntry(entry: StudentProgressEntry): ChildProgress {
+    const completedLessons = entry.completed ? 1 : 0;
+    return {
+      course_id: entry.session_id,
+      course_title: entry.session_title || entry.subject_name || 'Course',
+      progress: entry.completed ? 100 : 0,
+      completed_lessons: completedLessons,
+      total_lessons: 1,
+      last_accessed: entry.completed_at ?? new Date().toISOString(),
+      grade: this.scoreToGrade(entry.score),
+    };
+  }
+
+  private mapAcademicReport(report: StudentReport): AcademicReport {
+    const totalCourses = report.progress.length;
+    const completedCourses = report.progress.filter((entry) => entry.completed).length;
+    const overallProgress = totalCourses
+      ? Math.round((completedCourses / totalCourses) * 100)
+      : 0;
+    const lastWeekActivity = report.progress.filter((entry) => {
+      if (!entry.completed_at) {
+        return false;
+      }
+      const completedDate = new Date(entry.completed_at);
+      const now = new Date();
+      const diffDays = (now.getTime() - completedDate.getTime()) / 86400000;
+      return diffDays <= 7;
+    }).length;
+
+    return {
+      child_id: report.student_id,
+      child_name: report.student_name ?? 'Student',
+      total_courses: totalCourses,
+      completed_courses: completedCourses,
+      in_progress_courses: Math.max(totalCourses - completedCourses, 0),
+      overall_progress: overallProgress,
+      total_hours_studied: totalCourses * 3,
+      attendance_rate: 100,
+      last_week_activity: lastWeekActivity,
+    };
+  }
+
+  private scoreToGrade(score: number | null): string | undefined {
+    if (score === null || Number.isNaN(score)) {
+      return undefined;
+    }
+
+    if (score >= 90) return 'A';
+    if (score >= 80) return 'B';
+    if (score >= 70) return 'C';
+    if (score >= 60) return 'D';
+    return 'F';
   }
 }

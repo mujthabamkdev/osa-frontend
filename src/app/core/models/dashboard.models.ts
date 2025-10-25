@@ -1,8 +1,26 @@
+import { CourseAttachment, CourseQuiz } from './course.models';
+export interface DashboardTotals {
+  users: number;
+  activeUsers: number;
+  students: number;
+  teachers: number;
+  parents: number;
+  admins: number;
+  courses: number;
+  enrollments: number;
+}
+
+export interface DashboardActive {
+  students: number;
+  teachers: number;
+}
+
 export interface DashboardStats {
-  totalCourses: number;
-  activeStudents: number;
-  activeTeachers: number;
-  totalEnrollments: number;
+  totals: DashboardTotals;
+  active: DashboardActive;
+  unansweredQuestions: number;
+  systemHealth: string;
+  generatedAt: string;
 }
 
 export interface StudentStats {
@@ -26,6 +44,7 @@ export interface EnrolledCourse {
   completedLevels?: number;
   active_class_id?: number;
   active_class_title?: string;
+  active_class_year?: number;
 }
 
 export interface CourseLevel {
@@ -48,8 +67,8 @@ export interface CourseClass {
   order: number;
   progress?: number;
   completed?: boolean;
-  attachments?: any[];
-  quizzes?: any[];
+  attachments?: CourseAttachment[];
+  quizzes?: CourseQuiz[];
   created_at: string;
 }
 
@@ -62,6 +81,11 @@ export interface StudentProgress {
   last_accessed: string;
   active_class_id?: number;
   active_class_title?: string;
+  active_class?: {
+    id: number | null;
+    name?: string | null;
+    year?: number | null;
+  } | null;
   // Optional fields for flexibility
   id?: number;
   title?: string;

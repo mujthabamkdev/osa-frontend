@@ -253,9 +253,12 @@
               </button>
 
               @if (registrationSuccess()) {
-                <div class="alert alert-success d-flex align-items-center">
-                  <i class="bi bi-check-circle me-2"></i>
-                  <span>Account created successfully! Redirecting...</span>
+                <div class="alert alert-success d-flex align-items-start">
+                  <i class="bi bi-check-circle me-2 mt-1"></i>
+                  <div>
+                    <div>{{ registrationMessage() }}</div>
+                    <small class="text-muted">You can sign in once the admin approves your {{ registeredRole() | titlecase }} access.</small>
+                  </div>
                 </div>
               }
               @if (authService.authError(); as error) {
