@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.sevalla.com/api/v1'
+  apiUrl: 'https://osa-backend-production.up.railway.app/api/v1'
 };
