@@ -29,6 +29,7 @@ export class AppComponent implements OnInit {
   readonly version = environment.version;
 
   readonly showNavbar = signal(false);
+  readonly isMobileMenuOpen = signal(false);
 
   ngOnInit(): void {
     // Listen to route changes to determine if navbar should be shown
@@ -65,5 +66,13 @@ export class AppComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen.update(open => !open);
+  }
+
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
   }
 }

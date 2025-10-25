@@ -19,6 +19,14 @@
   z-index: 1;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
 .features {
   background: var(--color-background);
 }

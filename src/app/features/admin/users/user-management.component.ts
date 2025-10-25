@@ -69,6 +69,11 @@ export class UserManagementComponent implements OnInit {
   readonly teacherModalError = signal<string | null>(null);
   readonly replacementTeacherId = signal<number | null>(null);
 
+  // Name editing signals
+  readonly editingUserId = signal<number | null>(null);
+  readonly editingUserName = signal<string>('');
+  readonly savingName = signal(false);
+
   readonly replacementTeacherOptions = computed(() => {
     const selected = this.selectedTeacher();
     return this.teachers().filter((teacher) => !selected || teacher.id !== selected.id);
@@ -87,6 +92,14 @@ export class UserManagementComponent implements OnInit {
     }))
   );
 
+  readonly isClassLoading = computed(() => (courseId: number | null) => {
+    return courseId ? this.classesLoading()[courseId] || false : false;
+  });
+
+  readonly classOptionsForCourse = computed(() => (courseId: number | null) => {
+    return courseId ? this.classesCache()[courseId] || [] : [];
+  });
+
   ngOnInit(): void {
     this.loadCourses();
     this.refreshPendingUsers(true);
@@ -95,26 +108,41 @@ export class UserManagementComponent implements OnInit {
     this.refreshTeachers(true);
   }
 
+  loadCourses(): void {
+    this.coursesLoading.set(true);
+    this.apiService.getCourses().subscribe({
+      next: (courses) => {
+        this.courses.set(courses);
+        this.coursesLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Failed to load courses', error);
+        this.courses.set([]);
+        this.coursesLoading.set(false);
+      },
+    });
+  }
+
   switchView(mode: 'pending' | 'students' | 'parents' | 'teachers'): void {
     this.viewMode.set(mode);
     switch (mode) {
       case 'students':
-        this.refreshStudents();
+        this.refreshStudents(true);
         break;
       case 'parents':
-        this.refreshParents();
+        this.refreshParents(true);
         break;
       case 'teachers':
-        this.refreshTeachers();
+        this.refreshTeachers(true);
         break;
       case 'pending':
-        this.refreshPendingUsers();
+        this.refreshPendingUsers(true);
         break;
     }
   }
 
-  refreshPendingUsers(initial = false): void {
-    if (!initial && this.pendingUsers().length && !this.loadingPending()) {
+  refreshPendingUsers(force = false): void {
+    if (!force && this.pendingUsers().length && !this.loadingPending()) {
       return;
     }
     this.loadingPending.set(true);
@@ -131,8 +159,8 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
-  refreshStudents(initial = false): void {
-    if (!initial && this.students().length && !this.loadingStudents()) {
+  refreshStudents(force = false): void {
+    if (!force && this.students().length && !this.loadingStudents()) {
       return;
     }
     this.loadingStudents.set(true);
@@ -149,8 +177,8 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
-  refreshParents(initial = false): void {
-    if (!initial && this.parents().length && !this.loadingParents()) {
+  refreshParents(force = false): void {
+    if (!force && this.parents().length && !this.loadingParents()) {
       return;
     }
     this.loadingParents.set(true);
@@ -167,8 +195,8 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
-  refreshTeachers(initial = false): void {
-    if (!initial && this.teachers().length && !this.loadingTeachers()) {
+  refreshTeachers(force = false): void {
+    if (!force && this.teachers().length && !this.loadingTeachers()) {
       return;
     }
     this.loadingTeachers.set(true);
@@ -266,12 +294,15 @@ export class UserManagementComponent implements OnInit {
       next: () => {
         this.approving.set(false);
         this.closeApprovalModal();
-        this.refreshPendingUsers();
+        this.refreshPendingUsers(true);
         if (user.role === 'student') {
-          this.refreshStudents();
+          this.refreshStudents(true);
         }
         if (user.role === 'parent') {
-          this.refreshParents();
+          this.refreshParents(true);
+        }
+        if (user.role === 'teacher') {
+          this.refreshTeachers(true);
         }
       },
       error: (error) => {
@@ -286,7 +317,7 @@ export class UserManagementComponent implements OnInit {
       return;
     }
     this.apiService.deleteUser(user.id).subscribe({
-      next: () => this.refreshPendingUsers(),
+      next: () => this.refreshPendingUsers(true),
       error: (error) => console.error('Failed to delete pending user', error),
     });
   }
@@ -307,7 +338,7 @@ export class UserManagementComponent implements OnInit {
   closeEnrollmentModal(): void {
     this.enrollmentModalOpen.set(false);
     this.selectedStudent.set(null);
-    this.enrollmentAssignments.set([]);
+    this.enrollmentAssignments.set([this.createAssignmentRow()]);
   }
 
   addEnrollmentAssignment(): void {
@@ -373,7 +404,7 @@ export class UserManagementComponent implements OnInit {
       return;
     }
     this.apiService.deleteUser(student.id).subscribe({
-      next: () => this.refreshStudents(),
+      next: () => this.refreshStudents(true),
       error: (error) => console.error('Failed to delete student', error),
     });
   }
@@ -524,7 +555,7 @@ export class UserManagementComponent implements OnInit {
       next: () => {
         this.creatingStudent.set(false);
         this.closeStudentModal();
-        this.refreshStudents();
+        this.refreshStudents(true);
       },
       error: (error) => {
         console.error('Failed to add student', error);
@@ -533,41 +564,57 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
-  courseTitle(courseId: number | null): string {
-    if (!courseId) {
-      return 'Unassigned';
-    }
-    return this.courses().find((course) => course.id === courseId)?.title ?? 'Unknown';
+  // Name editing methods
+  startEditingName(userId: number, currentName: string | null): void {
+    this.editingUserId.set(userId);
+    this.editingUserName.set(currentName || '');
   }
 
-  classOptionsForCourse(courseId: number | null): SchoolClass[] {
-    if (!courseId) {
-      return [];
-    }
-    return this.classesCache()[courseId] ?? [];
+  cancelEditingName(): void {
+    this.editingUserId.set(null);
+    this.editingUserName.set('');
   }
 
-  isClassLoading(courseId: number | null): boolean {
-    if (!courseId) {
-      return false;
-    }
-    return this.classesLoading()[courseId] ?? false;
-  }
+  saveUserName(): void {
+    const userId = this.editingUserId();
+    const newName = this.editingUserName().trim();
 
-  private loadCourses(): void {
-    if (this.courses().length) {
-      return;
-    }
-    this.coursesLoading.set(true);
-    this.apiService.getCourses().subscribe({
-      next: (courses) => {
-        this.courses.set(courses);
-        this.coursesLoading.set(false);
+    if (!userId) return;
+
+    this.savingName.set(true);
+
+    this.apiService.updateUser(userId, { full_name: newName || null }).subscribe({
+      next: (updatedUser) => {
+        // Update the user in the appropriate list based on current view
+        switch (this.viewMode()) {
+          case 'students':
+            this.students.update((current) =>
+              current.map((student) => (student.id === userId ? { ...student, full_name: updatedUser.full_name } : student))
+            );
+            break;
+          case 'parents':
+            this.parents.update((current) =>
+              current.map((parent) => (parent.id === userId ? { ...parent, full_name: updatedUser.full_name } : parent))
+            );
+            break;
+          case 'teachers':
+            this.teachers.update((current) =>
+              current.map((teacher) => (teacher.id === userId ? { ...teacher, full_name: updatedUser.full_name } : teacher))
+            );
+            break;
+          case 'pending':
+            this.pendingUsers.update((current) =>
+              current.map((user) => (user.id === userId ? { ...user, full_name: updatedUser.full_name } : user))
+            );
+            break;
+        }
+
+        this.cancelEditingName();
+        this.savingName.set(false);
       },
       error: (error) => {
-        console.error('Failed to load courses', error);
-        this.courses.set([]);
-        this.coursesLoading.set(false);
+        console.error('Failed to update user name', error);
+        this.savingName.set(false);
       },
     });
   }

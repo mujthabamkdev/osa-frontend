@@ -122,28 +122,23 @@ export class ApiService {
     }
 
     return this.performRequest(() =>
-      this.http
-        .get<User[]>(`${this.baseUrl}/admin/users`, { params })
-        .pipe(
-          map((users) =>
-            users
-              .filter((user) => !user.is_active)
-              .map<PendingUser>((user) => ({
-                id: user.id,
-                email: user.email,
-                full_name: user.full_name ?? null,
-                role: (user.role ?? 'student') as UserRole,
-                created_at: user.created_at,
-              }))
-          )
+      this.http.get<User[]>(`${this.baseUrl}/admin/users`, { params }).pipe(
+        map((users) =>
+          users
+            .filter((user) => !user.is_active)
+            .map<PendingUser>((user) => ({
+              id: user.id,
+              email: user.email,
+              full_name: user.full_name ?? null,
+              role: (user.role ?? 'student') as UserRole,
+              created_at: user.created_at,
+            }))
         )
+      )
     );
   }
 
-  approveUser(
-    userId: number,
-    payload: ApproveUserPayload
-  ): Observable<StudentAdmin | AdminParent> {
+  approveUser(userId: number, payload: ApproveUserPayload): Observable<StudentAdmin | AdminParent> {
     return this.performRequest(() =>
       this.http.post<StudentAdmin | AdminParent>(
         `${this.baseUrl}/admin/users/${userId}/approve`,
@@ -153,27 +148,18 @@ export class ApiService {
   }
 
   getAdminStudents(): Observable<StudentAdmin[]> {
+    const params = new HttpParams().set('role', 'student');
     return this.performRequest(() =>
-      this.http.get<StudentAdmin[]>(`${this.baseUrl}/admin/students`).pipe(
-        catchError((error: HttpErrorResponse) => {
-          if (error.status === 404) {
-            const params = new HttpParams().set('role', 'student');
-            return this.http
-              .get<User[]>(`${this.baseUrl}/admin/users`, { params })
-              .pipe(
-                map((users) =>
-                  users.map<StudentAdmin>((user) => ({
-                    id: user.id,
-                    email: user.email,
-                    full_name: user.full_name ?? null,
-                    created_at: user.created_at,
-                    enrollments: [],
-                  }))
-                )
-              );
-          }
-          return throwError(() => error);
-        })
+      this.http.get<User[]>(`${this.baseUrl}/admin/users`, { params }).pipe(
+        map((users) =>
+          users.map<StudentAdmin>((user) => ({
+            id: user.id,
+            email: user.email,
+            full_name: user.full_name ?? null,
+            created_at: user.created_at,
+            enrollments: (user as any).enrollments || [],
+          }))
+        )
       )
     );
   }
@@ -183,32 +169,24 @@ export class ApiService {
     payload: UpdateStudentEnrollmentsPayload
   ): Observable<StudentAdmin> {
     return this.performRequest(() =>
-      this.http.put<StudentAdmin>(`${this.baseUrl}/admin/students/${studentId}/enrollments`, payload)
+      this.http.put<StudentAdmin>(
+        `${this.baseUrl}/admin/students/${studentId}/enrollments`,
+        payload
+      )
     );
   }
 
   getAdminParents(): Observable<AdminParent[]> {
     const params = new HttpParams().set('role', 'parent');
-    return this.performRequest(() =>
-      this.http.get<AdminParent[]>(`${this.baseUrl}/admin/parents`).pipe(
-        catchError((error: HttpErrorResponse) => {
-          if (error.status === 404) {
-            return this.http
-              .get<User[]>(`${this.baseUrl}/admin/users`, { params })
-              .pipe(
-                map((users) =>
-                  users.map<AdminParent>((user) => ({
-                    id: user.id,
-                    email: user.email,
-                    full_name: user.full_name ?? null,
-                    created_at: user.created_at,
-                    children: [],
-                  }))
-                )
-              );
-          }
-          return throwError(() => error);
-        })
+    return this.http.get<User[]>(`${this.baseUrl}/admin/users`, { params }).pipe(
+      map((users) =>
+        users.map<AdminParent>((user) => ({
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name ?? null,
+          created_at: user.created_at,
+          children: [],
+        }))
       )
     );
   }
@@ -225,19 +203,17 @@ export class ApiService {
   getAdminTeachers(): Observable<TeacherAdmin[]> {
     const params = new HttpParams().set('role', 'teacher');
     return this.performRequest(() =>
-      this.http
-        .get<User[]>(`${this.baseUrl}/admin/users`, { params })
-        .pipe(
-          map((users) =>
-            users.map<TeacherAdmin>((user) => ({
-              id: user.id,
-              email: user.email,
-              full_name: user.full_name ?? null,
-              created_at: user.created_at,
-              subjects: [],
-            }))
-          )
+      this.http.get<User[]>(`${this.baseUrl}/admin/users`, { params }).pipe(
+        map((users) =>
+          users.map<TeacherAdmin>((user) => ({
+            id: user.id,
+            email: user.email,
+            full_name: user.full_name ?? null,
+            created_at: user.created_at,
+            subjects: [],
+          }))
         )
+      )
     );
   }
 
@@ -303,7 +279,10 @@ export class ApiService {
 
     return this.getCachedObservable<CourseDetails>(
       cacheKey,
-      () => this.performRequest(() => this.http.get<CourseDetails>(`${this.baseUrl}/courses/${courseId}`)),
+      () =>
+        this.performRequest(() =>
+          this.http.get<CourseDetails>(`${this.baseUrl}/courses/${courseId}`)
+        ),
       cacheMs
     );
   }
@@ -381,13 +360,10 @@ export class ApiService {
     payload: CourseSubjectPayload
   ): Observable<CourseSubject> {
     return this.performRequest(() =>
-      this.http.put<CourseSubject>(
-        `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}`,
-        {
-          ...payload,
-          course_id: courseId,
-        }
-      )
+      this.http.put<CourseSubject>(`${this.baseUrl}/courses/${courseId}/subjects/${subjectId}`, {
+        ...payload,
+        course_id: courseId,
+      })
     );
   }
 
@@ -446,7 +422,11 @@ export class ApiService {
     );
   }
 
-  getLessonContents(courseId: number, subjectId: number, lessonId: number): Observable<CourseLessonContent[]> {
+  getLessonContents(
+    courseId: number,
+    subjectId: number,
+    lessonId: number
+  ): Observable<CourseLessonContent[]> {
     return this.performRequest(() =>
       this.http.get<CourseLessonContent[]>(
         `${this.baseUrl}/courses/${courseId}/subjects/${subjectId}/lessons/${lessonId}/contents`
@@ -567,7 +547,10 @@ export class ApiService {
 
   askLessonQuestion(lessonId: number, payload: LessonQuestionPayload): Observable<LessonQuestion> {
     return this.performRequest(() =>
-      this.http.post<LessonQuestion>(`${this.baseUrl}/students/lessons/${lessonId}/questions`, payload)
+      this.http.post<LessonQuestion>(
+        `${this.baseUrl}/students/lessons/${lessonId}/questions`,
+        payload
+      )
     );
   }
 
@@ -613,7 +596,9 @@ export class ApiService {
   }
 
   createExam(payload: ExamCreateRequest): Observable<Exam> {
-    return this.performRequest(() => this.http.post<Exam>(`${this.baseUrl}/teachers/exams`, payload));
+    return this.performRequest(() =>
+      this.http.post<Exam>(`${this.baseUrl}/teachers/exams`, payload)
+    );
   }
 
   getTeacherExams(): Observable<Exam[]> {
@@ -621,7 +606,9 @@ export class ApiService {
   }
 
   getExam(examId: number): Observable<Exam> {
-    return this.performRequest(() => this.http.get<Exam>(`${this.baseUrl}/teachers/exams/${examId}`));
+    return this.performRequest(() =>
+      this.http.get<Exam>(`${this.baseUrl}/teachers/exams/${examId}`)
+    );
   }
 
   getExamResults(examId: number): Observable<ExamResult[]> {

@@ -21,3 +21,23 @@
   background: var(--color-surface);
   border: 1px solid rgba(var(--color-teal-500-rgb), 0.12);
 }
+
+.edit-form {
+  max-width: 400px;
+}
+
+.edit-form .form-control {
+  border-radius: 8px;
+  border: 1px solid rgba(var(--color-teal-500-rgb), 0.2);
+  padding: 0.5rem 0.75rem;
+}
+
+.edit-form .form-control:focus {
+  border-color: rgba(var(--color-teal-500-rgb), 0.4);
+  box-shadow: 0 0 0 0.2rem rgba(var(--color-teal-500-rgb), 0.1);
+}
+
+.edit-form .invalid-feedback {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}

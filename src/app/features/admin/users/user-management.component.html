@@ -78,7 +78,46 @@
                   @for (user of pendingUsers(); track user.id) {
                     <tr>
                       <td>{{ user.email }}</td>
-                      <td>{{ user.full_name || '—' }}</td>
+                      <td>
+                        @if (editingUserId() === user.id) {
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              [ngModel]="editingUserName()"
+                              (ngModelChange)="editingUserName.set($event)"
+                              (keyup.enter)="saveUserName()"
+                              (keyup.escape)="cancelEditingName()"
+                              #nameInput
+                            />
+                            <button
+                              class="btn btn-sm btn-success"
+                              (click)="saveUserName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              (click)="cancelEditingName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="d-flex align-items-center gap-2">
+                            <span>{{ user.full_name || '—' }}</span>
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="startEditingName(user.id, user.full_name ?? null)"
+                              title="Edit name"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                          </div>
+                        }
+                      </td>
                       <td><span class="badge bg-warning text-dark">{{ user.role | titlecase }}</span></td>
                       <td>{{ user.created_at | date: 'short' }}</td>
                       <td class="text-end">
@@ -126,13 +165,52 @@
                   @for (student of students(); track student.id) {
                     <tr>
                       <td>{{ student.email }}</td>
-                      <td>{{ student.full_name || '—' }}</td>
+                      <td>
+                        @if (editingUserId() === student.id) {
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              [ngModel]="editingUserName()"
+                              (ngModelChange)="editingUserName.set($event)"
+                              (keyup.enter)="saveUserName()"
+                              (keyup.escape)="cancelEditingName()"
+                              #nameInput
+                            />
+                            <button
+                              class="btn btn-sm btn-success"
+                              (click)="saveUserName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              (click)="cancelEditingName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="d-flex align-items-center gap-2">
+                            <span>{{ student.full_name || '—' }}</span>
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="startEditingName(student.id, student.full_name ?? null)"
+                              title="Edit name"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                          </div>
+                        }
+                      </td>
                       <td>
                         @if (student.enrollments.length) {
                           <ul class="mb-0 ps-3">
                             @for (enrollment of student.enrollments; track enrollment.id) {
                               <li>
-                                <strong>{{ courseTitle(enrollment.course_id) }}</strong>
+                                <strong>{{ enrollment.course_title }}</strong>
                                 <span class="text-muted ms-1">
                                   @if (enrollment.class_id) {
                                     ({{ enrollment.class_name || 'Class ' + enrollment.class_id }})
@@ -193,7 +271,46 @@
                   @for (parent of parents(); track parent.id) {
                     <tr>
                       <td>{{ parent.email }}</td>
-                      <td>{{ parent.full_name || '—' }}</td>
+                      <td>
+                        @if (editingUserId() === parent.id) {
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              [ngModel]="editingUserName()"
+                              (ngModelChange)="editingUserName.set($event)"
+                              (keyup.enter)="saveUserName()"
+                              (keyup.escape)="cancelEditingName()"
+                              #nameInput
+                            />
+                            <button
+                              class="btn btn-sm btn-success"
+                              (click)="saveUserName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              (click)="cancelEditingName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="d-flex align-items-center gap-2">
+                            <span>{{ parent.full_name || '—' }}</span>
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="startEditingName(parent.id, parent.full_name ?? null)"
+                              title="Edit name"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                          </div>
+                        }
+                      </td>
                       <td>
                         @if (parent.children.length) {
                           <ul class="mb-0 ps-3">
@@ -245,7 +362,46 @@
                   @for (teacher of teachers(); track teacher.id) {
                     <tr>
                       <td>{{ teacher.email }}</td>
-                      <td>{{ teacher.full_name || '—' }}</td>
+                      <td>
+                        @if (editingUserId() === teacher.id) {
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm"
+                              [ngModel]="editingUserName()"
+                              (ngModelChange)="editingUserName.set($event)"
+                              (keyup.enter)="saveUserName()"
+                              (keyup.escape)="cancelEditingName()"
+                              #nameInput
+                            />
+                            <button
+                              class="btn btn-sm btn-success"
+                              (click)="saveUserName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              (click)="cancelEditingName()"
+                              [disabled]="savingName()"
+                            >
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="d-flex align-items-center gap-2">
+                            <span>{{ teacher.full_name || '—' }}</span>
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="startEditingName(teacher.id, teacher.full_name ?? null)"
+                              title="Edit name"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                          </div>
+                        }
+                      </td>
                       <td>{{ teacher.created_at | date: 'short' }}</td>
                       <td class="text-end">
                         <button
@@ -306,7 +462,7 @@
                         </div>
                         <div class="col-md-5">
                           <label class="form-label" [attr.for]="'approval-class-' + $index">Class (optional)</label>
-                          @if (isClassLoading(assignment.courseId)) {
+                          @if (isClassLoading()(assignment.courseId)) {
                             <div class="form-control"><span class="spinner-border spinner-border-sm"></span></div>
                           } @else {
                             <select
@@ -317,7 +473,7 @@
                               [disabled]="!assignment.courseId"
                             >
                               <option [ngValue]="null">No class selected</option>
-                              @for (classOption of classOptionsForCourse(assignment.courseId); track classOption.id) {
+                              @for (classOption of classOptionsForCourse()(assignment.courseId); track classOption.id) {
                                 <option [ngValue]="classOption.id">
                                   {{ classOption.name }}
                                 </option>
@@ -415,9 +571,9 @@
                         }
                       </select>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-6">
                       <label class="form-label" [attr.for]="'enrollment-class-' + $index">Class (optional)</label>
-                      @if (isClassLoading(assignment.courseId)) {
+                      @if (isClassLoading()(assignment.courseId)) {
                         <div class="form-control"><span class="spinner-border spinner-border-sm"></span></div>
                       } @else {
                         <select
@@ -428,7 +584,7 @@
                           (ngModelChange)="updateEnrollmentClass($index, $event)"
                         >
                           <option [ngValue]="null">No class selected</option>
-                          @for (classOption of classOptionsForCourse(assignment.courseId); track classOption.id) {
+                          @for (classOption of classOptionsForCourse()(assignment.courseId); track classOption.id) {
                             <option [ngValue]="classOption.id">
                               {{ classOption.name }}
                             </option>
@@ -436,24 +592,22 @@
                         </select>
                       }
                     </div>
-                    <div class="col-md-1 text-end">
-                      <button
-                        type="button"
-                        class="btn btn-outline-danger btn-sm"
-                        (click)="removeEnrollmentAssignment($index)"
-                        [disabled]="enrollmentAssignments().length === 1"
-                      >
-                        <i class="bi bi-x-lg"></i>
-                      </button>
-                    </div>
                   </div>
                 </div>
               }
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="addEnrollmentAssignment()">
+                  <i class="bi bi-plus-circle me-1"></i>
+                  Add Course
+                </button>
+                @if (enrollmentAssignments().length > 1) {
+                  <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeEnrollmentAssignment(enrollmentAssignments().length - 1)">
+                    <i class="bi bi-dash-circle me-1"></i>
+                    Remove Last
+                  </button>
+                }
+              </div>
             </div>
-            <button type="button" class="btn btn-link px-0 mt-3" (click)="addEnrollmentAssignment()">
-              <i class="bi bi-plus-circle me-1"></i>
-              Add course assignment
-            </button>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="closeEnrollmentModal()">Cancel</button>
