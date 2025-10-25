@@ -261,64 +261,31 @@
                 </div>
                 @if (!isSubjectCollapsed(subject.id)) {
                   <div class="card-body">
-                    <div class="row g-3">
-                      @for (lesson of subject.lessons; track lesson.id) {
-                        <div class="col-6 col-sm-4 col-md-3 col-lg-2 col-xl-1">
-                          <div
-                            class="card lesson-card"
-                            [class.active-lesson]="isActiveLessonId(lesson.id)"
-                            role="button"
-                            tabindex="0"
-                            (click)="selectLesson(lesson)"
-                            (keydown.enter)="selectLesson(lesson)"
-                            (keydown.space)="selectLesson(lesson)"
-                            [attr.aria-pressed]="isActiveLessonId(lesson.id)"
-                            style="cursor: pointer"
-                          >
-                            <div class="card-body lesson-card-body">
-                              @if (lesson.scheduled_date) {
-                                <div class="lesson-date-badge">
-                                  <span class="lesson-date-day">
-                                    {{ formatLessonDay(lesson.scheduled_date) }}
-                                  </span>
-                                  <span class="lesson-date-month">
-                                    {{ formatLessonMonth(lesson.scheduled_date) }}
-                                  </span>
-                                </div>
-                              }
-                              <div class="lesson-card-content">
-                                <div class="lesson-card-header">
-                                  <div class="lesson-card-title">
-                                    <h6 class="mb-1 text-truncate">{{ lesson.title }}</h6>
-                                    <small class="text-muted text-truncate">
-                                      <i class="bi bi-book me-1"></i>{{ lesson.subject_name }}
-                                    </small>
-                                  </div>
-                                  @if (lesson.progress?.completed) {
-                                    <div class="lesson-status text-success">
-                                      <i class="bi bi-check-circle-fill"></i>
-                                    </div>
-                                  }
-                                </div>
-                                <p class="lesson-card-description">
-                                  {{ lesson.description || 'Lesson overview coming soon.' }}
-                                </p>
-                                <div class="lesson-card-meta">
-                                  <span class="lesson-card-meta-item">
-                                    <i class="bi bi-play-circle me-1"></i>{{ lesson.attachments.length }} media
-                                  </span>
-                                  @if (lesson.quiz) {
-                                    <span class="lesson-card-meta-item text-primary">
-                                      <i class="bi bi-question-circle me-1"></i>Quiz
-                                    </span>
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      }
-                    </div>
+                    @if (subject.lessons.length === 0) {
+                      <p class="text-muted mb-0">Lessons will appear here once they are published.</p>
+                    } @else {
+                      <div class="subject-lesson-select">
+                        <label
+                          class="form-label subject-lesson-select__label"
+                          [attr.for]="'subject-lesson-select-' + subject.id"
+                        >
+                          Choose a lesson to view its details
+                        </label>
+                        <select
+                          class="form-select form-select-sm"
+                          [id]="'subject-lesson-select-' + subject.id"
+                          [value]="selectedLessonIdForSubject(subject.id) ?? ''"
+                          (change)="onLessonSelectionChange(subject.id, $event)"
+                        >
+                          <option value="" disabled>Select a lesson</option>
+                          @for (lesson of subject.lessons; track lesson.id; let idx = $index) {
+                            <option [value]="lesson.id">
+                              Lesson {{ idx + 1 }} — {{ lesson.title }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    }
                     @if (selectedLessonBelongsToSubject(subject.id)) {
                       <div class="lesson-detail-wrapper mt-4">
                         <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>

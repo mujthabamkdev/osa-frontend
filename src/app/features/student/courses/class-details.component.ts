@@ -733,6 +733,37 @@ export class ClassDetailsComponent implements OnInit {
     return activeLesson.subject_id === subjectId;
   }
 
+  // Keep dropdown selection in sync with the currently active lesson for the subject view
+  selectedLessonIdForSubject(subjectId: number): number | null {
+    const activeLesson = this.selectedLesson();
+    if (!activeLesson || activeLesson.subject_id !== subjectId) {
+      return null;
+    }
+    return activeLesson.id;
+  }
+
+  // Respond to dropdown selections by locating the corresponding lesson and delegating to the shared handler
+  onLessonSelectionChange(subjectId: number, event: Event): void {
+    const target = event.target as HTMLSelectElement | null;
+    const rawValue = target?.value ?? '';
+
+    if (!rawValue) {
+      return;
+    }
+
+    const lessonId = Number.parseInt(rawValue, 10);
+    if (Number.isNaN(lessonId)) {
+      return;
+    }
+
+    const subject = this.courseDetails()?.subjects.find((candidate) => candidate.id === subjectId);
+    const lesson = subject?.lessons.find((candidate) => candidate.id === lessonId);
+
+    if (lesson) {
+      this.selectLesson(lesson);
+    }
+  }
+
   formatDayHeader(dateString: string): string {
     const date = new Date(dateString);
     const today = new Date();

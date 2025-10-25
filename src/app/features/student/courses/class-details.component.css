@@ -439,6 +439,30 @@
   background: var(--color-surface);
   color: var(--color-text);
 }
+
+.subject-lesson-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.subject-lesson-select__label {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.subject-lesson-select .form-select {
+  font-size: var(--font-size-sm);
+  padding: var(--space-8) var(--space-12);
+}
+
+@media (max-width: 576px) {
+  .subject-lesson-select .form-select {
+    font-size: 1rem;
+  }
+}
  .card-header {
   background: rgba(var(--color-brown-600-rgb), 0.05);
   border-bottom: 1px solid var(--color-card-border);
