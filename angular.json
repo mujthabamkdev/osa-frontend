@@ -19,7 +19,8 @@
             ],
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/manifest.webmanifest"
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
@@ -34,7 +35,17 @@
             "production": {
               "optimization": true,
               "outputHashing": "all",
-              "sourceMap": false
+              "sourceMap": false,
+              "serviceWorker": "ngsw-config.json"
+            },
+            "mobile-dev": {
+              "serviceWorker": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.mobile.ts"
+                }
+              ]
             }
           }
         },
@@ -42,6 +53,15 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "buildTarget": "osa-frontend:build"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "osa-frontend:build:production"
+            },
+            "mobile-dev": {
+              "buildTarget": "osa-frontend:build:mobile-dev",
+              "host": "0.0.0.0"
+            }
           }
         },
         "lint": {

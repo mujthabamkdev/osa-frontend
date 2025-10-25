@@ -8,16 +8,52 @@
   z-index: 100;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-card-border);
+  padding: var(--space-12) var(--space-16);
+}
+
+@media (min-width: 768px) {
+  .course-header {
+    padding: var(--space-16) var(--space-24);
+  }
+}
+
+.course-header__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1200px;
+}
+
+@media (min-width: 992px) {
+  .course-header__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-16);
+  }
+}
+
+.course-header__primary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .course-header__primary {
+    gap: var(--space-12);
+  }
 }
 
 .calendar-day-lessons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--space-8);
-}
-
-.calendar-lesson-card {
-  }
 }
 
 .course-header__info {
@@ -95,6 +131,29 @@
   font-weight: var(--font-weight-medium);
 }
 
+.course-header__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: var(--radius-full);
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.course-header__back:hover {
+  color: var(--color-primary);
+}
+
+.course-header__back:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .course-header__toggle i,
 .course-header__refresh i,
 .course-header__back i {
@@ -139,7 +198,12 @@
   }
 }
 
-[data-color-scheme='dark'] .course-header__back,
+[data-color-scheme='dark'] .course-header__back {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.94);
+}
+
 [data-color-scheme='dark'] .course-header__refresh {
   border-color: rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.08);
@@ -153,9 +217,12 @@
 }
 
 [data-color-scheme='dark'] .course-header__toggle:hover,
-[data-color-scheme='dark'] .course-header__back:hover,
 [data-color-scheme='dark'] .course-header__refresh:hover {
   background: rgba(255, 255, 255, 0.12);
+}
+
+[data-color-scheme='dark'] .course-header__back:hover {
+  color: var(--color-teal-300);
 }
 
 .day-header {

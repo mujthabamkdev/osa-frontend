@@ -2,9 +2,8 @@
   <div class="course-header sticky-top shadow-sm">
     <div class="course-header__inner">
       <div class="course-header__primary">
-        <button class="course-header__back" type="button" (click)="goBack()">
+        <button type="button" class="course-header__back" aria-label="Go back" (click)="goBack()">
           <i class="bi bi-arrow-left"></i>
-          <span class="course-header__back-label">Back</span>
         </button>
         <div class="course-header__info">
           @if (courseDetails()) {
