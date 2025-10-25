@@ -29,7 +29,6 @@ export class AppComponent implements OnInit {
   readonly version = environment.version;
 
   readonly showNavbar = signal(false);
-  readonly mobileMenuOpen = signal(false);
 
   ngOnInit(): void {
     // Listen to route changes to determine if navbar should be shown
@@ -41,16 +40,7 @@ export class AppComponent implements OnInit {
       .subscribe((event: NavigationEnd) => {
         const hideNavbarRoutes = ['/auth/login', '/auth/register', '/unauthorized'];
         this.showNavbar.set(!hideNavbarRoutes.some((route) => event.url.includes(route)));
-        this.mobileMenuOpen.set(false);
       });
-  }
-
-  toggleMobileMenu(): void {
-    this.mobileMenuOpen.update((current) => !current);
-  }
-
-  closeMobileMenu(): void {
-    this.mobileMenuOpen.set(false);
   }
 
   getNotificationClass(type: string): string {
@@ -74,7 +64,6 @@ export class AppComponent implements OnInit {
   }
 
   logout(): void {
-    this.closeMobileMenu();
     this.authService.logout();
   }
 }

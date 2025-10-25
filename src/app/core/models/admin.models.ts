@@ -73,3 +73,45 @@ export interface AdminParent {
 export interface UpdateParentChildrenPayload {
   child_ids: number[];
 }
+
+export interface TeacherAdmin {
+  id: number;
+  email: string;
+  full_name?: string | null;
+  created_at: string;
+  subjects?: string[];
+}
+
+export interface TeacherCourseSummary {
+  id: number;
+  title: string;
+}
+
+export interface TeacherSubjectSummary {
+  id: number;
+  name: string;
+  course_id: number;
+  course_title: string;
+}
+
+export interface TeacherAssignments {
+  teacher_id: number;
+  teacher_email: string;
+  teacher_name?: string | null;
+  course_count: number;
+  subject_count: number;
+  live_class_count: number;
+  exam_count: number;
+  lesson_answer_count: number;
+  courses: TeacherCourseSummary[];
+  subjects: TeacherSubjectSummary[];
+}
+
+export interface TeacherReassignmentResponse {
+  deleted_teacher_id: number;
+  reassigned_courses: number;
+  reassigned_subjects: number;
+  reassigned_live_classes: number;
+  reassigned_exams: number;
+  reassigned_lesson_answers: number;
+}

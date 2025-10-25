@@ -9,6 +9,8 @@ import {
   ApproveUserPayload,
   PendingUser,
   StudentAdmin,
+  TeacherAdmin,
+  TeacherAssignments,
 } from '../../../core/models/admin.models';
 import { CreateUserRequest } from '../../../core/models/user.models';
 
@@ -23,15 +25,17 @@ type CourseAssignment = { courseId: number | null; classId: number | null };
 export class UserManagementComponent implements OnInit {
   private readonly apiService = inject(ApiService);
 
-  readonly viewMode = signal<'pending' | 'students' | 'parents'>('pending');
+  readonly viewMode = signal<'pending' | 'students' | 'parents' | 'teachers'>('pending');
 
   readonly pendingUsers = signal<PendingUser[]>([]);
   readonly students = signal<StudentAdmin[]>([]);
   readonly parents = signal<AdminParent[]>([]);
+  readonly teachers = signal<TeacherAdmin[]>([]);
 
   readonly loadingPending = signal(false);
   readonly loadingStudents = signal(false);
   readonly loadingParents = signal(false);
+  readonly loadingTeachers = signal(false);
   readonly coursesLoading = signal(false);
   readonly approving = signal(false);
   readonly enrollmentSaving = signal(false);
@@ -50,12 +54,25 @@ export class UserManagementComponent implements OnInit {
   readonly selectedPendingUser = signal<PendingUser | null>(null);
   readonly selectedStudent = signal<StudentAdmin | null>(null);
   readonly selectedParent = signal<AdminParent | null>(null);
+  readonly selectedTeacher = signal<TeacherAdmin | null>(null);
 
   readonly approvalAssignments = signal<CourseAssignment[]>([]);
   readonly approvalChildIds = signal<number[]>([]);
 
   readonly enrollmentAssignments = signal<CourseAssignment[]>([]);
   readonly parentChildSelection = signal<number[]>([]);
+
+  readonly teacherAssignments = signal<TeacherAssignments | null>(null);
+  readonly teacherModalOpen = signal(false);
+  readonly teacherAssignmentsLoading = signal(false);
+  readonly teacherDeletionSaving = signal(false);
+  readonly teacherModalError = signal<string | null>(null);
+  readonly replacementTeacherId = signal<number | null>(null);
+
+  readonly replacementTeacherOptions = computed(() => {
+    const selected = this.selectedTeacher();
+    return this.teachers().filter((teacher) => !selected || teacher.id !== selected.id);
+  });
 
   readonly newStudentForm = signal({
     full_name: '',
@@ -72,16 +89,34 @@ export class UserManagementComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCourses();
-    this.refreshPendingUsers();
-    this.refreshStudents();
-    this.refreshParents();
+    this.refreshPendingUsers(true);
+    this.refreshStudents(true);
+    this.refreshParents(true);
+    this.refreshTeachers(true);
   }
 
-  switchView(mode: 'pending' | 'students' | 'parents'): void {
+  switchView(mode: 'pending' | 'students' | 'parents' | 'teachers'): void {
     this.viewMode.set(mode);
+    switch (mode) {
+      case 'students':
+        this.refreshStudents();
+        break;
+      case 'parents':
+        this.refreshParents();
+        break;
+      case 'teachers':
+        this.refreshTeachers();
+        break;
+      case 'pending':
+        this.refreshPendingUsers();
+        break;
+    }
   }
 
-  refreshPendingUsers(): void {
+  refreshPendingUsers(initial = false): void {
+    if (!initial && this.pendingUsers().length && !this.loadingPending()) {
+      return;
+    }
     this.loadingPending.set(true);
     this.apiService.getPendingUsers().subscribe({
       next: (users) => {
@@ -96,7 +131,10 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
-  refreshStudents(): void {
+  refreshStudents(initial = false): void {
+    if (!initial && this.students().length && !this.loadingStudents()) {
+      return;
+    }
     this.loadingStudents.set(true);
     this.apiService.getAdminStudents().subscribe({
       next: (students) => {
@@ -111,7 +149,10 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
-  refreshParents(): void {
+  refreshParents(initial = false): void {
+    if (!initial && this.parents().length && !this.loadingParents()) {
+      return;
+    }
     this.loadingParents.set(true);
     this.apiService.getAdminParents().subscribe({
       next: (parents) => {
@@ -122,6 +163,24 @@ export class UserManagementComponent implements OnInit {
         console.error('Failed to load parents', error);
         this.parents.set([]);
         this.loadingParents.set(false);
+      },
+    });
+  }
+
+  refreshTeachers(initial = false): void {
+    if (!initial && this.teachers().length && !this.loadingTeachers()) {
+      return;
+    }
+    this.loadingTeachers.set(true);
+    this.apiService.getAdminTeachers().subscribe({
+      next: (teachers) => {
+        this.teachers.set(teachers);
+        this.loadingTeachers.set(false);
+      },
+      error: (error) => {
+        console.error('Failed to load teachers', error);
+        this.teachers.set([]);
+        this.loadingTeachers.set(false);
       },
     });
   }
@@ -364,6 +423,70 @@ export class UserManagementComponent implements OnInit {
           this.parentSaving.set(false);
         },
       });
+  }
+
+  openTeacherModal(teacher: TeacherAdmin): void {
+    const replacements = this.teachers().filter((item) => item.id !== teacher.id);
+    if (!replacements.length) {
+      console.warn('At least one additional teacher is required to transfer assignments.');
+      return;
+    }
+
+    this.selectedTeacher.set(teacher);
+    this.teacherModalOpen.set(true);
+    this.teacherAssignments.set(null);
+    this.teacherModalError.set(null);
+    this.replacementTeacherId.set(null);
+    this.teacherAssignmentsLoading.set(true);
+
+    this.apiService.getTeacherAssignments(teacher.id).subscribe({
+      next: (assignments) => {
+        this.teacherAssignments.set(assignments);
+        this.teacherAssignmentsLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Failed to load teacher assignments', error);
+        this.teacherModalError.set('Unable to load current assignments. Try again later.');
+        this.teacherAssignmentsLoading.set(false);
+      },
+    });
+  }
+
+  closeTeacherModal(): void {
+    this.teacherModalOpen.set(false);
+    this.selectedTeacher.set(null);
+    this.teacherAssignments.set(null);
+    this.teacherModalError.set(null);
+    this.replacementTeacherId.set(null);
+    this.teacherAssignmentsLoading.set(false);
+  }
+
+  updateReplacementTeacher(replacementId: number | null): void {
+    this.replacementTeacherId.set(replacementId);
+  }
+
+  confirmTeacherDeletion(): void {
+    const teacher = this.selectedTeacher();
+    const replacementId = this.replacementTeacherId();
+    if (!teacher || replacementId === null || this.teacherDeletionSaving()) {
+      return;
+    }
+
+    this.teacherDeletionSaving.set(true);
+    this.teacherModalError.set(null);
+    this.apiService.reassignTeacher(teacher.id, replacementId).subscribe({
+      next: () => {
+        this.teacherDeletionSaving.set(false);
+        this.closeTeacherModal();
+        this.teachers.update((current) => current.filter((item) => item.id !== teacher.id));
+        this.refreshTeachers(true);
+      },
+      error: (error) => {
+        console.error('Failed to reassign teacher', error);
+        this.teacherModalError.set('Could not complete reassignment. Please try again.');
+        this.teacherDeletionSaving.set(false);
+      },
+    });
   }
 
   openStudentModal(): void {

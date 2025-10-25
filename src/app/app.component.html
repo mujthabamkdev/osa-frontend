@@ -13,7 +13,7 @@
 <!-- Navigation Bar -->
 @if (showNavbar()) {
   <nav class="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top">
-    <div class="container-fluid px-4">
+    <div class="flex flex-row container-fluid px-4">
       <a
         class="navbar-brand fw-bold d-flex align-items-center"
         routerLink="/home"
@@ -28,14 +28,8 @@
         </div>
       </a>
 
-      <div
-        class="navbar-content"
-        [class.open]="mobileMenuOpen()"
-        id="navbarNav"
-      >
-        <ul
-          class="navbar-nav"
-        >
+      <div class="navbar-content" id="navbarNav">
+        <ul class="navbar-nav">
           @if (authService.isAdmin()) {
             <li class="nav-item">
               <a
@@ -43,7 +37,6 @@
                 routerLink="/admin/dashboard"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -55,7 +48,6 @@
                 routerLink="/admin/users"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-people me-1"></i>
                 Users
@@ -67,7 +59,6 @@
                 routerLink="/admin/courses"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-journal-text me-1"></i>
                 Courses
@@ -79,7 +70,6 @@
                 routerLink="/admin/settings"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-gear-wide-connected me-1"></i>
                 Settings
@@ -92,7 +82,6 @@
                 class="nav-link"
                 routerLink="/teacher/dashboard"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -103,7 +92,6 @@
                 class="nav-link"
                 routerLink="/teacher/courses"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-book me-1"></i>
                 My Courses
@@ -114,7 +102,6 @@
                 class="nav-link"
                 routerLink="/teacher/students"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-people me-1"></i>
                 Students
@@ -125,7 +112,6 @@
                 class="nav-link"
                 routerLink="/teacher/exams"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-journal-check me-1"></i>
                 Exams
@@ -136,7 +122,6 @@
                 class="nav-link"
                 routerLink="/teacher/live-classes"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-broadcast me-1"></i>
                 Live Classes
@@ -147,7 +132,6 @@
                 class="nav-link"
                 routerLink="/teacher/questions"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-question-circle me-1"></i>
                 Q&amp;A
@@ -160,7 +144,6 @@
                 class="nav-link"
                 routerLink="/student/dashboard"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -171,7 +154,6 @@
                 class="nav-link"
                 routerLink="/student/courses"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-book me-1"></i>
                 Courses
@@ -184,7 +166,6 @@
                 class="nav-link"
                 routerLink="/parent/dashboard"
                 routerLinkActive="active"
-                  (click)="closeMobileMenu()"
               >
                 <i class="bi bi-speedometer2 me-1"></i>
                 Dashboard
@@ -192,32 +173,21 @@
             </li>
           }
         </ul>
-
-        <div class="menu-utilities d-lg-none">
-          <button
-            class="btn btn-outline-light w-100"
-            type="button"
-            (click)="themeService.toggleTheme()"
-          >
-            <i
-              class="bi me-2"
-              [class]="themeService.theme() === 'dark' ? 'bi-sun' : 'bi-moon'"
-            ></i>
-            Toggle theme
-          </button>
-        </div>
       </div>
 
       <div class="navbar-actions">
         <button
-          class="navbar-toggler"
+          class="theme-toggle btn btn-outline-light"
           type="button"
-          aria-controls="navbarNav"
-          [attr.aria-expanded]="mobileMenuOpen()"
-          aria-label="Toggle navigation"
-          (click)="toggleMobileMenu()"
+          (click)="themeService.toggleTheme()"
+          aria-label="Toggle theme"
         >
-          <span class="navbar-toggler-icon"></span>
+          <i
+            class="bi theme-toggle-icon"
+            [class.bi-sun]="themeService.theme() === 'dark'"
+            [class.bi-moon]="themeService.theme() !== 'dark'"
+          ></i>
+          <span class="theme-toggle-label">Toggle theme</span>
         </button>
 
         @if (authService.user(); as user) {
@@ -278,17 +248,6 @@
                 ><i class="bi bi-question-circle me-2"></i>Help</a
                 >
               </li>
-              <li class="d-none d-lg-block"><hr class="dropdown-divider" /></li>
-              <li class="d-none d-lg-block">
-                <button
-                  class="dropdown-item"
-                  type="button"
-                  (click)="themeService.toggleTheme()"
-                >
-                  <i class="bi me-2" [class]="themeService.theme() === 'dark' ? 'bi-sun' : 'bi-moon'"></i>
-                  Toggle theme
-                </button>
-              </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
                 <a
@@ -306,18 +265,6 @@
       </div>
     </div>
   </nav>
-
-  @if (mobileMenuOpen()) {
-    <div
-      class="mobile-menu-backdrop"
-      role="button"
-      tabindex="0"
-      aria-label="Close mobile navigation"
-      (click)="closeMobileMenu()"
-      (keyup.enter)="closeMobileMenu()"
-      (keydown.space)="closeMobileMenu(); $event.preventDefault()"
-    ></div>
-  }
 }
 
 <!-- Main Content -->

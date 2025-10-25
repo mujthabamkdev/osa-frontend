@@ -30,15 +30,27 @@
         >
           Parents
         </button>
-      </div>
-      @if (viewMode() === 'students') {
-        <button type="button" class="btn btn-primary" (click)="openStudentModal()">
-          <i class="bi bi-plus-circle me-1"></i>
-          Add Student
+        <button
+          type="button"
+          class="btn"
+          [class.btn-primary]="viewMode() === 'teachers'"
+          [class.btn-outline-primary]="viewMode() !== 'teachers'"
+          (click)="switchView('teachers')"
+        >
+          Teachers
         </button>
-      }
+      </div>
     </div>
   </div>
+
+  @if (viewMode() === 'students') {
+    <div class="d-flex justify-content-start mb-3">
+      <button type="button" class="btn btn-primary" (click)="openStudentModal()">
+        <i class="bi bi-plus-circle me-1"></i>
+        Add Student
+      </button>
+    </div>
+  }
 
   @switch (viewMode()) {
     @case ('pending') {
@@ -197,6 +209,52 @@
                       <td class="text-end">
                         <button class="btn btn-sm btn-outline-primary" type="button" (click)="openParentModal(parent)">
                           Manage Access
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @case ('teachers') {
+      <div class="card">
+        <div class="card-body">
+          @if (loadingTeachers()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary"></div>
+            </div>
+          } @else if (!teachers().length) {
+            <p class="text-muted mb-0">No active teacher accounts.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Joined</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (teacher of teachers(); track teacher.id) {
+                    <tr>
+                      <td>{{ teacher.email }}</td>
+                      <td>{{ teacher.full_name || '—' }}</td>
+                      <td>{{ teacher.created_at | date: 'short' }}</td>
+                      <td class="text-end">
+                        <button
+                          class="btn btn-sm btn-outline-danger"
+                          type="button"
+                          (click)="openTeacherModal(teacher)"
+                          [disabled]="teachers().length <= 1"
+                        >
+                          Transfer &amp; Delete
                         </button>
                       </td>
                     </tr>
@@ -450,6 +508,128 @@
                 <span class="spinner-border spinner-border-sm me-2"></span>
               }
               Save Access
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (teacherModalOpen() && selectedTeacher()) {
+    <div class="modal show d-block" style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Transfer Assignments for
+              {{ selectedTeacher()?.full_name || selectedTeacher()?.email }}
+            </h5>
+            <button type="button" class="btn-close" (click)="closeTeacherModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted">
+              Select a replacement teacher to receive all courses and subjects currently owned by
+              {{ selectedTeacher()?.full_name || selectedTeacher()?.email }}. The teacher account will be removed after the transfer.
+            </p>
+
+            @if (teacherModalError()) {
+              <div class="alert alert-danger" role="alert">{{ teacherModalError() }}</div>
+            }
+
+            <div class="mb-4">
+              <label class="form-label" for="replacement-teacher">Replacement Teacher</label>
+              <select
+                id="replacement-teacher"
+                class="form-select"
+                [ngModel]="replacementTeacherId()"
+                (ngModelChange)="updateReplacementTeacher($event)"
+              >
+                <option [ngValue]="null">Select replacement teacher</option>
+                @for (option of replacementTeacherOptions(); track option.id) {
+                  <option [ngValue]="option.id">
+                    {{ option.full_name || option.email }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            @if (teacherAssignmentsLoading()) {
+              <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+              </div>
+            } @else if (teacherAssignments()) {
+              @let assignments = teacherAssignments();
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="fw-semibold mb-3">
+                      Courses ({{ assignments?.course_count }})
+                    </h6>
+                    @if (assignments && assignments.courses.length) {
+                      <ul class="mb-0 ps-3">
+                        @for (course of assignments?.courses ?? []; track course.id) {
+                          <li>{{ course.title }}</li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="text-muted mb-0">No courses assigned.</p>
+                    }
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="border rounded p-3 h-100">
+                    <h6 class="fw-semibold mb-3">
+                      Subjects ({{ assignments?.subject_count }})
+                    </h6>
+                    @if (assignments && assignments.subjects.length) {
+                      <ul class="mb-0 ps-3">
+                        @for (subject of assignments?.subjects ?? []; track subject.id) {
+                          <li>
+                            {{ subject.name }}
+                            <span class="text-muted">({{ subject.course_title }})</span>
+                          </li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="text-muted mb-0">No subjects directly assigned.</p>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mt-4">
+                <div class="col-12 col-md-4">
+                  <div class="small text-muted">
+                    Live classes: <strong>{{ assignments?.live_class_count }}</strong>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="small text-muted">
+                    Exams: <strong>{{ assignments?.exam_count }}</strong>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="small text-muted">
+                    Lesson answers: <strong>{{ assignments?.lesson_answer_count }}</strong>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <p class="text-muted mb-0">Assignments are unavailable.</p>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeTeacherModal()">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              (click)="confirmTeacherDeletion()"
+              [disabled]="replacementTeacherId() === null || teacherDeletionSaving()"
+            >
+              @if (teacherDeletionSaving()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+              }
+              Transfer &amp; Delete Teacher
             </button>
           </div>
         </div>

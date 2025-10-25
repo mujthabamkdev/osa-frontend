@@ -1,6 +1,6 @@
 // src/app/core/services/api.service.ts
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, throwError, map, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, CreateUserRequest, UpdateUserRequest, UserRole } from '../models/user.models';
@@ -64,6 +64,9 @@ import {
   ApproveUserPayload,
   StudentAdmin,
   AdminParent,
+  TeacherAdmin,
+  TeacherAssignments,
+  TeacherReassignmentResponse,
   UpdateStudentEnrollmentsPayload,
   UpdateParentChildrenPayload,
 } from '../models/admin.models';
@@ -113,9 +116,27 @@ export class ApiService {
   }
 
   getPendingUsers(role?: UserRole): Observable<PendingUser[]> {
-    const params = role ? new HttpParams().set('role', role) : undefined;
+    let params = new HttpParams();
+    if (role) {
+      params = params.set('role', role);
+    }
+
     return this.performRequest(() =>
-      this.http.get<PendingUser[]>(`${this.baseUrl}/admin/pending-users`, { params })
+      this.http
+        .get<User[]>(`${this.baseUrl}/admin/users`, { params })
+        .pipe(
+          map((users) =>
+            users
+              .filter((user) => !user.is_active)
+              .map<PendingUser>((user) => ({
+                id: user.id,
+                email: user.email,
+                full_name: user.full_name ?? null,
+                role: (user.role ?? 'student') as UserRole,
+                created_at: user.created_at,
+              }))
+          )
+        )
     );
   }
 
@@ -132,7 +153,29 @@ export class ApiService {
   }
 
   getAdminStudents(): Observable<StudentAdmin[]> {
-    return this.performRequest(() => this.http.get<StudentAdmin[]>(`${this.baseUrl}/admin/students`));
+    return this.performRequest(() =>
+      this.http.get<StudentAdmin[]>(`${this.baseUrl}/admin/students`).pipe(
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            const params = new HttpParams().set('role', 'student');
+            return this.http
+              .get<User[]>(`${this.baseUrl}/admin/users`, { params })
+              .pipe(
+                map((users) =>
+                  users.map<StudentAdmin>((user) => ({
+                    id: user.id,
+                    email: user.email,
+                    full_name: user.full_name ?? null,
+                    created_at: user.created_at,
+                    enrollments: [],
+                  }))
+                )
+              );
+          }
+          return throwError(() => error);
+        })
+      )
+    );
   }
 
   updateStudentEnrollments(
@@ -145,7 +188,29 @@ export class ApiService {
   }
 
   getAdminParents(): Observable<AdminParent[]> {
-    return this.performRequest(() => this.http.get<AdminParent[]>(`${this.baseUrl}/admin/parents`));
+    const params = new HttpParams().set('role', 'parent');
+    return this.performRequest(() =>
+      this.http.get<AdminParent[]>(`${this.baseUrl}/admin/parents`).pipe(
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            return this.http
+              .get<User[]>(`${this.baseUrl}/admin/users`, { params })
+              .pipe(
+                map((users) =>
+                  users.map<AdminParent>((user) => ({
+                    id: user.id,
+                    email: user.email,
+                    full_name: user.full_name ?? null,
+                    created_at: user.created_at,
+                    children: [],
+                  }))
+                )
+              );
+          }
+          return throwError(() => error);
+        })
+      )
+    );
   }
 
   updateParentChildren(
@@ -154,6 +219,45 @@ export class ApiService {
   ): Observable<AdminParent> {
     return this.performRequest(() =>
       this.http.put<AdminParent>(`${this.baseUrl}/admin/parents/${parentId}/children`, payload)
+    );
+  }
+
+  getAdminTeachers(): Observable<TeacherAdmin[]> {
+    const params = new HttpParams().set('role', 'teacher');
+    return this.performRequest(() =>
+      this.http
+        .get<User[]>(`${this.baseUrl}/admin/users`, { params })
+        .pipe(
+          map((users) =>
+            users.map<TeacherAdmin>((user) => ({
+              id: user.id,
+              email: user.email,
+              full_name: user.full_name ?? null,
+              created_at: user.created_at,
+              subjects: [],
+            }))
+          )
+        )
+    );
+  }
+
+  getTeacherAssignments(teacherId: number): Observable<TeacherAssignments> {
+    return this.performRequest(() =>
+      this.http.get<TeacherAssignments>(`${this.baseUrl}/admin/teachers/${teacherId}/assignments`)
+    );
+  }
+
+  reassignTeacher(
+    teacherId: number,
+    replacementTeacherId: number
+  ): Observable<TeacherReassignmentResponse> {
+    return this.performRequest(() =>
+      this.http.post<TeacherReassignmentResponse>(
+        `${this.baseUrl}/admin/teachers/${teacherId}/reassign`,
+        {
+          replacement_teacher_id: replacementTeacherId,
+        }
+      )
     );
   }
 
