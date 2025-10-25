@@ -79,7 +79,10 @@ export class StudentCoursesComponent implements OnInit {
       return;
     }
 
-    this.router.navigate(['/student/courses', classId]);
+    const courseId = targetClass.course_id ?? this.defaultCourseId;
+    this.router.navigate(['/student/courses', courseId], {
+      queryParams: { classId },
+    });
   }
 
   isClassActive(classItem: Class): boolean {

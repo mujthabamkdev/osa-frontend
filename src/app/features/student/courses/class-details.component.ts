@@ -57,6 +57,10 @@ interface LessonProgress {
   completed_at: string | null;
 }
 
+interface ScheduleConfig {
+  max_lessons_per_day: number;
+}
+
 interface Lesson {
   id: number;
   title: string;
@@ -68,7 +72,12 @@ interface Lesson {
   quiz: Quiz | null;
   progress: LessonProgress | null;
   scheduled_date: string | null;
+  original_scheduled_date: string | null;
 }
+
+const DEFAULT_SCHEDULE_CONFIG: ScheduleConfig = {
+  max_lessons_per_day: 3,
+};
 
 interface Subject {
   id: number;
@@ -82,6 +91,13 @@ interface DaySchedule {
   date: string;
   dateObj: Date;
   lessons: Lesson[];
+}
+
+interface CourseClass {
+  id: number;
+  year: number;
+  name: string;
+  is_active: boolean;
 }
 
 interface LiveClass {
@@ -105,6 +121,9 @@ interface CourseDetails {
   subjects: Subject[];
   schedule: DaySchedule[];
   live_classes: LiveClass[];
+  classes: CourseClass[];
+  active_class: CourseClass | null;
+  schedule_config: ScheduleConfig;
 }
 
 interface ApiLessonContentResponse {
@@ -137,6 +156,13 @@ interface ApiSubjectResponse {
   lessons?: ApiLessonResponse[];
 }
 
+interface ApiCourseClassResponse {
+  id: number;
+  year?: number;
+  name?: string;
+  is_active?: boolean;
+}
+
 interface ApiCourseDetailsResponse {
   id: number;
   title: string;
@@ -146,6 +172,9 @@ interface ApiCourseDetailsResponse {
   created_at: string;
   subjects?: ApiSubjectResponse[];
   live_classes?: LiveClass[];
+  classes?: ApiCourseClassResponse[];
+  active_class?: ApiCourseClassResponse | null;
+  schedule_config?: Partial<ScheduleConfig> | null;
 }
 
 @Component({
@@ -171,6 +200,9 @@ export class ClassDetailsComponent implements OnInit {
   courseDetails = signal<CourseDetails | null>(null);
   selectedLesson = signal<Lesson | null>(null);
   viewMode = signal<'calendar' | 'subject'>('calendar');
+  filterDateInput = signal('');
+  activeFilterDate = signal<string | null>(null);
+  selectedClassId = signal<number | null>(null);
 
   collapsedSubjects = signal<Map<number, boolean>>(new Map());
   collapsedDays = signal<Map<string, boolean>>(new Map());
@@ -225,6 +257,34 @@ export class ClassDetailsComponent implements OnInit {
     this.selectedLesson()?.attachments.filter((attachment) => attachment.file_type !== 'video') || []
   );
 
+  selectedClass = computed(() => {
+    const details = this.courseDetails();
+    const classId = this.selectedClassId();
+    if (!details || classId === null) {
+      return null;
+    }
+    return details.classes.find((courseClass) => courseClass.id === classId) ?? null;
+  });
+
+  readonly todayIso = this.toIsoDate(new Date());
+
+  // Sort calendar days latest-first while limiting to today and earlier, with optional date filter
+  calendarSchedule = computed(() => {
+    const details = this.courseDetails();
+    if (!details) {
+      return [] as DaySchedule[];
+    }
+
+    const anchor = this.activeFilterDate();
+    let schedule = details.schedule.filter((day) => day.date <= this.todayIso);
+
+    if (anchor) {
+      schedule = schedule.filter((day) => day.date === anchor);
+    }
+
+    return schedule.sort((a, b) => b.date.localeCompare(a.date));
+  });
+
   selectedVideoAttachment = computed(() => {
     const videos = this.lessonVideoAttachments();
     const index = this.selectedVideoIndex();
@@ -242,34 +302,69 @@ export class ClassDetailsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const classIdParam = params.get('classId');
+        if (!classIdParam) {
+          this.selectedClassId.set(null);
+          return;
+        }
+
+        const parsed = Number.parseInt(classIdParam, 10);
+        if (Number.isNaN(parsed)) {
+          this.selectedClassId.set(null);
+          return;
+        }
+
+        this.selectedClassId.set(parsed);
+      });
+
     const courseId = this.route.snapshot.params['id'];
     if (courseId) {
       this.loadCourseDetails(+courseId);
     }
   }
 
-  loadCourseDetails(courseId: number): void {
+  loadCourseDetails(courseId: number, options?: { forceRefresh?: boolean }): void {
+    const forceRefresh = options?.forceRefresh ?? false;
     this.loading.set(true);
     this.error.set(null);
-    console.log('Loading course details for id:', courseId);
     this.apiService
-      .getCourseDetails(courseId)
+      .getCourseDetails(courseId, { forceRefresh })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
-          console.log('Course details request completed, setting loading to false');
           this.loading.set(false);
         })
       )
       .subscribe({
         next: (rawData) => {
-          console.log('Course details API response:', rawData);
-
           // Transform backend data structure to match frontend expectations
           const data = this.transformCourseData(rawData as ApiCourseDetailsResponse);
-          console.log('Course details transformed:', data);
 
           this.courseDetails.set(data);
+
+          const currentSelectedClassId = this.selectedClassId();
+          const matchingClass = currentSelectedClassId
+            ? data.classes.find((courseClass) => courseClass.id === currentSelectedClassId)
+            : null;
+
+          if (currentSelectedClassId && !matchingClass) {
+            if (data.active_class) {
+              this.selectedClassId.set(data.active_class.id);
+            } else if (data.classes.length > 0) {
+              this.selectedClassId.set(data.classes[0].id);
+            } else {
+              this.selectedClassId.set(null);
+            }
+          } else if (currentSelectedClassId === null) {
+            if (data.active_class) {
+              this.selectedClassId.set(data.active_class.id);
+            } else if (data.classes.length > 0) {
+              this.selectedClassId.set(data.classes[0].id);
+            }
+          }
 
           const collapsedMap = new Map<string, boolean>();
           data.schedule.forEach((day) => collapsedMap.set(day.date, true));
@@ -277,9 +372,9 @@ export class ClassDetailsComponent implements OnInit {
           this.loadCourseNotes();
 
           // Auto-select first lesson if available
-          const firstScheduledDay = data.schedule?.[0];
-          if (firstScheduledDay && firstScheduledDay.lessons.length > 0) {
-            this.selectLesson(firstScheduledDay.lessons[0]);
+          const firstAvailableDay = data.schedule.find((day) => day.date <= this.todayIso);
+          if (firstAvailableDay && firstAvailableDay.lessons.length > 0) {
+            this.selectLesson(firstAvailableDay.lessons[0]);
           }
         },
         error: (error) => {
@@ -290,92 +385,134 @@ export class ClassDetailsComponent implements OnInit {
   }
 
   private transformCourseData(rawData: ApiCourseDetailsResponse): CourseDetails {
-    console.log('Transforming course data...', rawData);
+    const scheduleConfig = this.normalizeScheduleConfig(rawData.schedule_config);
+
+    const classes: CourseClass[] = (rawData.classes || []).map((classData) => ({
+      id: classData.id,
+      year: classData.year ?? 0,
+      name: classData.name ?? 'Class',
+      is_active: classData.is_active ?? false,
+    }));
+
+    const activeClass: CourseClass | null = rawData.active_class
+      ? {
+          id: rawData.active_class.id,
+          year: rawData.active_class.year ?? 0,
+          name: rawData.active_class.name ?? 'Class',
+          is_active: rawData.active_class.is_active ?? false,
+        }
+      : null;
 
     const subjects: Subject[] = [];
     const schedule: DaySchedule[] = [];
-    const lessonMap = new Map<number, Lesson>();
+    const subjectOrderMap = new Map<number, number>();
 
     // Process subjects directly from course (new structure)
     if (rawData.subjects && Array.isArray(rawData.subjects)) {
-      console.log('Processing subjects structure...');
-
       for (const subject of rawData.subjects) {
         const lessons: Lesson[] = [];
+        const subjectOrder = subject.order_in_course ?? 0;
 
         // Transform lessons from new structure
         if (subject.lessons && Array.isArray(subject.lessons)) {
           for (const lessonData of subject.lessons) {
+            const originalScheduledDate = lessonData.scheduled_date
+              ? this.extractDate(lessonData.scheduled_date)
+              : null;
+
             const lesson: Lesson = {
               id: lessonData.id || Math.random(),
               title: lessonData.title || 'Untitled Lesson',
               description: lessonData.description || '',
-              order: lessonData.order_in_course || 0,
+              order:
+                lessonData.order_in_course ??
+                lessonData.order_in_subject ??
+                lessons.length + 1,
               subject_id: subject.id,
               subject_name: subject.name || 'Subject',
               attachments: (lessonData.contents || []).map(
                 (content: ApiLessonContentResponse, idx: number) => ({
-                id: content.id || idx,
-                title: content.title || 'Content',
-                file_type: content.content_type || 'document',
-                file_url: content.content_url || '',
-                source: content.source || 'upload',
-                description: content.content_text || '',
+                  id: content.id || idx,
+                  title: content.title || 'Content',
+                  file_type: content.content_type || 'document',
+                  file_url: content.content_url || '',
+                  source: content.source || 'upload',
+                  description: content.content_text || '',
                 })
               ),
               quiz: lessonData.quiz || null,
               progress: lessonData.progress || null,
-              scheduled_date: lessonData.scheduled_date
-                ? this.extractDate(lessonData.scheduled_date)
-                : null,
+              scheduled_date: originalScheduledDate,
+              original_scheduled_date: originalScheduledDate,
             };
             lessons.push(lesson);
-            lessonMap.set(lesson.id, lesson);
           }
         }
+
+        const sortedLessons = lessons.sort((a, b) => a.order - b.order);
 
         subjects.push({
           id: subject.id,
           title: subject.name || 'Untitled Subject',
           description: subject.description || '',
-          order: subject.order_in_course || 0,
-          lessons: lessons.sort((a, b) => a.order - b.order),
+          order: subjectOrder,
+          lessons: sortedLessons,
         });
+
+        subjectOrderMap.set(subject.id, subjectOrder);
       }
     }
 
     // Build daily schedule from lessons (new structure)
     if (subjects.length > 0) {
-      console.log('Building daily schedule from lessons...');
-
+      const maxLessonsPerDay = scheduleConfig.max_lessons_per_day;
+      const slotDates = this.computeLessonSlotDates(subjects);
       const dayMap = new Map<string, Lesson[]>();
 
-      // Collect all lessons with their scheduled dates
       for (const subject of subjects) {
-        for (const lesson of subject.lessons) {
-          // Find the lesson data from the API response to get scheduled_date
-          const lessonData = rawData.subjects
-            ?.find((candidate) => candidate.id === subject.id)
-            ?.lessons?.find((candidateLesson) => candidateLesson.id === lesson.id);
+        subject.lessons.forEach((lesson, index) => {
+          const slotDate = slotDates[index] ?? this.todayIso;
 
-          if (lessonData && lessonData.scheduled_date) {
-            const dateStr = this.extractDate(lessonData.scheduled_date);
+          lesson.scheduled_date = slotDate;
 
-            if (!dayMap.has(dateStr)) {
-              dayMap.set(dateStr, []);
-            }
-            dayMap.get(dateStr)!.push(lesson);
+          const existingLessons = dayMap.get(slotDate) ?? [];
+          if (!existingLessons.some((candidate) => candidate.id === lesson.id)) {
+            existingLessons.push(lesson);
+            dayMap.set(slotDate, existingLessons);
           }
-        }
+        });
       }
 
-      // Convert map to sorted schedule array
-      const sortedDates = Array.from(dayMap.keys()).sort();
+      const sortedDates = Array.from(dayMap.keys()).sort((a, b) => b.localeCompare(a));
       for (const dateStr of sortedDates) {
+        const dayLessons = [...(dayMap.get(dateStr) || [])].sort((a, b) => {
+          const subjectOrderA = subjectOrderMap.get(a.subject_id) ?? Number.MAX_SAFE_INTEGER;
+          const subjectOrderB = subjectOrderMap.get(b.subject_id) ?? Number.MAX_SAFE_INTEGER;
+
+          if (subjectOrderA !== subjectOrderB) {
+            return subjectOrderA - subjectOrderB;
+          }
+
+          return a.order - b.order;
+        });
+
+        const uniqueLessons: Lesson[] = [];
+        const seenSubjects = new Set<number>();
+        for (const lesson of dayLessons) {
+          if (seenSubjects.has(lesson.subject_id)) {
+            continue;
+          }
+          seenSubjects.add(lesson.subject_id);
+          uniqueLessons.push(lesson);
+          if (uniqueLessons.length === maxLessonsPerDay) {
+            break;
+          }
+        }
+
         schedule.push({
           date: dateStr,
           dateObj: new Date(dateStr),
-          lessons: dayMap.get(dateStr) || [],
+          lessons: uniqueLessons,
         });
       }
     }
@@ -385,20 +522,75 @@ export class ClassDetailsComponent implements OnInit {
       title: rawData.title,
       description: rawData.description,
       teacher_id: rawData.teacher_id,
-  teacher: rawData.teacher ?? undefined,
+      teacher: rawData.teacher ?? undefined,
       created_at: rawData.created_at,
       subjects,
       schedule,
       live_classes: rawData.live_classes || [],
+      classes,
+      active_class: activeClass,
+      schedule_config: scheduleConfig,
     };
 
-    console.log(
-      'Transformation complete. Subjects:',
-      subjects.length,
-      'Schedule days:',
-      schedule.length
-    );
     return result;
+  }
+
+  private normalizeScheduleConfig(
+    raw: Partial<ScheduleConfig> | null | undefined
+  ): ScheduleConfig {
+    if (!raw) {
+      return { ...DEFAULT_SCHEDULE_CONFIG };
+    }
+
+    const maxLessons = raw.max_lessons_per_day;
+
+    if (typeof maxLessons === 'number' && maxLessons > 0) {
+      return { max_lessons_per_day: Math.max(1, Math.floor(maxLessons)) };
+    }
+
+    return { ...DEFAULT_SCHEDULE_CONFIG };
+  }
+
+  // Derive per-slot calendar dates so lessons in the same order index share a day in the calendar view
+  private computeLessonSlotDates(subjects: Subject[]): string[] {
+    if (subjects.length === 0) {
+      return [];
+    }
+
+    const maxLessons = subjects.reduce((max, subject) => Math.max(max, subject.lessons.length), 0);
+    if (maxLessons === 0) {
+      return [];
+    }
+
+    const slotDates: (string | null)[] = Array.from({ length: maxLessons }, () => null);
+
+    subjects.forEach((subject) => {
+      subject.lessons.forEach((lesson, index) => {
+        if (!lesson.original_scheduled_date) {
+          return;
+        }
+
+        const normalized =
+          lesson.original_scheduled_date > this.todayIso ? this.todayIso : lesson.original_scheduled_date;
+        const current = slotDates[index];
+
+        if (!current || normalized > current) {
+          slotDates[index] = normalized;
+        }
+      });
+    });
+
+    const baseDate = new Date(this.todayIso);
+
+    return slotDates.map((date, index) => {
+      if (date) {
+        return date;
+      }
+
+      const fallbackDate = new Date(baseDate);
+      fallbackDate.setDate(baseDate.getDate() - index);
+      return this.toIsoDate(fallbackDate);
+    });
   }
 
   private extractDate(dateString: string): string {
@@ -513,7 +705,7 @@ export class ClassDetailsComponent implements OnInit {
   }
 
   private expandDayForLesson(lessonId: number): void {
-    const schedule = this.courseDetails()?.schedule ?? [];
+    const schedule = this.calendarSchedule();
     const matchingDay = schedule.find((day) => day.lessons.some((lesson) => lesson.id === lessonId));
     if (!matchingDay) {
       return;
@@ -561,13 +753,71 @@ export class ClassDetailsComponent implements OnInit {
     }
   }
 
+  onFilterDateInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    const value = target?.value?.trim() ?? '';
+
+    if (!value) {
+      this.filterDateInput.set('');
+      return;
+    }
+
+    if (value > this.todayIso) {
+      this.filterDateInput.set(this.todayIso);
+      if (target) {
+        target.value = this.todayIso;
+      }
+      return;
+    }
+
+    this.filterDateInput.set(value);
+  }
+
+  searchByDate(): void {
+    const candidate = this.filterDateInput().trim();
+    if (!candidate) {
+      this.activeFilterDate.set(null);
+      return;
+    }
+
+    if (candidate > this.todayIso) {
+      return;
+    }
+
+    const details = this.courseDetails();
+    if (!details) {
+      return;
+    }
+
+    const matchingDay = details.schedule.find((day) => day.date === candidate && day.date <= this.todayIso);
+    if (!matchingDay) {
+      this.activeFilterDate.set(null);
+      return;
+    }
+
+    this.activeFilterDate.set(candidate);
+
+    if (!this.selectedLessonBelongsToDay(matchingDay) && matchingDay.lessons.length > 0) {
+      this.selectLesson(matchingDay.lessons[0]);
+    }
+  }
+
+  resetDateFilter(): void {
+    this.filterDateInput.set('');
+    this.activeFilterDate.set(null);
+  }
+
+  private toIsoDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
   goBack(): void {
     this.router.navigate(['/student/courses']);
   }
 
   refreshCourse(): void {
     if (this.courseDetails()) {
-      this.loadCourseDetails(this.courseDetails()!.id);
+      this.loadCourseDetails(this.courseDetails()!.id, { forceRefresh: true });
     }
   }
 

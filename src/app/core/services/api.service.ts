@@ -1,7 +1,7 @@
 // src/app/core/services/api.service.ts
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap, catchError, throwError, map } from 'rxjs';
+import { Observable, tap, catchError, throwError, map, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, CreateUserRequest, UpdateUserRequest, UserRole } from '../models/user.models';
 import { AuthResponse } from '../models/auth.models';
@@ -70,6 +70,9 @@ export class ApiService {
   private readonly isLoading = signal(false);
   private readonly error = signal<string | null>(null);
 
+  private readonly cache = new Map<string, { expiresAt: number; stream: Observable<unknown> }>();
+  private readonly defaultCacheMs = 60_000;
+
   readonly loading = this.isLoading.asReadonly();
   readonly apiError = this.error.asReadonly();
 
@@ -124,9 +127,26 @@ export class ApiService {
   }
 
   // Course Details endpoints
-  getCourseDetails(courseId: number): Observable<CourseDetails> {
-    return this.performRequest(() =>
-      this.http.get<CourseDetails>(`${this.baseUrl}/courses/${courseId}`)
+  getCourseDetails(
+    courseId: number,
+    options?: { forceRefresh?: boolean; cacheMs?: number }
+  ): Observable<CourseDetails> {
+    const { forceRefresh = false, cacheMs = this.defaultCacheMs } = options ?? {};
+    const cacheKey = `course-details:${courseId}`;
+
+    if (forceRefresh) {
+      this.cache.delete(cacheKey);
+    } else {
+      const cached = this.getFromCache<CourseDetails>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    return this.getCachedObservable<CourseDetails>(
+      cacheKey,
+      () => this.performRequest(() => this.http.get<CourseDetails>(`${this.baseUrl}/courses/${courseId}`)),
+      cacheMs
     );
   }
 
@@ -599,6 +619,44 @@ export class ApiService {
         return throwError(() => error);
       })
     );
+  }
+
+  private getFromCache<T>(key: string): Observable<T> | null {
+    const cached = this.cache.get(key);
+    if (!cached) {
+      return null;
+    }
+
+    if (cached.expiresAt <= Date.now()) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.stream as Observable<T>;
+  }
+
+  private getCachedObservable<T>(
+    key: string,
+    requestFactory: () => Observable<T>,
+    cacheMs: number
+  ): Observable<T> {
+    if (cacheMs <= 0) {
+      return requestFactory();
+    }
+
+    const stream$ = requestFactory().pipe(
+      tap({
+        error: () => this.cache.delete(key),
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+
+    this.cache.set(key, {
+      expiresAt: Date.now() + cacheMs,
+      stream: stream$,
+    });
+
+    return stream$;
   }
 
   getEnrolledCourses(userId: number): Observable<StudentProgress[]> {

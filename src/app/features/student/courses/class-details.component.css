@@ -10,60 +10,13 @@
   border-bottom: 1px solid var(--color-card-border);
 }
 
-.course-header__inner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-16);
-  padding: var(--space-16);
+.calendar-day-lessons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-8);
 }
 
-@media (min-width: 576px) {
-  .course-header__inner {
-    padding: var(--space-20) var(--space-24);
-  }
-}
-
-@media (min-width: 992px) {
-  .course-header__inner {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-}
-
-.course-header__primary {
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.course-header__back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-6) var(--space-12);
-  border-radius: var(--radius-base);
-  border: 1px solid rgba(var(--color-brown-600-rgb), 0.26);
-  background: rgba(var(--color-brown-600-rgb), 0.08);
-  color: var(--color-text);
-  font-weight: var(--font-weight-medium);
-  transition: all var(--duration-normal) var(--ease-standard);
-}
-
-.course-header__back:hover {
-  background: rgba(var(--color-brown-600-rgb), 0.14);
-  text-decoration: none;
-}
-
-.course-header__back-label {
-  display: none;
-}
-
-@media (min-width: 480px) {
-  .course-header__back-label {
-    display: inline;
+.calendar-lesson-card {
   }
 }
 
@@ -361,6 +314,48 @@
   gap: var(--space-4);
 }
 
+
+.calendar-day-lessons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-10);
+}
+
+.calendar-lesson-card {
+  width: 100%;
+  cursor: pointer;
+  min-height: 100%;
+}
+
+.calendar-lesson-card .lesson-card-body {
+  padding: var(--space-4);
+  gap: var(--space-4);
+  min-height: 4rem;
+}
+
+.calendar-lesson-card .lesson-card-content {
+  gap: var(--space-3);
+}
+
+.calendar-lesson-card .lesson-card-title h6 {
+  font-size: 0.7rem;
+}
+
+.calendar-lesson-card .lesson-card-description {
+  font-size: 0.58rem;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  min-height: 1.8em;
+}
+
+.calendar-lesson-card .lesson-card-meta {
+  font-size: 0.55rem;
+}
+
+.calendar-lesson-card:hover {
+  transform: translateY(-2px);
+}
+
 [data-color-scheme='dark'] .lesson-card-description {
   color: rgba(245, 245, 245, 0.78);
 }
@@ -368,6 +363,8 @@
 [data-color-scheme='dark'] .lesson-card-meta {
   color: rgba(245, 245, 245, 0.72);
 }
+
+
 
 .subject-card {
   transition: all 0.3s;

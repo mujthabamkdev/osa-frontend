@@ -2,12 +2,17 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
-import { AdminSettings } from '../../../core/models/admin.models';
+import { AdminSettings, ScheduleConfig } from '../../../core/models/admin.models';
 
 interface SummarySettings {
   feature_flags: Record<string, boolean>;
   role_permissions: Record<string, Record<string, boolean>>;
+  schedule_config: ScheduleConfig;
 }
+
+const DEFAULT_SCHEDULE_CONFIG: ScheduleConfig = {
+  max_lessons_per_day: 3,
+};
 
 @Component({
   selector: 'app-admin-settings',
@@ -96,6 +101,31 @@ export class SettingsManagementComponent implements OnInit {
     this.isDirty.set(true);
   }
 
+  updateScheduleConfig(key: keyof ScheduleConfig, rawValue: string | number): void {
+    const numericValue = Number(rawValue);
+    if (Number.isNaN(numericValue)) {
+      return;
+    }
+
+    const clamped = Math.max(1, Math.min(12, Math.floor(numericValue)));
+
+    this.localSettings.update((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        schedule_config: {
+          ...current.schedule_config,
+          [key]: clamped,
+        },
+      };
+    });
+
+    this.isDirty.set(true);
+  }
+
   saveSettings(): void {
     const draft = this.localSettings();
     if (!draft || this.saving()) {
@@ -106,6 +136,7 @@ export class SettingsManagementComponent implements OnInit {
       .updateAdminSettings({
         feature_flags: draft.feature_flags,
         role_permissions: draft.role_permissions,
+        schedule_config: draft.schedule_config,
       })
       .subscribe({
         next: (updated) => {
@@ -155,6 +186,9 @@ export class SettingsManagementComponent implements OnInit {
           { ...permissions },
         ]),
       ),
+      schedule_config: {
+        ...(settings.schedule_config ?? DEFAULT_SCHEDULE_CONFIG),
+      },
     };
   }
 }

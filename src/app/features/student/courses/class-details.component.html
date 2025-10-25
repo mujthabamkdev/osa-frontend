@@ -15,11 +15,16 @@
               Instructor: {{ courseDetails()!.teacher!.full_name }}
             </p>
           }
+          @if (selectedClass()) {
+            <p class="course-header__subtitle">
+              Viewing class: {{ selectedClass()!.name }} (Year {{ selectedClass()!.year }})
+            </p>
+          }
         </div>
       </div>
 
       <div class="course-header__actions">
-  <div class="course-header__view-toggle" role="group" aria-label="Course view modes">
+        <div class="course-header__view-toggle" role="group" aria-label="Course view modes">
           <button
             type="button"
             class="course-header__toggle"
@@ -40,6 +45,25 @@
             <i class="bi bi-book"></i>
             <span>By Subject</span>
           </button>
+        </div>
+        <div class="course-header__date-filter">
+          <label class="visually-hidden" for="calendar-sort-date">Filter calendar by date</label>
+          <div class="d-flex align-items-center gap-2">
+            <input
+              id="calendar-sort-date"
+              type="date"
+              class="form-control form-control-sm"
+              [max]="todayIso"
+              [value]="filterDateInput()"
+              (input)="onFilterDateInput($event)"
+            />
+            <button class="btn btn-sm btn-primary" type="button" (click)="searchByDate()" [disabled]="!filterDateInput()">
+              Search
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" (click)="resetDateFilter()">
+              Reset
+            </button>
+          </div>
         </div>
         <button class="course-header__refresh" type="button" (click)="refreshCourse()">
           <i class="bi bi-arrow-clockwise"></i>
@@ -68,7 +92,7 @@
 
   @if (!loading() && courseDetails()) {
     <div class="container-fluid py-4">
-      <div class="row mb-4">
+      <!-- <div class="row mb-4">
         <div class="col-12">
           <div class="card">
             <div class="card-header">
@@ -84,51 +108,61 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       @if (viewMode() === 'calendar') {
         <div class="row g-4">
-          @for (daySchedule of courseDetails()?.schedule; track daySchedule.date) {
+          @if (calendarSchedule().length === 0) {
             <div class="col-12">
-              <div class="card">
-                <div
-                  class="card-header bg-light day-header"
-                  role="button"
-                  tabindex="0"
-                  (click)="toggleDay(daySchedule.date)"
-                  (keydown.enter)="toggleDay(daySchedule.date)"
-                  (keydown.space)="toggleDay(daySchedule.date)"
-                  [attr.aria-expanded]="!isDayCollapsed(daySchedule.date)"
-                >
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h5 class="mb-1">
-                        <i class="bi bi-calendar-event me-2"></i>
-                        {{ formatDayHeader(daySchedule.date) }}
-                      </h5>
-                      <small class="text-muted">
-                        {{ daySchedule.lessons.length }} lesson{{ daySchedule.lessons.length === 1 ? '' : 's' }}
-                      </small>
-                    </div>
-                    <i
-                      class="bi"
-                      [class.bi-chevron-down]="!isDayCollapsed(daySchedule.date)"
-                      [class.bi-chevron-right]="isDayCollapsed(daySchedule.date)"
-                    ></i>
-                  </div>
-                </div>
-                @if (!isDayCollapsed(daySchedule.date)) {
-                  <div class="card-body">
-                    @if (daySchedule.lessons.length === 0) {
-                      <div class="text-center text-muted py-3">
-                        No lessons scheduled for this day
+              <div class="alert alert-info mb-0">
+                @if (activeFilterDate()) {
+                  No classes scheduled on {{ formatDayHeader(activeFilterDate()!) }}.
+                } @else {
+                  No classes scheduled on or before today.
+                }
+              </div>
+            </div>
+          } @else {
+            @for (daySchedule of calendarSchedule(); track daySchedule.date) {
+              <div class="col-12">
+                <div class="card">
+                  <div
+                    class="card-header bg-light day-header"
+                    role="button"
+                    tabindex="0"
+                    (click)="toggleDay(daySchedule.date)"
+                    (keydown.enter)="toggleDay(daySchedule.date)"
+                    (keydown.space)="toggleDay(daySchedule.date)"
+                    [attr.aria-expanded]="!isDayCollapsed(daySchedule.date)"
+                  >
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <h5 class="mb-1">
+                          <i class="bi bi-calendar-event me-2"></i>
+                          {{ formatDayHeader(daySchedule.date) }}
+                        </h5>
+                        <small class="text-muted">
+                          {{ daySchedule.lessons.length }} lesson{{ daySchedule.lessons.length === 1 ? '' : 's' }}
+                        </small>
                       </div>
-                    } @else {
-                      <div class="row g-3">
-                        @for (lesson of daySchedule.lessons; track lesson.id) {
-                          <div class="col-sm-6 col-md-4 col-lg-3 col-xl-2">
+                      <i
+                        class="bi"
+                        [class.bi-chevron-down]="!isDayCollapsed(daySchedule.date)"
+                        [class.bi-chevron-right]="isDayCollapsed(daySchedule.date)"
+                      ></i>
+                    </div>
+                  </div>
+                  @if (!isDayCollapsed(daySchedule.date)) {
+                    <div class="card-body">
+                      @if (daySchedule.lessons.length === 0) {
+                        <div class="text-center text-muted py-3">
+                          No lessons scheduled for this day
+                        </div>
+                      } @else {
+                        <div class="calendar-day-lessons">
+                          @for (lesson of daySchedule.lessons; track lesson.id) {
                             <div
-                              class="card lesson-card"
+                              class="card lesson-card calendar-lesson-card"
                               [class.active-lesson]="isActiveLessonId(lesson.id)"
                               role="button"
                               tabindex="0"
@@ -136,7 +170,6 @@
                               (keydown.enter)="selectLesson(lesson)"
                               (keydown.space)="selectLesson(lesson)"
                               [attr.aria-pressed]="isActiveLessonId(lesson.id)"
-                              style="cursor: pointer"
                             >
                               <div class="card-body lesson-card-body">
                                 @if (lesson.scheduled_date) {
@@ -179,19 +212,19 @@
                                 </div>
                               </div>
                             </div>
+                          }
+                        </div>
+                        @if (selectedLessonBelongsToDay(daySchedule)) {
+                          <div class="lesson-detail-wrapper mt-4">
+                            <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>
                           </div>
                         }
-                      </div>
-                      @if (selectedLessonBelongsToDay(daySchedule)) {
-                        <div class="lesson-detail-wrapper mt-4">
-                          <ng-container *ngTemplateOutlet="lessonDetailTemplate"></ng-container>
-                        </div>
                       }
-                    }
-                  </div>
-                }
+                    </div>
+                  }
+                </div>
               </div>
-            </div>
+            }
           }
         </div>
       }
