@@ -4,7 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { environment } from '@environments/environment';
+import { AuthResponse, RegistrationResponse } from '@core/models/auth.models';
 import { UserRole } from '@core/models/user.models';
+
+const isAuthResponse = (
+  value: AuthResponse | RegistrationResponse
+): value is AuthResponse => {
+  const candidate = value as AuthResponse;
+  return Boolean(candidate?.access_token || candidate?.token);
+};
 
 @Component({
   templateUrl: './register.component.html',
@@ -28,6 +36,8 @@ export class RegisterComponent {
   readonly showPassword = signal(false);
   readonly acceptTerms = signal(false);
   readonly registrationSuccess = signal(false);
+  readonly registrationMessage = signal('');
+  readonly registeredRole = signal<UserRole>('student');
 
   readonly passwordsMatch = computed(() => {
     return this.userData().password === this.confirmPassword();
@@ -75,13 +85,39 @@ export class RegisterComponent {
     if (!this.isFormValid()) return;
 
     this.authService.clearError();
+    this.registrationSuccess.set(false);
+    this.registrationMessage.set('');
 
     this.authService.register(this.userData()).subscribe({
       next: (response) => {
-        this.authService.loading.set(false);
-        // Redirect immediately after successful registration
-        const role = response.user?.role || 'student';
-        this.router.navigate([`/${role}/dashboard`]);
+        if (isAuthResponse(response)) {
+          const authUser = response.user;
+          if (authUser) {
+            const role = authUser.role || 'student';
+            this.router.navigate([`/${role}/dashboard`]);
+            return;
+          }
+
+          const fallback: RegistrationResponse = {
+            message: 'Registration submitted. An administrator will review your account soon.',
+            user_id: 0,
+            email: this.userData().email,
+            role: this.userData().role,
+            is_active: false,
+          };
+
+          this.registrationSuccess.set(true);
+          this.registrationMessage.set(fallback.message);
+          this.registeredRole.set(fallback.role);
+          return;
+        }
+
+        const message =
+          response.message ||
+          'Registration submitted. An administrator will review your account soon.';
+        this.registrationSuccess.set(true);
+        this.registrationMessage.set(message);
+        this.registeredRole.set(response.role);
       },
       error: (error) => {
         this.authService.loading.set(false);

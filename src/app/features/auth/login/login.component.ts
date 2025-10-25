@@ -33,10 +33,18 @@ export class LoginComponent extends BaseComponent {
     };
 
     this.authService.login(credentials).subscribe({
-      next: ({ user }) => {
+      next: (response) => {
         this.authService.loading.set(false);
-        console.log('Login successful, user:', user);
-        console.log('User role:', user.role);
+
+        const resolvedUser = response.user ?? this.authService.user();
+        if (!resolvedUser) {
+          console.error('Login response did not include user details.');
+          this.authService.authError.set('Login succeeded but user data is missing.');
+          return;
+        }
+
+        console.log('Login successful, user:', resolvedUser);
+        console.log('User role:', resolvedUser.role);
 
         // Wait for user signal to be set before navigating
         const checkUserReady = () => {

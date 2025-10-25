@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, tap, throwError, of, catchError, map, retry, delay } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { AuthResponse } from '../models/auth.models';
+import { AuthResponse, RegistrationResponse } from '../models/auth.models';
 import { User, UserRole } from '../models/user.models';
 interface LoginCredentials {
   email: string;
@@ -80,24 +80,7 @@ export class AuthService {
     }
 
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, { email, password: pwd }).pipe(
-      tap((response) => {
-        const token = response.access_token ?? response.token;
-        if (!token) {
-          return;
-        }
-
-        const expiresAt = Date.now() + 30 * 60 * 1000;
-        const tokenData: TokenData = {
-          token,
-          expiresAt,
-        };
-
-        this.storeTokenData(tokenData);
-        if (response.user) {
-          this.currentUserSignal.set(response.user);
-          this.userRole.set(response.user.role);
-        }
-      }),
+      tap((response) => this.storeAuthSession(response)),
       catchError((error: HttpErrorResponse) => {
         this.loading.set(false);
         this.authError.set(error.error?.detail || 'Login failed');
@@ -107,12 +90,12 @@ export class AuthService {
     );
   }
 
-  register(userData: RegisterPayload): Observable<AuthResponse> {
+  register(userData: RegisterPayload): Observable<AuthResponse | RegistrationResponse> {
     this.loading.set(true);
     this.authError.set(null);
 
     return this.http
-      .post<AuthResponse>(`${this.baseUrl}/auth/register`, {
+      .post<AuthResponse | RegistrationResponse>(`${this.baseUrl}/auth/register`, {
         email: userData.email,
         password: userData.password,
         full_name: userData.fullName,
@@ -120,27 +103,14 @@ export class AuthService {
       })
       .pipe(
         tap((response) => {
-          const token = response.access_token ?? response.token;
-          if (!token) {
-            return;
-          }
-
-          const expiresAt = Date.now() + 30 * 60 * 1000;
-          const tokenData: TokenData = {
-            token,
-            expiresAt,
-          };
-
-          this.storeTokenData(tokenData);
-          if (response.user) {
-            this.currentUserSignal.set(response.user);
-            this.userRole.set(response.user.role);
+          if (this.isAuthResponse(response)) {
+            this.storeAuthSession(response);
           }
         }),
         catchError((error: HttpErrorResponse) => {
-        this.loading.set(false);
-        this.authError.set(error.error?.detail || 'Registration failed');
-        return throwError(() => error);
+          this.loading.set(false);
+          this.authError.set(error.error?.detail || 'Registration failed');
+          return throwError(() => error);
         }),
         tap(() => this.loading.set(false))
       );
@@ -279,6 +249,33 @@ export class AuthService {
   clearError(): void {
     this.authError.set(null);
   }
+
+  private readonly storeAuthSession = (response: AuthResponse): void => {
+    const token = response.access_token ?? response.token;
+    if (!token) {
+      return;
+    }
+
+    const expiresAt = Date.now() + 30 * 60 * 1000;
+    const tokenData: TokenData = {
+      token,
+      expiresAt,
+    };
+
+    this.storeTokenData(tokenData);
+    if (response.user) {
+      this.currentUserSignal.set(response.user);
+      this.userRole.set(response.user.role);
+      localStorage.setItem('authUser', JSON.stringify(response.user));
+    }
+  };
+
+  private readonly isAuthResponse = (
+    value: AuthResponse | RegistrationResponse
+  ): value is AuthResponse => {
+    const candidate = value as AuthResponse;
+    return Boolean(candidate?.access_token || candidate?.token);
+  };
 
   refreshToken(): Observable<never> {
     // For now, this is a placeholder. In a full implementation,

@@ -4,7 +4,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, throwError, map, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, CreateUserRequest, UpdateUserRequest, UserRole } from '../models/user.models';
-import { AuthResponse } from '../models/auth.models';
+import { AuthResponse, RegistrationResponse } from '../models/auth.models';
 import {
   Course,
   CreateCourseRequest,
@@ -57,7 +57,16 @@ import {
   StudentReport,
   StudentProgressEntry,
 } from '../models/teacher.models';
-import { AdminSettings, AdminSettingsUpdate } from '../models/admin.models';
+import {
+  AdminSettings,
+  AdminSettingsUpdate,
+  PendingUser,
+  ApproveUserPayload,
+  StudentAdmin,
+  AdminParent,
+  UpdateStudentEnrollmentsPayload,
+  UpdateParentChildrenPayload,
+} from '../models/admin.models';
 
 @Injectable({
   providedIn: 'root',
@@ -100,6 +109,51 @@ export class ApiService {
   toggleUserStatus(id: number): Observable<User> {
     return this.performRequest(() =>
       this.http.patch<User>(`${this.baseUrl}/users/${id}/toggle-status`, {})
+    );
+  }
+
+  getPendingUsers(role?: UserRole): Observable<PendingUser[]> {
+    const params = role ? new HttpParams().set('role', role) : undefined;
+    return this.performRequest(() =>
+      this.http.get<PendingUser[]>(`${this.baseUrl}/admin/pending-users`, { params })
+    );
+  }
+
+  approveUser(
+    userId: number,
+    payload: ApproveUserPayload
+  ): Observable<StudentAdmin | AdminParent> {
+    return this.performRequest(() =>
+      this.http.post<StudentAdmin | AdminParent>(
+        `${this.baseUrl}/admin/users/${userId}/approve`,
+        payload
+      )
+    );
+  }
+
+  getAdminStudents(): Observable<StudentAdmin[]> {
+    return this.performRequest(() => this.http.get<StudentAdmin[]>(`${this.baseUrl}/admin/students`));
+  }
+
+  updateStudentEnrollments(
+    studentId: number,
+    payload: UpdateStudentEnrollmentsPayload
+  ): Observable<StudentAdmin> {
+    return this.performRequest(() =>
+      this.http.put<StudentAdmin>(`${this.baseUrl}/admin/students/${studentId}/enrollments`, payload)
+    );
+  }
+
+  getAdminParents(): Observable<AdminParent[]> {
+    return this.performRequest(() => this.http.get<AdminParent[]>(`${this.baseUrl}/admin/parents`));
+  }
+
+  updateParentChildren(
+    parentId: number,
+    payload: UpdateParentChildrenPayload
+  ): Observable<AdminParent> {
+    return this.performRequest(() =>
+      this.http.put<AdminParent>(`${this.baseUrl}/admin/parents/${parentId}/children`, payload)
     );
   }
 
@@ -398,6 +452,12 @@ export class ApiService {
       this.http.patch<void>(`${this.baseUrl}/students/progress/${courseId}`, {
         progress,
       })
+    );
+  }
+
+  getCourseClasses(courseId: number): Observable<Class[]> {
+    return this.performRequest(() =>
+      this.http.get<Class[]>(`${this.baseUrl}/school/courses/${courseId}/classes`)
     );
   }
 
@@ -899,9 +959,9 @@ export class ApiService {
     password: string,
     fullName: string,
     role: UserRole
-  ): Observable<AuthResponse> {
+  ): Observable<AuthResponse | RegistrationResponse> {
     return this.performRequest(() =>
-      this.http.post<AuthResponse>(`${this.baseUrl}/auth/register`, {
+      this.http.post<AuthResponse | RegistrationResponse>(`${this.baseUrl}/auth/register`, {
         email,
         password,
         full_name: fullName,

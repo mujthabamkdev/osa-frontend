@@ -12,11 +12,19 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  access_token: string;
-  token_type: string;
+  access_token?: string;
+  token_type?: string;
   refresh_token?: string;
   token?: string;
-  user: User;
+  user?: User;
+}
+
+export interface RegistrationResponse {
+  message: string;
+  user_id: number;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
 }
 
 export interface TokenPayload {
