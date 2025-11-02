@@ -4,6 +4,6 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "nginx -g 'daemon off;'"
+    "startCommand": "/entrypoint.sh"
   }
 }
