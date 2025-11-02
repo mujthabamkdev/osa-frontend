@@ -14,4 +14,4 @@ RUN npm install -g serve
 
 EXPOSE 3000
 
-CMD ["serve", "-s", "dist/osa-frontend", "-l", "3000"]
+CMD ["serve", "-s", "dist/osa-frontend", "-p", "3000"]
