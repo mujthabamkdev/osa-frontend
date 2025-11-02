@@ -9,6 +9,9 @@ export PORT
 
 envsubst '$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
+echo "Contents of /usr/share/nginx/html before start:"
+ls -al /usr/share/nginx/html || echo "Directory not found"
+
 echo "Starting nginx on port $PORT"
 echo "----- Rendered nginx config -----"
 cat /etc/nginx/conf.d/default.conf || true
