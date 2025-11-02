@@ -19,6 +19,6 @@ COPY entrypoint.sh /entrypoint.sh
 RUN apk add --no-cache gettext \
 	&& chmod +x /entrypoint.sh
 
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["/entrypoint.sh"]
