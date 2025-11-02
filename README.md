@@ -1,3 +1,4 @@
+02 Nov 2025
 # 🎨 Online Sharia Academy Frontend
 
 Modern Angular 20 standalone application with signal-based state management for the Online Sharia Academy platform, featuring role-based dashboards and interactive learning interfaces.
