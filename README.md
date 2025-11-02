@@ -1,11 +1,11 @@
 02 Nov 2025
-# 🎨 Online Sharia Academy Frontend
+# Online Sharia Academy Frontend
 
 Modern Angular 20 standalone application with signal-based state management for the Online Sharia Academy platform, featuring role-based dashboards and interactive learning interfaces.
 
-## 🚀 Features
+## Features
 
-### ✨ Angular 20 Modern Architecture
+### Angular 20 Modern Architecture
 
 - **Standalone Components**: Pure standalone architecture without NgModules
 - **Signal-based State Management**: Latest Angular signals for reactive programming
@@ -14,7 +14,7 @@ Modern Angular 20 standalone application with signal-based state management for 
 - **Functional Interceptors**: HTTP interceptors using dependency injection
 - **Modern Dependency Injection**: Using `inject()` function throughout
 
-### 🔐 Authentication & Security
+### Authentication & Security
 
 - JWT-based authentication with automatic token refresh
 - Role-based access control (Admin, Teacher, Student, Parent)
@@ -22,7 +22,7 @@ Modern Angular 20 standalone application with signal-based state management for 
 - HTTP interceptors for token management and error handling
 - Secure token storage with automatic cleanup
 
-### 👥 Role-Based Dashboards
+### Role-Based Dashboards
 
 #### **Admin Dashboard**
 
@@ -53,7 +53,7 @@ Modern Angular 20 standalone application with signal-based state management for 
 - Student performance tracking
 - Communication with teachers
 
-### 🎨 Modern UI/UX Design
+### Modern UI/UX Design
 
 - **Bootstrap 5.3.2**: Latest Bootstrap with custom theming
 - **Inter Font Family**: Modern, readable typography
@@ -63,7 +63,7 @@ Modern Angular 20 standalone application with signal-based state management for 
 - **Loading States**: Visual feedback for all async operations
 - **Toast Notifications**: Global notification system
 
-### 🏗️ Production-Ready Features
+### Production-Ready Features
 
 - **Lazy Loading**: Route-based code splitting for optimal performance
 - **HTTP Interceptors**: Global loading, error handling, and authentication
@@ -72,7 +72,7 @@ Modern Angular 20 standalone application with signal-based state management for 
 - **TypeScript Strict Mode**: Type-safe development experience
 - **ESLint & Prettier**: Code quality and formatting standards
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Angular**: 20.0.0 (latest version)
 - **TypeScript**: 5.6.0
@@ -82,7 +82,7 @@ Modern Angular 20 standalone application with signal-based state management for 
 - **Angular CLI**: 20.0.0 (build tools)
 - **Signals API**: Reactive state management
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
