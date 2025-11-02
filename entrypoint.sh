@@ -7,6 +7,8 @@ fi
 
 export PORT
 
+echo "PORT env: $PORT"
+
 envsubst '$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
 echo "Contents of /usr/share/nginx/html before start:"
