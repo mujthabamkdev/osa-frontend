@@ -11,6 +11,8 @@ envsubst '$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/d
 
 echo "Contents of /usr/share/nginx/html before start:"
 ls -al /usr/share/nginx/html || echo "Directory not found"
+echo "Contents of /usr/share/nginx/html/browser:" 
+ls -al /usr/share/nginx/html/browser || echo "browser directory missing"
 
 echo "Starting nginx on port $PORT"
 echo "----- Rendered nginx config -----"
