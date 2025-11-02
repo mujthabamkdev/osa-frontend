@@ -13,6 +13,9 @@ RUN npm run build
 FROM nginx:alpine
 
 COPY --from=build /app/dist/osa-frontend/browser/ /usr/share/nginx/html/
+
+RUN cp -r /usr/share/nginx/html/browser/* /usr/share/nginx/html/ \ 
+	&& rm -rf /usr/share/nginx/html/browser
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
 COPY entrypoint.sh /entrypoint.sh
 
