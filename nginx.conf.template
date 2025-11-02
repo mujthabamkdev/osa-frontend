@@ -1,8 +1,11 @@
 server {
-    listen ${PORT};
+    listen 0.0.0.0:${PORT};
+    listen [::]:${PORT};
     server_name localhost;
     root /usr/share/nginx/html;
     index index.html;
+    access_log /dev/stdout;
+    error_log /dev/stderr warn;
 
     location / {
         try_files $uri $uri/ /index.html;
