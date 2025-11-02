@@ -4,6 +4,6 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "serve -s dist/osa-frontend -p $PORT"
+    "startCommand": "nginx -g 'daemon off;'"
   }
 }
