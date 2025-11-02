@@ -4,6 +4,6 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "npx serve -s dist/osa-frontend -p $PORT"
+    "startCommand": "serve -s dist/osa-frontend -p $PORT"
   }
 }
