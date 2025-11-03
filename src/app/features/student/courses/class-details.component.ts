@@ -206,6 +206,8 @@ export class ClassDetailsComponent implements OnInit {
 
   collapsedSubjects = signal<Map<number, boolean>>(new Map());
   collapsedDays = signal<Map<string, boolean>>(new Map());
+  headerCollapsed = signal(false);
+  viewToggleCollapsed = signal(true);
   notes = signal<Note[]>([]);
   notesLoading = signal(false);
   notesError = signal<string | null>(null);
